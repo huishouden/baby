@@ -2,8 +2,9 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import type { Contact } from '@huishouden/pwa-kit/contacts';
 import type { Appointment } from './lib/model';
+import { isImported, type CalendarMatch } from '@huishouden/pwa-kit/calendar';
 import { useClock } from '@huishouden/pwa-kit/react/clock';
-import { calendarAvailable } from '@huishouden/pwa-kit/react/calendar';
+import { CalendarSuggestions, calendarAvailable, useCalendarSuggestions } from '@huishouden/pwa-kit/react/calendar';
 import { ContactDialog } from '@huishouden/pwa-kit/react/contacts';
 import { Toast, type ToastState } from '@huishouden/pwa-kit/react/ui';
 import type { BabyStore } from './data/types';
@@ -11,6 +12,8 @@ import { Header, type Tab } from './components/Header';
 import { ProfileDialog, type ProfileMode } from './components/ProfileDialog';
 import { AppointmentDialog } from './components/AppointmentDialog';
 import { APP, ROLES } from './lib/contacts';
+import { BABY_CALENDAR_QUERIES, fromCalendar } from './lib/calendarImport';
+import { auth } from './data/firebase';
 import { LogScreen } from './screens/LogScreen';
 import { Overview } from './screens/Overview';
 import { Appointments } from './screens/Appointments';
@@ -47,6 +50,14 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   const { profile } = store.data;
   const born = !!profile?.birthDate;
   const calendar = calendarAvailable(user);
+  const appointments = store.data.appointments;
+  const suggested = useCalendarSuggestions({ auth, words: BABY_CALENDAR_QUERIES, isImported: (m) => isImported(m, appointments), app: 'Baby' });
+
+  /** Calendar events in as appointments: Import from calendar and the new-in-your-calendar card. */
+  const importEvents = (list: CalendarMatch[]) => {
+    for (const m of list) store.actions.saveAppointment(null, fromCalendar(m));
+    notify(list.length === 1 ? `Added ${list[0].title}` : `Added ${list.length} appointments`);
+  };
 
   useEffect(() => {
     document.title = 'Huishouden Baby';
@@ -71,7 +82,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   let content: ReactNode;
   if (!store.ready) content = <p className="p-2 text-lg text-stone-600">Loading the baby's details</p>;
   else if (tab === 'appointments')
-    content = <Appointments store={store} calendarAvailable={calendar} onAdd={() => setAppointment('new')} onEdit={setAppointment} notify={notify} />;
+    content = <Appointments store={store} calendarAvailable={calendar} onAdd={() => setAppointment('new')} onEdit={setAppointment} onImport={importEvents} />;
   else if (tab === 'checklists') content = <Checklists store={store} notify={notify} onAddContact={(role) => setContact({ contact: null, role })} />;
   else if (tab === 'contacts')
     content = <Contacts store={store} notify={notify} onAdd={() => setContact({ contact: null })} onEdit={(c) => setContact({ contact: c })} />;
@@ -93,6 +104,9 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
       <Header tabs={tabs} tab={tab} onTab={(id) => setTab(id as TabId)} user={user} onSignIn={onSignIn} onSignOut={onSignOut} signingIn={signingIn} />
       <main className="mx-auto flex w-full max-w-[1200px] min-h-0 flex-1 flex-col gap-4 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-6">
         {banner}
+        {tab === 'home' && store.ready && (
+          <CalendarSuggestions suggestions={suggested.suggestions} now={now} onAdd={(m) => importEvents([m])} onDismiss={suggested.dismiss} />
+        )}
         <div className="min-h-0 flex-1">{content}</div>
       </main>
 
