@@ -2,13 +2,13 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Baby, ChevronLeft, ChevronRight, Droplet, Droplets, Milk, Moon, Pencil, Sun } from 'lucide-react';
 import type { BabyEvent, DiaperKind, Side } from '../lib/model';
 import { dayTimeline, dayTotals, describeEvent, diaperBreakdown, feedDetail, latest, sleepState } from '../lib/summary';
-import { addDays, babyAge, formatDuration, formatHours, startOfDay } from '../lib/time';
-import { formatDayLong, formatTime } from '../lib/format';
-import { useClock } from '../clock';
+import { addDays, formatDayLong, formatDuration, formatHours, formatTime, startOfDay } from '@huishouden/pwa-kit/time';
+import { babyAge } from '../lib/time';
+import { useClock } from '@huishouden/pwa-kit/react/clock';
 import type { BabyStore } from '../data/types';
 import { AmountDialog } from '../components/AmountDialog';
 import { EventDialog } from '../components/EventDialog';
-import { PersonBadge, cardClass, iconButton } from '../components/ui';
+import { PersonBadge, cardClass, iconButton } from '@huishouden/pwa-kit/react/ui';
 
 const HISTORY_DAYS = 13;
 

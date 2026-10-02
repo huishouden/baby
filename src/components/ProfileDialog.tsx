@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type { BabyProfile } from '../lib/model';
 import { LIMITS } from '../lib/model';
-import { toYmd } from '../lib/time';
+import { toYmd } from '@huishouden/pwa-kit/time';
 import type { ProfileInput } from '../data/types';
-import { Dialog, Field, ghostButton, inputClass, primaryButton } from './ui';
+import { Dialog, Field, ghostButton, inputClass, primaryButton } from '@huishouden/pwa-kit/react/ui';
 
 export type ProfileMode = 'due' | 'born' | 'edit';
 

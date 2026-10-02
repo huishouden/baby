@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { DEMO_NOW, demoData } from './demo';
 import { countdown } from './time';
 import { latest, sleepState } from './summary';
-import { formatAgo } from './time';
+import { formatAgo } from '@huishouden/pwa-kit/time';
 
 test('the before demo is twelve weeks out', () => {
   const d = demoData('before');

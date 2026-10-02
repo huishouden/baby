@@ -1,11 +1,11 @@
 import { Baby, CalendarPlus, Check, ChevronRight, MapPin, Pencil } from 'lucide-react';
 import type { Appointment } from '../lib/model';
 import { groupChecklist } from '../lib/checklist';
-import { countdown, parseYmd, relativeDay } from '../lib/time';
-import { formatDateLong, formatDayLong, formatTime } from '../lib/format';
-import { useClock } from '../clock';
+import { formatDateLong, formatDayLong, formatTime, parseYmd, relativeDay } from '@huishouden/pwa-kit/time';
+import { countdown } from '../lib/time';
+import { useClock } from '@huishouden/pwa-kit/react/clock';
 import type { BabyStore } from '../data/types';
-import { cardClass, ghostButton, iconButton, overline, primaryButton } from '../components/ui';
+import { cardClass, ghostButton, iconButton, overline, primaryButton } from '@huishouden/pwa-kit/react/ui';
 
 interface Props {
   store: BabyStore;

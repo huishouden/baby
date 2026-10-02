@@ -2,14 +2,15 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import type { Contact } from '@huishouden/pwa-kit/contacts';
 import type { Appointment } from './lib/model';
-import { useClock } from './clock';
+import { useClock } from '@huishouden/pwa-kit/react/clock';
+import { calendarAvailable } from '@huishouden/pwa-kit/react/calendar';
+import { ContactDialog } from '@huishouden/pwa-kit/react/contacts';
+import { Toast, type ToastState } from '@huishouden/pwa-kit/react/ui';
 import type { BabyStore } from './data/types';
 import { Header, type Tab } from './components/Header';
 import { ProfileDialog, type ProfileMode } from './components/ProfileDialog';
 import { AppointmentDialog } from './components/AppointmentDialog';
-import { ContactDialog } from './components/ContactDialog';
-import { calendarAvailable } from './data/calendar';
-import { Toast, type ToastState } from './components/ui';
+import { APP, ROLES } from './lib/contacts';
 import { LogScreen } from './screens/LogScreen';
 import { Overview } from './screens/Overview';
 import { Appointments } from './screens/Appointments';
@@ -120,7 +121,11 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
       {contact && (
         <ContactDialog
           contact={contact.contact}
+          app={APP}
+          roles={ROLES}
           role={contact.role}
+          searchPlaceholder="Practice name and town"
+          namePlaceholder="Example Pediatrics"
           onClose={() => setContact(null)}
           onSave={(input) => {
             store.actions.saveContact(contact.contact?.id ?? null, input);
