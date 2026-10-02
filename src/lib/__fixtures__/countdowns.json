@@ -1,0 +1,24 @@
+{
+  "description": "Due dates against a fixed 'now' (local noon, 2031-03-05).",
+  "now": "2031-03-05T12:00",
+  "cases": [
+    { "dueDate": "2031-05-31", "headline": "12 weeks", "suffix": "to go", "days": 87, "week": 28 },
+    { "dueDate": "2031-03-19", "headline": "2 weeks", "suffix": "to go", "days": 14, "week": 39 },
+    { "dueDate": "2031-03-14", "headline": "9 days", "suffix": "to go", "days": 9, "week": 39 },
+    { "dueDate": "2031-03-06", "headline": "1 day", "suffix": "to go", "days": 1, "week": 40 },
+    { "dueDate": "2031-03-05", "headline": "Due today", "suffix": "", "days": 0, "week": 41 },
+    { "dueDate": "2031-03-02", "headline": "3 days", "suffix": "past the due date", "days": -3, "week": 41 },
+    { "dueDate": "2031-11-30", "headline": "38 weeks", "suffix": "to go", "days": 270, "week": 2 },
+    { "dueDate": "not-a-date", "headline": null }
+  ],
+  "ages": [
+    { "birthDate": "2031-03-05", "age": "Born today" },
+    { "birthDate": "2031-03-04", "age": "1 day old" },
+    { "birthDate": "2031-02-24", "age": "9 days old" },
+    { "birthDate": "2031-02-13", "age": "2 weeks old" },
+    { "birthDate": "2031-01-02", "age": "8 weeks old" },
+    { "birthDate": "2030-12-20", "age": "2 months old" },
+    { "birthDate": "2030-11-01", "age": "4 months old" },
+    { "birthDate": "2031-04-01", "age": null }
+  ]
+}

@@ -1,0 +1,45 @@
+import type { Appointment, BabyEvent, ChecklistItem, EventFields } from '../lib/model';
+import type { BabyData } from '../lib/demo';
+
+export type { BabyData };
+
+export interface ProfileInput {
+  name?: string;
+  dueDate?: string;
+  birthDate?: string;
+}
+
+export interface AppointmentInput {
+  title: string;
+  at: number;
+  location?: string;
+  notes?: string;
+}
+
+/** Writes return immediately (Firestore queues them offline); failures arrive through `onError`. */
+export interface BabyActions {
+  saveProfile(p: ProfileInput): void;
+  logEvent(fields: Omit<EventFields, 'at'> & { at?: number }): BabyEvent;
+  updateEvent(event: BabyEvent, fields: EventFields): void;
+  deleteEvent(id: string): void;
+  restoreEvent(event: BabyEvent): void;
+  addChecklistItem(list: string, text: string): void;
+  setChecklistDone(id: string, done: boolean): void;
+  deleteChecklistItem(id: string): void;
+  restoreChecklistItem(item: ChecklistItem): void;
+  reorderChecklist(writes: { id: string; order: number }[]): void;
+  saveAppointment(id: string | null, input: AppointmentInput): void;
+  deleteAppointment(id: string): void;
+  restoreAppointment(a: Appointment): void;
+}
+
+export interface BabyStore {
+  data: BabyData;
+  /** False until the profile and lists have answered once (from cache or server). */
+  ready: boolean;
+  actions: BabyActions;
+  /** Lowercase emails of the household, for consistent avatar colours. */
+  members: string[];
+  /** The signed-in member's email (or the demo's). */
+  me: string;
+}

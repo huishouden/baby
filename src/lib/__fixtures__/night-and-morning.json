@@ -1,0 +1,33 @@
+{
+  "description": "An invented night and morning: times are local, 'now' is 10:30 on 2031-03-05.",
+  "now": "2031-03-05T10:30",
+  "events": [
+    { "id": "e1", "kind": "sleep", "at": "2031-03-04T22:00", "endAt": "2031-03-05T01:30", "by": "pat@example.com" },
+    { "id": "e2", "kind": "feed", "at": "2031-03-05T01:40", "method": "breast", "side": "right", "by": "pat@example.com" },
+    { "id": "e3", "kind": "diaper", "at": "2031-03-05T01:55", "diaper": "wet", "by": "lee@example.com" },
+    { "id": "e4", "kind": "sleep", "at": "2031-03-05T02:10", "endAt": "2031-03-05T05:40", "by": "lee@example.com" },
+    { "id": "e5", "kind": "feed", "at": "2031-03-05T05:50", "method": "bottle", "amountMl": 90, "by": "lee@example.com" },
+    { "id": "e6", "kind": "diaper", "at": "2031-03-05T06:00", "diaper": "both", "by": "pat@example.com" },
+    { "id": "e7", "kind": "pump", "at": "2031-03-05T06:30", "amountMl": 120, "by": "pat@example.com" },
+    { "id": "e8", "kind": "diaper", "at": "2031-03-05T07:45", "diaper": "dirty", "by": "lee@example.com" },
+    { "id": "e9", "kind": "feed", "at": "2031-03-05T08:20", "method": "breast", "side": "left", "by": "pat@example.com" },
+    { "id": "e10", "kind": "diaper", "at": "2031-03-05T09:40", "diaper": "wet", "by": "lee@example.com" },
+    { "id": "e11", "kind": "sleep", "at": "2031-03-05T09:55", "endAt": null, "by": "pat@example.com" },
+    { "id": "e12", "kind": "feed", "at": "2031-03-05T11:00", "method": "breast", "side": "right", "by": "pat@example.com", "note": "logged ahead by mistake; after now, so ignored" }
+  ],
+  "expected": {
+    "lastFeedId": "e9",
+    "lastFeedAgo": "2h 10m ago",
+    "lastFeedDetail": "left",
+    "sleep": { "state": "asleep", "for": "35m" },
+    "lastDiaperId": "e10",
+    "totals": {
+      "feeds": 3, "breastFeeds": 2, "bottleFeeds": 1, "bottleMl": 90,
+      "sleepMinutes": 335,
+      "diapers": { "wet": 2, "dirty": 1, "both": 1 }, "diaperCount": 4,
+      "pumpMl": 120, "pumps": 1
+    },
+    "diaperBreakdown": "2 wet, 1 dirty, 1 both",
+    "timelineIds": ["e12", "e11", "e10", "e9", "e8", "e7", "e6", "e5", "e4", "e3", "e2", "e1"]
+  }
+}

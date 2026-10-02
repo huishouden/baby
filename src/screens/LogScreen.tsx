@@ -1,0 +1,261 @@
+import { useMemo, useState, type ReactNode } from 'react';
+import { Baby, ChevronLeft, ChevronRight, Droplet, Droplets, Milk, Moon, Pencil, Sun } from 'lucide-react';
+import type { BabyEvent, DiaperKind, Side } from '../lib/model';
+import { dayTimeline, dayTotals, describeEvent, diaperBreakdown, feedDetail, latest, sleepState } from '../lib/summary';
+import { addDays, babyAge, formatDuration, formatHours, startOfDay } from '../lib/time';
+import { formatDayLong, formatTime } from '../lib/format';
+import { useClock } from '../clock';
+import type { BabyStore } from '../data/types';
+import { AmountDialog } from '../components/AmountDialog';
+import { EventDialog } from '../components/EventDialog';
+import { PersonBadge, cardClass, iconButton } from '../components/ui';
+
+const HISTORY_DAYS = 13;
+
+interface Props {
+  store: BabyStore;
+  notify: (message: string, undo?: () => void) => void;
+  onEditProfile: () => void;
+}
+
+/** After the birth: what happened last, one-tap logging, and today's totals and timeline. */
+export function LogScreen({ store, notify, onEditProfile }: Props) {
+  const { now, read } = useClock();
+  const { data, actions } = store;
+  const [amountFor, setAmountFor] = useState<'bottle' | 'pump' | null>(null);
+  const [editing, setEditing] = useState<BabyEvent | null>(null);
+  const [dayOffset, setDayOffset] = useState(0);
+
+  const events = data.events;
+  const lastFeed = latest(events, 'feed', now);
+  const sleep = sleepState(events, now);
+  const lastDiaper = latest(events, 'diaper', now);
+  const day = addDays(now, -dayOffset);
+  const dayStart = startOfDay(day);
+  const totals = useMemo(() => dayTotals(events, dayStart, now), [events, dayStart, now]);
+  const timeline = useMemo(() => dayTimeline(events, dayStart, now), [events, dayStart, now]);
+  const lastPump = latest(events, 'pump', now);
+  const lastBottle = useMemo(() => events.filter((e) => e.kind === 'feed' && e.method === 'bottle' && e.amountMl).sort((a, b) => b.at - a.at)[0], [events]);
+
+  const log = (fields: Parameters<typeof actions.logEvent>[0], what: string) => {
+    const e = actions.logEvent({ ...fields, at: read() });
+    notify(`Logged ${what} at ${formatTime(e.at)}`, () => actions.deleteEvent(e.id));
+  };
+  const feed = (side: Side) => log({ kind: 'feed', method: 'breast', side }, `feed, ${side}`);
+  const diaper = (d: DiaperKind) => log({ kind: 'diaper', diaper: d }, `${d} diaper`);
+  const toggleSleep = () => {
+    if (sleep.state === 'asleep') {
+      const before = sleep.event;
+      const end = read();
+      actions.updateEvent(before, { ...before, endAt: end });
+      notify(`Woke up after ${formatDuration(end - before.at)}`, () => actions.restoreEvent(before));
+    } else log({ kind: 'sleep', endAt: null }, 'sleep start');
+  };
+
+  const name = data.profile?.name;
+  const age = data.profile?.birthDate ? babyAge(data.profile.birthDate, now) : null;
+
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="flex min-h-0 flex-col gap-6">
+        <section className={`${cardClass} px-6 py-5`} aria-live="polite" aria-label="At a glance">
+          <div className="mb-2 flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold text-stone-800">
+              {name ?? 'Baby'}
+              {age && <span className="font-normal text-stone-600"> · {age}</span>}
+            </h2>
+            <button type="button" onClick={onEditProfile} className={iconButton} aria-label="Edit baby details">
+              <Pencil size={18} />
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-3 sm:gap-5">
+            <Glance
+              label="Last fed"
+              {...ago(lastFeed?.at, now)}
+              detail={lastFeed ? `${feedDetail(lastFeed)}, ${formatTime(lastFeed.at)}` : 'Tap a feed button to log one'}
+            />
+            <Glance
+              label={sleep.state === 'asleep' ? 'Asleep for' : sleep.state === 'awake' ? 'Awake for' : 'Sleep'}
+              value={sleep.state === 'unknown' ? 'Not yet' : formatDuration(now - sleep.since)}
+              detail={sleep.state === 'unknown' ? 'Start a sleep to time it' : `since ${formatTime(sleep.since)}`}
+              attention={sleep.state === 'asleep'}
+            />
+            <Glance
+              label="Last diaper"
+              {...ago(lastDiaper?.at, now)}
+              detail={lastDiaper ? `${lastDiaper.diaper ?? 'changed'}, ${formatTime(lastDiaper.at)}` : 'Tap wet, dirty or both'}
+            />
+          </div>
+        </section>
+
+        <section aria-label="Log" className={`${cardClass} grid flex-1 grid-cols-2 gap-3 p-4 sm:grid-cols-4 lg:grid-rows-[1fr_1fr_1.1fr]`}>
+          <BigButton onClick={() => feed('left')} icon={<Milk size={22} />} label="Left" sub="Breast feed" ariaLabel="Log breast feed, left" />
+          <BigButton onClick={() => feed('right')} icon={<Milk size={22} />} label="Right" sub="Breast feed" ariaLabel="Log breast feed, right" />
+          <BigButton onClick={() => feed('both')} icon={<Milk size={22} />} label="Both sides" sub="Breast feed" ariaLabel="Log breast feed, both sides" />
+          <BigButton onClick={() => setAmountFor('bottle')} icon={<Milk size={22} />} label="Bottle" sub="Feed, in ml" ariaLabel="Log bottle feed" />
+          <BigButton onClick={() => diaper('wet')} icon={<Droplet size={22} />} label="Wet" sub="Diaper" ariaLabel="Log wet diaper" />
+          <BigButton onClick={() => diaper('dirty')} icon={<Baby size={22} />} label="Dirty" sub="Diaper" ariaLabel="Log dirty diaper" />
+          <BigButton onClick={() => diaper('both')} icon={<Baby size={22} />} label="Wet and dirty" sub="Diaper" ariaLabel="Log wet and dirty diaper" />
+          <BigButton
+            onClick={() => setAmountFor('pump')}
+            icon={<Droplets size={22} />}
+            label="Pumped"
+            sub={totals.pumps && dayOffset === 0 ? `${totals.pumpMl} ml today` : 'In ml'}
+            ariaLabel="Log pumping"
+          />
+          <button
+            type="button"
+            onClick={toggleSleep}
+            className={`col-span-2 flex min-h-24 w-full items-center justify-center gap-4 rounded-2xl border px-4 transition-colors duration-150 sm:col-span-4 ${
+              sleep.state === 'asleep'
+                ? 'border-forest-700 bg-forest-700 text-white hover:bg-forest-600'
+                : 'border-stone-200 bg-cream text-forest-700 hover:border-forest-400 hover:bg-forest-50'
+            }`}
+          >
+            {sleep.state === 'asleep' ? <Sun size={32} /> : <Moon size={32} />}
+            <span className="text-left">
+              <span className="block text-2xl font-semibold">{sleep.state === 'asleep' ? 'Woke up' : 'Fell asleep'}</span>
+              <span className={`block text-base tabular-nums ${sleep.state === 'asleep' ? 'text-forest-100' : 'text-stone-600'}`}>
+                {sleep.state === 'asleep' ? `Asleep ${formatDuration(now - sleep.since)}. Tap to stop the sleep timer.` : 'Starts the sleep timer'}
+              </span>
+            </span>
+          </button>
+        </section>
+      </div>
+
+      <section className={`${cardClass} flex min-h-0 flex-col`} aria-label="Day">
+        <div className="flex items-center justify-between gap-2 border-b border-stone-200 px-3 py-2">
+          <button type="button" className={iconButton} aria-label="Previous day" disabled={dayOffset >= HISTORY_DAYS} onClick={() => setDayOffset((d) => d + 1)}>
+            <ChevronLeft size={22} />
+          </button>
+          <h2 className="text-lg font-semibold text-stone-800">{dayOffset === 0 ? 'Today' : dayOffset === 1 ? 'Yesterday' : formatDayLong(day)}</h2>
+          <button type="button" className={iconButton} aria-label="Next day" disabled={dayOffset === 0} onClick={() => setDayOffset((d) => d - 1)}>
+            <ChevronRight size={22} />
+          </button>
+        </div>
+        <dl className="grid grid-cols-2 gap-px border-b border-stone-200 bg-stone-200">
+          <Total label="Feeds" value={String(totals.feeds)} detail={feedTotalsDetail(totals.breastFeeds, totals.bottleFeeds, totals.bottleMl)} />
+          <Total label="Sleep" value={formatHours(totals.sleepMs)} detail={totals.sleepMs ? formatDuration(totals.sleepMs) : 'none yet'} />
+          <Total label="Diapers" value={String(totals.diaperCount)} detail={diaperBreakdown(totals.diapers)} />
+          <Total label="Pumped" value={`${totals.pumpMl} ml`} detail={totals.pumps ? `${totals.pumps} time${totals.pumps === 1 ? '' : 's'}` : 'none yet'} />
+        </dl>
+        <ol className="min-h-0 flex-1 overflow-y-auto" aria-label="Timeline">
+          {timeline.length === 0 && <li className="px-5 py-6 text-base text-stone-600">Nothing logged {dayOffset === 0 ? 'yet today' : 'this day'}.</li>}
+          {timeline.map((e) => (
+            <li key={e.id} className="flex min-h-16 items-center gap-3 border-b border-stone-200 py-2 pr-2 pl-5 last:border-b-0">
+              <span className="w-[4.5rem] shrink-0 text-sm text-stone-600 tabular-nums">{formatTime(e.at)}</span>
+              <KindIcon event={e} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-medium text-stone-800">{describeEvent(e, now)}</p>
+                {(e.kind === 'sleep' || e.note) && (
+                  <p className="truncate text-sm text-stone-600">
+                    {e.kind === 'sleep' && (e.endAt != null ? `${formatTime(e.at)} to ${formatTime(e.endAt)}` : 'Running')}
+                    {e.kind === 'sleep' && e.note ? ' · ' : ''}
+                    {e.note}
+                  </p>
+                )}
+              </div>
+              <PersonBadge email={e.by} me={store.me} members={store.members} size={30} />
+              <button type="button" className={iconButton} aria-label={`Edit ${describeEvent(e, now)} at ${formatTime(e.at)}`} onClick={() => setEditing(e)}>
+                <Pencil size={18} />
+              </button>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {amountFor && (
+        <AmountDialog
+          title={amountFor === 'bottle' ? 'Bottle feed' : 'Pump'}
+          action={amountFor === 'bottle' ? 'Log bottle' : 'Log pumping'}
+          initial={amountFor === 'bottle' ? lastBottle?.amountMl : lastPump?.amountMl}
+          onClose={() => setAmountFor(null)}
+          onLog={(ml) =>
+            amountFor === 'bottle'
+              ? log({ kind: 'feed', method: 'bottle', amountMl: ml }, ml ? `bottle, ${ml} ml` : 'bottle')
+              : log({ kind: 'pump', amountMl: ml }, ml ? `pumping, ${ml} ml` : 'pumping')
+          }
+        />
+      )}
+      {editing && (
+        <EventDialog
+          event={editing}
+          onClose={() => setEditing(null)}
+          onSave={(fields) => {
+            const before = editing;
+            actions.updateEvent(before, fields);
+            notify('Saved', () => actions.restoreEvent(before));
+          }}
+          onDelete={() => {
+            const gone = editing;
+            actions.deleteEvent(gone.id);
+            notify(`Deleted ${describeEvent(gone, now).toLowerCase()}`, () => actions.restoreEvent(gone));
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function feedTotalsDetail(breast: number, bottle: number, ml: number) {
+  const parts = [];
+  if (breast) parts.push(`${breast} breast`);
+  if (bottle) parts.push(`${bottle} bottle${ml ? `, ${ml} ml` : ''}`);
+  return parts.length ? parts.join(' · ') : 'none yet';
+}
+
+/** Big number with "ago" on the smaller line, so the number never wraps. */
+function ago(at: number | undefined, now: number): { value: string; prefix?: string } {
+  if (at === undefined) return { value: 'Not yet' };
+  if (now - at < 60_000) return { value: 'Just now' };
+  return { value: formatDuration(now - at), prefix: 'ago' };
+}
+
+function Glance({ label, value, prefix, detail, attention }: { label: string; value: string; prefix?: string; detail: string; attention?: boolean }) {
+  return (
+    <div>
+      <p className="text-sm font-medium text-stone-600 sm:text-base">{label}</p>
+      <p className={`text-2xl leading-tight font-semibold tracking-tight whitespace-nowrap sm:text-5xl tabular-nums ${attention ? 'text-forest-700' : 'text-stone-800'}`}>{value}</p>
+      <p className="text-sm text-stone-600 sm:text-lg">
+        {prefix ? `${prefix} · ` : ''}
+        {detail}
+      </p>
+    </div>
+  );
+}
+
+function BigButton({ onClick, label, sub, icon, ariaLabel }: { onClick: () => void; label: string; sub?: string; icon?: ReactNode; ariaLabel: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className="flex h-full min-h-24 w-full flex-col items-center justify-center gap-0.5 rounded-2xl border border-stone-200 bg-cream px-2 py-2 text-forest-700 transition-colors duration-150 hover:border-forest-400 hover:bg-forest-50 active:bg-forest-100"
+    >
+      {icon}
+      <span className="text-xl font-semibold">{label}</span>
+      {sub && <span className="text-sm text-stone-600">{sub}</span>}
+    </button>
+  );
+}
+
+function Total({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="bg-white px-5 py-3">
+      <dt className="text-sm font-medium text-stone-600">{label}</dt>
+      <dd className="text-2xl font-semibold text-stone-800 tabular-nums">{value}</dd>
+      <dd className="text-sm text-stone-600">
+        {detail}
+      </dd>
+    </div>
+  );
+}
+
+function KindIcon({ event }: { event: BabyEvent }) {
+  const Icon = event.kind === 'feed' ? Milk : event.kind === 'sleep' ? Moon : event.kind === 'diaper' ? Baby : Droplets;
+  return (
+    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-forest-50 text-forest-700" aria-hidden="true">
+      <Icon size={18} />
+    </span>
+  );
+}
