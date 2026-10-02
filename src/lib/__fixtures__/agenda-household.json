@@ -1,0 +1,16 @@
+{
+  "description": "An invented household's baby profile and appointments as Firestore holds them (at in ms: 2031-05-21 09:30 and 2031-06-04 14:00 UTC).",
+  "profile": { "name": "Robin", "dueDate": "2031-08-06", "updatedAt": 1938000000000, "updatedBy": "sam@example.com" },
+  "appointments": [
+    {
+      "id": "appt-1",
+      "title": "Prenatal visit",
+      "at": 1937122200000,
+      "location": "Riverside Family Clinic, 40 River Road, Springfield",
+      "notes": "Bring the glucose results.",
+      "createdAt": 1937000000000,
+      "by": "sam@example.com"
+    },
+    { "id": "appt-2", "title": "Hospital tour", "at": 1938348000000, "createdAt": 1937000000000, "by": "alex@example.com" }
+  ]
+}

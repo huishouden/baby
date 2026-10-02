@@ -18,6 +18,10 @@ import { Checklists } from './screens/Checklists';
 import { Contacts } from './screens/Contacts';
 
 type TabId = 'home' | 'appointments' | 'checklists' | 'contacts';
+const TAB_IDS: readonly TabId[] = ['home', 'appointments', 'checklists', 'contacts'];
+
+/** The tab a link asks for ("#appointments", as the household agenda links), if any. */
+const tabFromHash = (): TabId | undefined => TAB_IDS.find((id) => `#${id}` === location.hash);
 
 interface Props {
   store: BabyStore;
@@ -34,9 +38,9 @@ interface Props {
 }
 
 /** Everything inside the frame once there is data to show (live or sample). */
-export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, notify, clearToast, banner, initialTab = 'home' }: Props) {
+export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, notify, clearToast, banner, initialTab }: Props) {
   const { now } = useClock();
-  const [tab, setTab] = useState<TabId>(initialTab);
+  const [tab, setTab] = useState<TabId>(() => initialTab ?? tabFromHash() ?? 'home');
   const [profileMode, setProfileMode] = useState<ProfileMode | null>(null);
   const [appointment, setAppointment] = useState<Appointment | 'new' | null>(null);
   const [contact, setContact] = useState<{ contact: Contact | null; role?: string } | null>(null);
@@ -46,6 +50,15 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
 
   useEffect(() => {
     document.title = 'Huishouden Baby';
+  }, []);
+
+  useEffect(() => {
+    const follow = () => {
+      const id = tabFromHash();
+      if (id) setTab(id);
+    };
+    addEventListener('hashchange', follow);
+    return () => removeEventListener('hashchange', follow);
   }, []);
 
   const tabs: Tab[] = [
