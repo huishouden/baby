@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { signInSilently } from '@huishouden/pwa-kit/auth';
-import { markJoined, watchHousehold, type HouseholdState } from '@huishouden/pwa-kit/household';
+import { markJoined, saveMyProfile, watchHousehold, type HouseholdState } from '@huishouden/pwa-kit/household';
 import { auth, db, googleClientId, signInWithGoogle, signOutEverywhere } from './data/firebase';
 import { useLiveStore } from './data/useLiveStore';
 import { useDemoStore } from './data/useDemoStore';
@@ -59,6 +59,11 @@ function SignedIn({ user, ...frame }: FrameProps & { user: User }) {
   useEffect(() => {
     if (household) markJoined(db, household, email).catch(() => {});
   }, [household, email]);
+  // Members' names and photos come from their own sign-ins (shown in the portal and on entries).
+  const householdId = household?.id;
+  useEffect(() => {
+    if (householdId) saveMyProfile(db, householdId, user).catch(() => {});
+  }, [householdId, user]);
 
   if (state.status === 'ready') return <LiveApp householdId={state.household.id} members={state.household.members} user={user} {...frame} />;
   if (state.status === 'loading') return <Plain user={user} {...frame}>Finding your household.</Plain>;
