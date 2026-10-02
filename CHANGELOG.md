@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/huishouden/baby/compare/v1.0.0...v1.1.0) (2026-10-02)
+
+
+### Features
+
+* care-team contacts and calendar search for appointments ([#4](https://github.com/huishouden/baby/issues/4)) ([0dea088](https://github.com/huishouden/baby/commit/0dea0882b87768aedd5c772d8bccf626654ddfe4))
+
 ## 1.0.0 (2026-10-02)
 
 
