@@ -12,7 +12,7 @@ import { ClockProvider } from '@huishouden/pwa-kit/react/clock';
 import { BabyApp } from './BabyApp';
 import { Header } from './components/Header';
 import { PORTAL_URL } from './lib/portal';
-import { Chip, cardClass, primaryButton, useToast } from '@huishouden/pwa-kit/react/ui';
+import { Chip, SampleBanner, cardClass, primaryButton, useToast } from '@huishouden/pwa-kit/react/ui';
 
 export default function App() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
@@ -141,11 +141,7 @@ function DemoInner({ scenario, read, onScenario, signInError, ...frame }: FrameP
   const { toast, notify, clear } = useToast();
   const store = useDemoStore(scenario, read, demoRole());
   const banner = (
-    <div className={`${cardClass} flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-1.5`} role="note">
-      <span className="rounded-full bg-terracotta-light px-3 py-1 text-sm font-semibold text-terracotta-dark">Sample data</span>
-      <p className="min-w-0 flex-1 text-base text-stone-600">
-        {signInError ?? 'An invented family. Nothing is saved. Sign in to use your household’s own.'}
-      </p>
+    <SampleBanner text="An invented family. Nothing is saved. Sign in to use your household’s own." notice={signInError ?? undefined}>
       <div className="flex gap-2" role="group" aria-label="Sample">
         <Chip active={scenario === 'before'} onClick={() => onScenario('before')}>
           Before birth
@@ -154,7 +150,7 @@ function DemoInner({ scenario, read, onScenario, signInError, ...frame }: FrameP
           After birth
         </Chip>
       </div>
-    </div>
+    </SampleBanner>
   );
   return <BabyApp store={store} user={null} {...frame} toast={toast} notify={notify} clearToast={clear} banner={banner} />;
 }
