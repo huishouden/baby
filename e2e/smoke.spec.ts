@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { expectCleanLoad, expectGoogleSignInPopup, expectInstallable } from '@huishouden/pwa-kit/e2e';
+import { expectCleanLoad, expectGoogleSignInPopup, expectHuishoudenFrame, expectInstallable } from '@huishouden/pwa-kit/e2e';
 
 test('loads without runtime errors and shows the sample countdown', async ({ page }) => {
   await expectCleanLoad(page);
   await expect(page.getByText('Sample data')).toBeVisible();
   await expect(page.getByText('12 weeks')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Huishouden home' })).toHaveAttribute('href', 'https://huishouden-piekstra.web.app');
+  await expectHuishoudenFrame(page, { app: 'Baby', portalUrl: 'https://huishouden-piekstra.web.app' });
 });
 
 test('the sample log answers a one-tap feed with an undo', async ({ page }) => {

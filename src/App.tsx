@@ -9,6 +9,7 @@ import { DEMO_NOW, type DemoScenario } from './lib/demo';
 import { ClockProvider } from './clock';
 import { BabyApp } from './BabyApp';
 import { Header } from './components/Header';
+import { PORTAL_URL } from './lib/portal';
 import { Chip, cardClass, primaryButton } from './components/ui';
 import { useToast } from './useToast';
 
@@ -80,7 +81,7 @@ function SignedIn({ user, ...frame }: FrameProps & { user: User }) {
         {user.email} isn't a member of a Huishouden household. Ask someone in your household to invite this address from the Huishouden home screen, then open
         Baby again. If you use another Google account for the household, sign out and sign in with that one.
       </p>
-      <a className={`${primaryButton} mt-5`} href="https://huishouden-piekstra.web.app">
+      <a className={`${primaryButton} mt-5`} href={PORTAL_URL}>
         Open Huishouden
       </a>
     </Plain>
