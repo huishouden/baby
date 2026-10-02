@@ -30,3 +30,8 @@ export function fromCalendar(m: CalendarMatch): { title: string; at: number; loc
     calendarLink: m.link,
   };
 }
+
+/** The toast after importing calendar events: "Added Prenatal visit", "Added 3 appointments". */
+export function importMessage(list: Pick<CalendarMatch, 'title'>[]): string {
+  return list.length === 1 ? `Added ${list[0].title}` : `Added ${list.length} appointments`;
+}

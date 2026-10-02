@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { stubCalendar } from '@huishouden/pwa-kit/e2e';
 import { calendarEvents, mockCalendar } from './fixtures/calendar';
 
 // Google Calendar has no emulator, and the sample app has no Google account: these tests stand in
@@ -81,4 +82,51 @@ test.describe('with a calendar', () => {
     await expect(alert).toContainText('Calendar access was not allowed');
     await expect(alert.getByRole('button', { name: 'Try again' })).toBeVisible();
   });
+});
+
+// Something an assistant put in the calendar shows up on the main screen on its own, but only on a
+// device that already has a calendar token (stubbed here): the app never asks on open.
+test.describe('new in your calendar', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.clock.setFixedTime('2031-05-14T10:30:00');
+    await stubCalendar(page, { events: calendarEvents });
+    await page.goto('/');
+  });
+
+  test('offers new events on the main screen; Add and Not this one', async ({ page }) => {
+    const card = page.getByRole('region', { name: 'New in your calendar' });
+    await expect(card).toContainText('New in your calendar: Prenatal visit');
+    await expect(card).not.toContainText('Glucose test');
+    await card.getByRole('button', { name: '+2 more' }).click();
+    await expect(card.getByRole('list', { name: 'More new calendar events' }).getByRole('listitem')).toHaveCount(2);
+
+    await card.getByRole('button', { name: 'Add Prenatal visit' }).click();
+    await expect(page.getByText('Added Prenatal visit')).toBeVisible();
+    await expect(card).toContainText('New in your calendar: Lactation class');
+
+    await card.getByRole('button', { name: 'Not this one: Lactation class' }).click();
+    await expect(card).toContainText('New in your calendar: Pediatrician meet and greet');
+    await expect(card.getByRole('button', { name: /more/ })).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Appointments', exact: true }).click();
+    await expect(card).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Upcoming appointments' }).getByText('Prenatal visit', { exact: true })).toBeVisible();
+  });
+
+  test('a dismissed event stays dismissed after reopening', async ({ page }) => {
+    const card = page.getByRole('region', { name: 'New in your calendar' });
+    await card.getByRole('button', { name: 'Not this one: Prenatal visit' }).click();
+    await page.reload();
+    await expect(card).toContainText('New in your calendar: Lactation class');
+    await expect(card).not.toContainText('Prenatal visit');
+  });
+});
+
+test('no calendar token on the device: no card and no Google window', async ({ page }) => {
+  await page.clock.setFixedTime('2031-05-14T10:30:00');
+  await stubCalendar(page, { events: calendarEvents, cachedToken: false });
+  await page.goto('/');
+  await expect(page.getByRole('heading').first()).toBeVisible();
+  await expect(page.getByRole('region', { name: 'New in your calendar' })).toHaveCount(0);
+  expect(page.context().pages()).toHaveLength(1);
 });

@@ -7,16 +7,18 @@ import { useClock } from '@huishouden/pwa-kit/react/clock';
 import { cardClass, ghostButton, iconButton, linkClass, primaryButton, secondaryButton } from '@huishouden/pwa-kit/react/ui';
 import { formatDayLong, formatTime, monthShort, relativeDay } from '@huishouden/pwa-kit/time';
 import type { Appointment } from '../lib/model';
-import { BABY_CALENDAR_QUERIES, fromCalendar } from '../lib/calendarImport';
+import { BABY_CALENDAR_QUERIES } from '../lib/calendarImport';
+import type { CalendarMatch } from '@huishouden/pwa-kit/calendar';
 import type { BabyStore } from '../data/types';
 import { auth } from '../data/firebase';
 
-export function Appointments({ store, calendarAvailable, onAdd, onEdit, notify }: {
+export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport }: {
   store: BabyStore;
   calendarAvailable: boolean;
   onAdd: () => void;
   onEdit: (a: Appointment) => void;
-  notify: (message: string, undo?: () => void) => void;
+  /** Adds calendar events as appointments, with a toast. */
+  onImport: (list: CalendarMatch[]) => void;
 }) {
   const { now } = useClock();
   const [showPast, setShowPast] = useState(false);
@@ -88,10 +90,7 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, notify }
           noneFound="No baby events found in your calendars."
           allImported="Every baby event in your calendar is already in Baby."
           onRetry={runScan}
-          onAdd={(list) => {
-            for (const m of list) store.actions.saveAppointment(null, fromCalendar(m));
-            notify(list.length === 1 ? `Added ${list[0].title}` : `Added ${list.length} appointments`);
-          }}
+          onAdd={onImport}
           onClose={() => {
             setImporting(false);
             scan.reset();

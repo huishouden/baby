@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { CalendarMatch } from '@huishouden/pwa-kit/calendar';
 import fixture from './__fixtures__/calendar-matches.json';
-import { fromCalendar } from './calendarImport';
+import { fromCalendar, importMessage } from './calendarImport';
 import { LIMITS } from './model';
 
 const matches = fixture.matches as CalendarMatch[];
@@ -29,5 +29,12 @@ describe('an appointment from a calendar event', () => {
     const out = fromCalendar({ ...prenatal, description: 'word '.repeat(400) });
     expect(out.notes!.length).toBeLessThanOrEqual(LIMITS.notes);
     expect(out.notes!.endsWith('…')).toBe(true);
+  });
+});
+
+describe('the toast after an import', () => {
+  test('names one event, counts several', () => {
+    expect(importMessage([prenatal])).toBe('Added Prenatal visit');
+    expect(importMessage(matches.slice(0, 3))).toBe('Added 3 appointments');
   });
 });
