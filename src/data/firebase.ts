@@ -1,7 +1,7 @@
 import { getApps, initializeApp } from 'firebase/app';
 import { GoogleAuthProvider, getAuth, signInWithPopup, signOut } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { firebaseConfigFromEnv } from '@huishouden/pwa-kit/firebase';
+import { initFirestore } from '@huishouden/pwa-kit/firestore';
 import { forgetSilentSignIn } from '@huishouden/pwa-kit/auth';
 import { configureGoogleTokens, forgetGoogleToken } from '@huishouden/pwa-kit/google-token';
 
@@ -10,9 +10,8 @@ export const app = getApps()[0] ?? initializeApp(firebaseConfigFromEnv(import.me
 // getAuth keeps the session in IndexedDB, so the tablet stays signed in across restarts.
 export const auth = getAuth(app);
 // Persistent cache: the log opens and accepts entries offline, and syncs when the network returns.
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-});
+// An entry logged just before the app is closed is written when it next opens (see useLiveStore).
+export const db = initFirestore(app, { auth });
 export const googleClientId: string | undefined = import.meta.env.VITE_GOOGLE_CLIENT_ID || undefined;
 // Google API tokens come from Google Identity Services with this OAuth client, not from Firebase sign-in.
 configureGoogleTokens({ clientId: googleClientId });

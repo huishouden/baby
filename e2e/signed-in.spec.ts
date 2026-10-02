@@ -41,3 +41,27 @@ test('a bottle feed one member logs shows for the other', async ({ page, browser
     await other.close();
   }
 });
+
+// People on the shared tablet tap and close the app at once. Firestore takes a few milliseconds to
+// put a write in its offline cache, so a reload inside that gap used to lose the entry.
+for (const leave of ['reload', 'close'] as const) {
+  test(`a feed logged just before the app ${leave === 'reload' ? 'reloads' : 'is closed'} is kept`, async ({ page, context }) => {
+    await signInTestUser(page, { email: 'test-a@example.com' });
+    await openLog(page);
+    const ml = 201 + ((Date.now() + (leave === 'close' ? 400 : 0)) % 799);
+    await page.getByRole('button', { name: 'Log bottle feed' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Bottle feed' });
+    await dialog.getByLabel('Amount in ml').fill(String(ml));
+    await dialog.getByRole('button', { name: 'Log bottle' }).click();
+    if (leave === 'reload') await page.reload();
+    else {
+      await page.close();
+      page = await context.newPage();
+      await page.goto('/');
+    }
+    await openLog(page);
+    await expect(page.getByText(new RegExp(`\\b${ml} ml\\b`)).first()).toBeVisible({ timeout: 20_000 });
+    // Written again and then forgotten: nothing is left waiting in the outbox.
+    await expect.poll(() => page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('hh-outbox:')).length)).toBe(0);
+  });
+}
