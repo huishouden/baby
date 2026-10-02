@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/huishouden/baby/compare/v1.2.0...v1.3.0) (2026-10-02)
+
+
+### Features
+
+* offer new calendar events on the main screen ([#18](https://github.com/huishouden/baby/issues/18)) ([be60867](https://github.com/huishouden/baby/commit/be60867b23df5de6603b55ab15c627a9af8a98f9))
+
 ## [1.2.0](https://github.com/huishouden/baby/compare/v1.1.1...v1.2.0) (2026-10-02)
 
 
