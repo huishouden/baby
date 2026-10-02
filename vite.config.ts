@@ -20,7 +20,8 @@ export default defineConfig({
     pwaApp({
       name: 'Huishouden Baby',
       shortName: 'Baby',
-      description: 'Due-date countdown, appointments and checklists before the baby arrives; feeds, sleep and diapers after.',
+      description: "Looking after the little one, together",
+      url: 'https://huishouden-baby.web.app',
       themeColor: '#1b4332',
       backgroundColor: '#faf9f5',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
