@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/huishouden/baby/compare/v1.4.0...v1.5.0) (2026-10-02)
+
+
+### Features
+
+* **roles:** helpers and kids may end a sleep someone else started ([#25](https://github.com/huishouden/baby/issues/25)) ([254a193](https://github.com/huishouden/baby/commit/254a193f68a3a50211ea70935a51f81cc38c94f8))
+
 ## [1.4.0](https://github.com/huishouden/baby/compare/v1.3.1...v1.4.0) (2026-10-02)
 
 
