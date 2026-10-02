@@ -1,7 +1,7 @@
 import type { Contact } from '@huishouden/pwa-kit/contacts';
 import type { Appointment, BabyEvent, BabyProfile, ChecklistItem } from './model';
 import { defaultChecklistDocs } from './checklist';
-import { toYmd } from './time';
+import { toYmd } from '@huishouden/pwa-kit/time';
 
 // Invented sample data for the signed-out app: README screenshots and first impressions. Everything
 // is relative to one fixed day in 2031 so nothing resembles a real family's dates.

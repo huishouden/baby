@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Chip, Dialog, Field, ghostButton, inputClass, primaryButton } from './ui';
+import { Chip, Dialog, Field, ghostButton, inputClass, primaryButton } from '@huishouden/pwa-kit/react/ui';
 
 const PRESETS = [60, 90, 120, 150, 180];
 

@@ -1,5 +1,5 @@
 import type { BabyEvent, DiaperKind } from './model';
-import { addDays, formatDuration } from './time';
+import { addDays, formatDuration } from '@huishouden/pwa-kit/time';
 
 // What the log screen shows at a glance, derived from the event list. Pure: `now` is passed in.
 

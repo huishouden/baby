@@ -5,7 +5,7 @@ import { groupChecklist, moveItem } from '../lib/checklist';
 import { LIMITS } from '../lib/model';
 import { contactForRole, roleForChecklistItem, type KnownRole } from '../lib/contacts';
 import type { BabyStore } from '../data/types';
-import { Dialog, Field, cardClass, ghostButton, iconButton, inputClass, linkClass, primaryButton } from '../components/ui';
+import { Dialog, Field, cardClass, ghostButton, iconButton, inputClass, linkClass, primaryButton } from '@huishouden/pwa-kit/react/ui';
 
 export function Checklists({ store, notify, onAddContact }: {
   store: BabyStore;

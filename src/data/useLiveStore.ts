@@ -5,7 +5,8 @@ import type { Appointment, BabyEvent, BabyProfile, ChecklistItem } from '../lib/
 import { APP } from '../lib/contacts';
 import { cleanEvent } from '../lib/model';
 import { defaultChecklistDocs, nextOrder } from '../lib/checklist';
-import { DAY } from '../lib/time';
+import { DAY } from '@huishouden/pwa-kit/time';
+import { readError } from '@huishouden/pwa-kit/feedback';
 import { db } from './firebase';
 import { appointmentDoc, eventFields, newEventDoc, profileDoc } from './build';
 import type { BabyActions, BabyStore } from './types';
@@ -144,11 +145,4 @@ export function useLiveStore(householdId: string, me: string, members: string[],
     members,
     me,
   };
-}
-
-export function readError(e: unknown, prefix: string): string {
-  const code = (e as { code?: string })?.code;
-  if (code === 'permission-denied') return `${prefix}: this household doesn't allow it yet.`;
-  if (code === 'unavailable') return `${prefix}: offline. It will retry when the connection is back.`;
-  return `${prefix}.`;
 }

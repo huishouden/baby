@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import type { BabyEvent, DiaperKind, EventFields, FeedMethod, Side } from '../lib/model';
 import { LIMITS } from '../lib/model';
-import { fromLocalInput, toLocalInput } from '../lib/time';
-import { Chip, Dialog, Field, ghostButton, inputClass, primaryButton } from './ui';
+import { fromLocalInput, toLocalInput } from '@huishouden/pwa-kit/time';
+import { Chip, Dialog, Field, ghostButton, inputClass, primaryButton } from '@huishouden/pwa-kit/react/ui';
 
 const KIND_TITLE = { feed: 'Feed', sleep: 'Sleep', diaper: 'Diaper', pump: 'Pump' } as const;
 

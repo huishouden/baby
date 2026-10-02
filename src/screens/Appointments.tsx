@@ -1,17 +1,15 @@
 import { useState } from 'react';
-import { CalendarArrowDown, CalendarPlus, ChevronDown, ChevronUp, ExternalLink, MapPin, Pencil, Phone, Plus, UserRound } from 'lucide-react';
-import type { CalendarMatch } from '@huishouden/pwa-kit/calendar';
+import { CalendarArrowDown, CalendarPlus, ChevronDown, ChevronUp, ExternalLink, MapPin, Pencil, Phone, UserRound } from 'lucide-react';
 import type { Contact } from '@huishouden/pwa-kit/contacts';
 import { telHref } from '@huishouden/pwa-kit/places';
+import { CalendarHint, CalendarImportDialog, useCalendarSearch } from '@huishouden/pwa-kit/react/calendar';
+import { useClock } from '@huishouden/pwa-kit/react/clock';
+import { cardClass, ghostButton, iconButton, linkClass, primaryButton, secondaryButton } from '@huishouden/pwa-kit/react/ui';
+import { formatDayLong, formatTime, monthShort, relativeDay } from '@huishouden/pwa-kit/time';
 import type { Appointment } from '../lib/model';
-import { BABY_CALENDAR_QUERIES, fromCalendar, notImported } from '../lib/calendarImport';
-import { relativeDay } from '../lib/time';
-import { formatDayLong, formatDayShort, formatTime, monthShort } from '../lib/format';
-import { useClock } from '../clock';
+import { BABY_CALENDAR_QUERIES, fromCalendar } from '../lib/calendarImport';
 import type { BabyStore } from '../data/types';
-import { useCalendarSearch } from '../data/calendar';
-import { CalendarHint } from '../components/AppointmentDialog';
-import { Dialog, ErrorNotice, cardClass, ghostButton, iconButton, linkClass, primaryButton, secondaryButton } from '../components/ui';
+import { auth } from '../data/firebase';
 
 export function Appointments({ store, calendarAvailable, onAdd, onEdit, notify }: {
   store: BabyStore;
@@ -23,7 +21,7 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, notify }
   const { now } = useClock();
   const [showPast, setShowPast] = useState(false);
   const [importing, setImporting] = useState(false);
-  const scan = useCalendarSearch();
+  const scan = useCalendarSearch(auth, 'Baby');
   const all = store.data.appointments;
   const contacts = store.data.contacts;
   const upcoming = all.filter((a) => a.at >= now - 3_600_000).sort((a, b) => a.at - b.at);
@@ -54,7 +52,7 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, notify }
           </div>
         </div>
         <div className="mt-1 flex justify-end text-right">
-          <CalendarHint available={calendarAvailable} />
+          <CalendarHint app="Baby" available={calendarAvailable} />
         </div>
       </div>
 
@@ -83,9 +81,12 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, notify }
       )}
 
       {importing && (
-        <ImportDialog
+        <CalendarImportDialog
           state={scan.state}
-          appointments={all}
+          records={all}
+          intro="Prenatal, midwife, ultrasound, pediatric and other baby events from last week to a year ahead."
+          noneFound="No baby events found in your calendars."
+          allImported="Every baby event in your calendar is already in Baby."
           onRetry={runScan}
           onAdd={(list) => {
             for (const m of list) store.actions.saveAppointment(null, fromCalendar(m));
@@ -143,75 +144,5 @@ function Row({ a, now, contacts, first, onEdit }: { a: Appointment; now: number;
         <Pencil size={18} />
       </button>
     </li>
-  );
-}
-
-function ImportDialog({ state, appointments, onRetry, onAdd, onClose }: {
-  state: ReturnType<typeof useCalendarSearch>['state'];
-  appointments: Appointment[];
-  onRetry: () => void;
-  onAdd: (matches: CalendarMatch[]) => void;
-  onClose: () => void;
-}) {
-  // Recomputed as appointments arrive, so an added event leaves the list.
-  const fresh = state.status === 'done' ? notImported(state.matches, appointments) : [];
-  return (
-    <Dialog
-      title="Import from calendar"
-      onClose={onClose}
-      footer={
-        <>
-          <button type="button" className={ghostButton} onClick={onClose}>
-            Done
-          </button>
-          {fresh.length > 1 && (
-            <button
-              type="button"
-              className={primaryButton}
-              onClick={() => {
-                onAdd(fresh);
-                onClose();
-              }}
-            >
-              Add all {fresh.length}
-            </button>
-          )}
-        </>
-      }
-    >
-      <p className="text-base text-stone-600">Prenatal, midwife, ultrasound, pediatric and other baby events from last week to a year ahead.</p>
-      <div className="mt-4">
-        {(state.status === 'searching' || state.status === 'idle') && (
-          <p role="status" className="text-base text-stone-600">
-            Searching your calendars
-          </p>
-        )}
-        {state.status === 'error' && <ErrorNotice message={state.message} onRetry={onRetry} />}
-        {state.status === 'done' && fresh.length === 0 && (
-          <p role="status" className="text-base text-stone-600">
-            {state.matches.length ? 'Every baby event in your calendar is already in Baby.' : 'No baby events found in your calendars.'}
-          </p>
-        )}
-        {fresh.length > 0 && (
-          <ul className="divide-y divide-stone-200 rounded-2xl border border-stone-200" aria-label="Calendar events">
-            {fresh.map((m) => (
-              <li key={`${m.id}-${m.start}`} className="flex items-center gap-3 px-3 py-2">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-stone-800 [overflow-wrap:anywhere]">{m.title}</p>
-                  <p className="text-sm text-stone-600">
-                    {formatDayShort(m.start)}
-                    {m.allDay ? ', all day' : `, ${formatTime(m.start)}`} · {m.calendarName}
-                  </p>
-                  {m.location && <p className="text-sm text-stone-600 [overflow-wrap:anywhere]">{m.location}</p>}
-                </div>
-                <button type="button" className={secondaryButton} onClick={() => onAdd([m])} aria-label={`Add ${m.title}`}>
-                  <Plus size={18} /> Add
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </Dialog>
   );
 }

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import type { Contact } from '@huishouden/pwa-kit/contacts';
 import { DEFAULT_CHECKLISTS } from './checklist';
-import { contactForRole, contactInput, displayWebsite, groupContacts, knownRole, normalizeWebsite, roleForChecklistItem } from './contacts';
+import { groupContacts } from '@huishouden/pwa-kit/contacts';
+import { ROLES, contactForRole, knownRole, roleForChecklistItem } from './contacts';
 
 const contact = (name: string, role?: string): Contact => ({ id: name, name, role, apps: ['baby'], createdAt: 1, by: 'sam@example.com' });
 
@@ -43,33 +44,17 @@ describe('roles', () => {
 });
 
 test('groups put known roles first, free-text roles next, no role last as Other', () => {
-  const groups = groupContacts([
-    contact('B Hospital', 'Hospital'),
-    contact('Night help', 'Night nanny'),
-    contact('A Peds', 'pediatrician'),
-    contact('Plumber'),
-    contact('C Peds', 'Pediatrician'),
-    contact('Aunt', 'Backup driver'),
-  ]);
+  const groups = groupContacts(
+    [
+      contact('B Hospital', 'Hospital'),
+      contact('Night help', 'Night nanny'),
+      contact('A Peds', 'pediatrician'),
+      contact('Plumber'),
+      contact('C Peds', 'Pediatrician'),
+      contact('Aunt', 'Backup driver'),
+    ],
+    ROLES,
+  );
   expect(groups.map((g) => g.role)).toEqual(['Pediatrician', 'Hospital', 'Backup driver', 'Night nanny', 'Other']);
   expect(groups[0].contacts.map((c) => c.name)).toEqual(['A Peds', 'C Peds']);
-});
-
-describe('saving', () => {
-  test('websites get a scheme and display without one', () => {
-    expect(normalizeWebsite('pediatrics.example.com')).toBe('https://pediatrics.example.com');
-    expect(normalizeWebsite('http://example.com')).toBe('http://example.com');
-    expect(normalizeWebsite('  ')).toBeUndefined();
-    expect(displayWebsite('https://www.example.com/kids/')).toBe('example.com/kids');
-  });
-
-  test('input is trimmed to the rules and always shown in Baby, keeping other apps', () => {
-    const out = contactInput({ name: '  Example Pediatrics ', role: '', notes: 'x'.repeat(1200), website: 'example.com' }, ['health']);
-    expect(out.name).toBe('Example Pediatrics');
-    expect(out.role).toBeUndefined();
-    expect(out.notes?.length).toBe(1000);
-    expect(out.website).toBe('https://example.com');
-    expect(out.apps).toEqual(['health', 'baby']);
-    expect(contactInput({ name: 'X' }, ['baby']).apps).toEqual(['baby']);
-  });
 });

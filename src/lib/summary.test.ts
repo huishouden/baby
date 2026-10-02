@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import fixture from './__fixtures__/night-and-morning.json';
 import type { BabyEvent } from './model';
 import { dayTimeline, dayTotals, describeEvent, diaperBreakdown, feedDetail, latest, sleepSessions, sleepState } from './summary';
-import { MINUTE, formatAgo, formatDuration, startOfDay } from './time';
+import { MINUTE, formatAgo, formatDuration, startOfDay } from '@huishouden/pwa-kit/time';
 
 // Fixture times are local ("2031-03-05T10:30" without an offset), so results hold in any time zone.
 const t = (s: string) => new Date(s).getTime();
