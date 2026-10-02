@@ -33,8 +33,11 @@ test('a bottle feed one member logs shows for the other', async ({ page, browser
 
   // Saved in the household, not just on this screen: the other member's own browser shows it.
   const other = await browser.newContext({ baseURL: test.info().project.use.baseURL });
-  const theirs = await other.newPage();
-  await signInTestUser(theirs, { email: 'test-b@example.com' });
-  await expect(feed(theirs)).toBeVisible({ timeout: 20_000 });
-  await other.close();
+  try {
+    const theirs = await other.newPage();
+    await signInTestUser(theirs, { email: 'test-b@example.com' });
+    await expect(feed(theirs)).toBeVisible({ timeout: 20_000 });
+  } finally {
+    await other.close();
+  }
 });
