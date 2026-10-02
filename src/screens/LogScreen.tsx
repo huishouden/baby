@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { can, refusal } from '@huishouden/pwa-kit/roles';
+import { can } from '@huishouden/pwa-kit/roles';
 import { RoleNote } from '@huishouden/pwa-kit/react/roles';
 import { mayChange } from '../lib/roles';
 import { Baby, ChevronLeft, ChevronRight, Droplet, Droplets, Milk, Moon, Pencil, Sun } from 'lucide-react';
@@ -49,8 +49,8 @@ export function LogScreen({ store, notify, onEditProfile }: Props) {
   const diaper = (d: DiaperKind) => log({ kind: 'diaper', diaper: d }, `${d} diaper`);
   const toggleSleep = () => {
     if (sleep.state === 'asleep') {
+      // Anyone may end a sleep someone else started: only its end changes (huishouden/rules babyEvents).
       const before = sleep.event;
-      if (!mayChange(store.role, store.me, before)) return notify(refusal('edit-others'));
       const end = read();
       actions.updateEvent(before, { ...before, endAt: end });
       notify(`Woke up after ${formatDuration(end - before.at)}`, () => actions.restoreEvent(before));

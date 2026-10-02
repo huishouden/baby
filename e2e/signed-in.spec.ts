@@ -114,4 +114,29 @@ test.describe('as a helper', () => {
     await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
     await expect(timeline.getByText(new RegExp(`\\b${mine} ml\\b`))).toHaveCount(0, { timeout: 20_000 });
   });
+  test("a helper ends a sleep a member started", async ({ page, browser }) => {
+    const admin = await browser.newContext({ baseURL: test.info().project.use.baseURL });
+    try {
+      const theirs = await admin.newPage();
+      await signInTestUser(theirs, { email: 'test-a@example.com' });
+      await openLog(theirs);
+      // Start from awake, so the sleep is the member's own.
+      if (await theirs.getByRole('button', { name: /^Woke up/ }).isVisible()) {
+        await theirs.getByRole('button', { name: /^Woke up/ }).click();
+        await expect(theirs.getByRole('button', { name: /^Fell asleep/ })).toBeVisible();
+      }
+      await theirs.getByRole('button', { name: /^Fell asleep/ }).click();
+      await expect(theirs.getByRole('button', { name: /^Woke up/ })).toBeVisible();
+    } finally {
+      await admin.close();
+    }
+
+    await signInTestUser(page, { email: 'test-helper@example.com' });
+    await page.getByRole('button', { name: /^Woke up/ }).click({ timeout: 20_000 });
+    await expect(page.getByText(/^Woke up after /)).toBeVisible();
+    // Kept by the server (a refused write would put the sleep back after a reload).
+    await page.waitForTimeout(3000);
+    await page.reload();
+    await expect(page.getByRole('button', { name: /^Fell asleep/ })).toBeVisible({ timeout: 20_000 });
+  });
 });
