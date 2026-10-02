@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/huishouden/baby/compare/v1.1.1...v1.2.0) (2026-10-02)
+
+
+### Features
+
+* publish appointments and the due date to the household agenda ([#14](https://github.com/huishouden/baby/issues/14)) ([a190da3](https://github.com/huishouden/baby/commit/a190da38092a265c1dd5620a68b55382b3285f88))
+
 ## [1.1.1](https://github.com/huishouden/baby/compare/v1.1.0...v1.1.1) (2026-10-02)
 
 
