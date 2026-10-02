@@ -13,6 +13,7 @@ import { agendaItems, appointmentAgenda, appointmentRef } from '../lib/agenda';
 import { db } from './firebase';
 import { appointmentDoc, eventFields, newEventDoc, profileDoc } from './build';
 import type { BabyActions, BabyStore } from './types';
+import { track } from '@huishouden/pwa-kit/observability';
 
 /** How far back the log reads: enough for the day picker, small enough to stay fast. */
 const HISTORY_DAYS = 14;
@@ -124,12 +125,14 @@ export function useLiveStore(householdId: string, me: string, members: string[],
       publish(replaceAgenda(db, householdId, APP, appointmentRef(a.id), appointmentAgenda(a, profileRef.current), { by: me }));
     return {
       saveProfile: (p) => {
+        track('save baby profile');
         const data = profileDoc(p, me, Date.now());
         report(setDoc(doc(db, base, 'babyProfile', 'main'), data));
         // The due date and the baby's name on every appointment may both have changed.
         publish(syncAgenda(db, householdId, APP, agendaItems({ profile: data, appointments: appointmentsRef.current }), { by: me }));
       },
       logEvent: (f) => {
+        track('log entry', { kind: f.kind });
         const now = Date.now();
         const data = newEventDoc({ ...f, at: f.at ?? now }, me, now);
         const ref = doc(col('babyEvents'));
@@ -141,6 +144,7 @@ export function useLiveStore(householdId: string, me: string, members: string[],
       deleteEvent: (id) => report(deleteDoc(doc(col('babyEvents'), id))),
       restoreEvent: (e) => report(setDoc(doc(col('babyEvents'), e.id), cleanEvent(withoutId(e)))),
       addChecklistItem: (list, text) => {
+        track('add checklist item');
         const t = text.trim().slice(0, 200);
         const l = list.trim().slice(0, 60);
         if (!t || !l) return;
@@ -155,6 +159,7 @@ export function useLiveStore(householdId: string, me: string, members: string[],
         report(batch.commit());
       },
       saveAppointment: (id, input) => {
+        track('save appointment');
         const existing = id ? appointmentsRef.current.find((a) => a.id === id) : undefined;
         const ref = id ? doc(col('babyAppointments'), id) : doc(col('babyAppointments'));
         const data = appointmentDoc(input, existing?.by ?? me, existing?.createdAt ?? Date.now());
