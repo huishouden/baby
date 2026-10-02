@@ -41,3 +41,5 @@ test('a bottle feed one member logs shows for the other', async ({ page, browser
     await other.close();
   }
 });
+
+// Staging path check (test PR, closed unmerged).
