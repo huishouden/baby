@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/huishouden/baby/compare/v1.3.1...v1.4.0) (2026-10-02)
+
+
+### Features
+
+* error, speed and anonymous usage reports (pwa-kit observability) ([#20](https://github.com/huishouden/baby/issues/20)) ([aa9666d](https://github.com/huishouden/baby/commit/aa9666d5b6a4b59b0370b38373552dc8ffc852fe))
+* **roles:** helpers log and tick, change only their own; private appointments; settings for admins and members ([#24](https://github.com/huishouden/baby/issues/24)) ([d787e75](https://github.com/huishouden/baby/commit/d787e751d1961b00b85d999165c73537bbaea7d0))
+
 ## [1.3.1](https://github.com/huishouden/baby/compare/v1.3.0...v1.3.1) (2026-10-02)
 
 
