@@ -25,3 +25,11 @@ test('Google sign-in popup reaches Google with an allowed redirect URI', ({ page
   expectGoogleSignInPopup(page, context, async (p) => {
     await p.getByRole('button', { name: 'Sign in with Google' }).first().click();
   }));
+
+test('agenda links open their tab', async ({ page }) => {
+  await expectCleanLoad(page, '/#appointments');
+  await expect(page.getByRole('heading', { name: 'Appointments', exact: true })).toBeVisible();
+  await page.evaluate(() => (location.hash = '#checklists'));
+  await expect(page.getByRole('heading', { name: 'Checklists', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Appointments', exact: true })).toHaveCount(0);
+});

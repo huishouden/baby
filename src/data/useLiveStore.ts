@@ -7,6 +7,8 @@ import { cleanEvent } from '../lib/model';
 import { defaultChecklistDocs, nextOrder } from '../lib/checklist';
 import { DAY } from '@huishouden/pwa-kit/time';
 import { readError } from '@huishouden/pwa-kit/feedback';
+import { removeAgenda, replaceAgenda, syncAgenda } from '@huishouden/pwa-kit/agenda';
+import { agendaItems, appointmentAgenda, appointmentRef } from '../lib/agenda';
 import { db } from './firebase';
 import { appointmentDoc, eventFields, newEventDoc, profileDoc } from './build';
 import type { BabyActions, BabyStore } from './types';
@@ -15,6 +17,9 @@ import type { BabyActions, BabyStore } from './types';
 const HISTORY_DAYS = 14;
 
 const withoutId = <T extends { id: string }>({ id: _id, ...rest }: T) => rest;
+
+/** The household agenda is a copy for the portal: a failed write there never interrupts Baby. */
+const publish = (p: Promise<unknown>) => void p.catch((e) => console.warn("Couldn't update the household agenda", e));
 
 /**
  * Live household data from Firestore with onSnapshot listeners. Writes are fire-and-forget: the
@@ -33,6 +38,12 @@ export function useLiveStore(householdId: string, me: string, members: string[],
   checklistRef.current = checklists;
   const appointmentsRef = useRef<Appointment[]>([]);
   appointmentsRef.current = appointments;
+  const profileRef = useRef<BabyProfile | null>(null);
+  profileRef.current = profile;
+  // Whether the profile and appointments have answered from the server, not just the local cache:
+  // the agenda is reconciled against them once per household when both have.
+  const [fromServer, setFromServer] = useState({ profile: false, appointments: false });
+  const syncedFor = useRef<string | null>(null);
   const errorRef = useRef(onError);
   errorRef.current = onError;
 
@@ -44,9 +55,11 @@ export function useLiveStore(householdId: string, me: string, members: string[],
     const unsubs = [
       onSnapshot(
         doc(db, base, 'babyProfile', 'main'),
+        { includeMetadataChanges: true },
         (s) => {
           setProfile(s.exists() ? (s.data() as BabyProfile) : null);
           setAnswered((a) => ({ ...a, profile: true }));
+          if (!s.metadata.fromCache) setFromServer((f) => (f.profile ? f : { ...f, profile: true }));
         },
         (e) => {
           setAnswered((a) => ({ ...a, profile: true }));
@@ -83,7 +96,11 @@ export function useLiveStore(householdId: string, me: string, members: string[],
       ),
       onSnapshot(
         collection(db, base, 'babyAppointments'),
-        (s) => setAppointments(s.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Appointment, 'id'>) }))),
+        { includeMetadataChanges: true },
+        (s) => {
+          setAppointments(s.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Appointment, 'id'>) })));
+          if (!s.metadata.fromCache) setFromServer((f) => (f.appointments ? f : { ...f, appointments: true }));
+        },
         fail('the appointments'),
       ),
       watchContacts(db, householdId, setContacts, { app: APP, onError: fail('the contacts') }),
@@ -91,11 +108,24 @@ export function useLiveStore(householdId: string, me: string, members: string[],
     return () => unsubs.forEach((u) => u());
   }, [base, householdId, me]);
 
+  useEffect(() => {
+    if (!fromServer.profile || !fromServer.appointments || syncedFor.current === householdId) return;
+    syncedFor.current = householdId;
+    publish(syncAgenda(db, householdId, APP, agendaItems({ profile, appointments }), { by: me }));
+  }, [fromServer, householdId, me, profile, appointments]);
+
   const actions = useMemo<BabyActions>(() => {
     const report = (p: Promise<unknown>) => void p.catch((e) => errorRef.current(readError(e, "Couldn't save")));
     const col = (name: string) => collection(db, base, name);
+    const publishAppointment = (a: Appointment) =>
+      publish(replaceAgenda(db, householdId, APP, appointmentRef(a.id), appointmentAgenda(a, profileRef.current), { by: me }));
     return {
-      saveProfile: (p) => report(setDoc(doc(db, base, 'babyProfile', 'main'), profileDoc(p, me, Date.now()))),
+      saveProfile: (p) => {
+        const data = profileDoc(p, me, Date.now());
+        report(setDoc(doc(db, base, 'babyProfile', 'main'), data));
+        // The due date and the baby's name on every appointment may both have changed.
+        publish(syncAgenda(db, householdId, APP, agendaItems({ profile: data, appointments: appointmentsRef.current }), { by: me }));
+      },
       logEvent: (f) => {
         const now = Date.now();
         const data = newEventDoc({ ...f, at: f.at ?? now }, me, now);
@@ -124,10 +154,18 @@ export function useLiveStore(householdId: string, me: string, members: string[],
       saveAppointment: (id, input) => {
         const existing = id ? appointmentsRef.current.find((a) => a.id === id) : undefined;
         const ref = id ? doc(col('babyAppointments'), id) : doc(col('babyAppointments'));
-        report(setDoc(ref, appointmentDoc(input, existing?.by ?? me, existing?.createdAt ?? Date.now())));
+        const data = appointmentDoc(input, existing?.by ?? me, existing?.createdAt ?? Date.now());
+        report(setDoc(ref, data));
+        publishAppointment({ id: ref.id, ...data });
       },
-      deleteAppointment: (id) => report(deleteDoc(doc(col('babyAppointments'), id))),
-      restoreAppointment: (a) => report(setDoc(doc(col('babyAppointments'), a.id), withoutId(a))),
+      deleteAppointment: (id) => {
+        report(deleteDoc(doc(col('babyAppointments'), id)));
+        publish(removeAgenda(db, householdId, APP, appointmentRef(id)));
+      },
+      restoreAppointment: (a) => {
+        report(setDoc(doc(col('babyAppointments'), a.id), withoutId(a)));
+        publishAppointment(a);
+      },
       saveContact: (id, input) => report(id ? updateContact(db, householdId, id, input, me) : addContact(db, householdId, input, me)),
       deleteContact: (id) => {
         const c = contactsRef.current.find((x) => x.id === id);
