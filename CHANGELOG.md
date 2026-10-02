@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/huishouden/baby/compare/v1.1.0...v1.1.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* Google API tokens from Google Identity Services, not Firebase sign-in (kit v0.23.0) ([#11](https://github.com/huishouden/baby/issues/11)) ([cb7bb39](https://github.com/huishouden/baby/commit/cb7bb398931f289d060d4405e62512e21a40dbf7))
+
 ## [1.1.0](https://github.com/huishouden/baby/compare/v1.0.0...v1.1.0) (2026-10-02)
 
 
