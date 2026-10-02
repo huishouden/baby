@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { collection, deleteDoc, doc, onSnapshot, query, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
+import { deleteDoc, setDoc, updateDoc, writeBatch } from '@huishouden/pwa-kit/firestore';
 import { addContact, removeContactFromApp, restoreContact, updateContact, watchContacts, type Contact } from '@huishouden/pwa-kit/contacts';
 import type { Appointment, BabyEvent, BabyProfile, ChecklistItem } from '../lib/model';
 import { APP } from '../lib/contacts';
@@ -23,7 +24,9 @@ const publish = (p: Promise<unknown>) => void p.catch((e) => console.warn("Could
 
 /**
  * Live household data from Firestore with onSnapshot listeners. Writes are fire-and-forget: the
- * persistent cache applies them locally at once (also offline) and syncs later.
+ * persistent cache applies them locally at once (also offline) and syncs later. They come from the
+ * kit, which also notes each one in localStorage until Firestore has it, so a feed logged as the
+ * app is closed is not lost. The kit's contact and agenda helpers write the same way.
  */
 export function useLiveStore(householdId: string, me: string, members: string[], onError: (message: string) => void): BabyStore {
   const [profile, setProfile] = useState<BabyProfile | null>(null);
