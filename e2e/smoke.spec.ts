@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expectCleanLoad, expectGoogleSignInPopup, expectInstallable } from '@piekstra/huishouden-pwa-kit/e2e';
+import { expectCleanLoad, expectGoogleSignInPopup, expectInstallable } from '@huishouden/pwa-kit/e2e';
 
 test('loads without runtime errors and shows the sample countdown', async ({ page }) => {
   await expectCleanLoad(page);
