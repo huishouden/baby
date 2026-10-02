@@ -31,6 +31,8 @@ export function appointmentAgenda(a: Appointment, profile: BabyProfile | null, a
       ...(location ? { detail: location } : {}),
       url: tabUrl(appUrl, 'appointments'),
       ...(who ? { who } : {}),
+      // A private appointment stays private on the household calendar too.
+      private: a.private === true,
     },
   ];
 }

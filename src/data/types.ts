@@ -1,4 +1,5 @@
 import type { Contact, ContactInput } from '@huishouden/pwa-kit/contacts';
+import type { Role } from '@huishouden/pwa-kit/roles';
 import type { Appointment, BabyEvent, ChecklistItem, EventFields } from '../lib/model';
 import type { BabyData } from '../lib/demo';
 
@@ -18,6 +19,7 @@ export interface AppointmentInput {
   contactId?: string;
   calendarEventId?: string;
   calendarLink?: string;
+  private?: boolean;
 }
 
 /** Writes return immediately (Firestore queues them offline); failures arrive through `onError`. */
@@ -50,4 +52,6 @@ export interface BabyStore {
   members: string[];
   /** The signed-in member's email (or the demo's). */
   me: string;
+  /** Their role in the household (pwa-kit roles): helpers and kids change only what they added. */
+  role: Role | null;
 }

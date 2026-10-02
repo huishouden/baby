@@ -7,6 +7,8 @@ import { useClock } from '@huishouden/pwa-kit/react/clock';
 import { CalendarSuggestions, calendarAvailable, useCalendarSuggestions } from '@huishouden/pwa-kit/react/calendar';
 import { ContactDialog } from '@huishouden/pwa-kit/react/contacts';
 import { Toast, type ToastState } from '@huishouden/pwa-kit/react/ui';
+import { can, refusal } from '@huishouden/pwa-kit/roles';
+import { mayChange } from './lib/roles';
 import type { BabyStore } from './data/types';
 import { Header, type Tab } from './components/Header';
 import { ProfileDialog, type ProfileMode } from './components/ProfileDialog';
@@ -51,6 +53,12 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   const born = !!profile?.birthDate;
   const calendar = calendarAvailable(user);
   const appointments = store.data.appointments;
+  const canSettings = can(store.role, 'change-settings');
+  const canPrivate = can(store.role, 'see-private');
+  /** Opens an appointment to edit, or says who can when it isn't theirs. */
+  const openAppointment = (a: Appointment) => (mayChange(store.role, store.me, a) ? setAppointment(a) : notify(refusal('edit-others')));
+  /** The baby's details are the household's settings: admins and members. */
+  const openProfile = (mode: ProfileMode) => (canSettings ? setProfileMode(mode) : notify(refusal('change-settings')));
   const suggested = useCalendarSuggestions({ auth, words: BABY_CALENDAR_QUERIES, isImported: (m) => isImported(m, appointments), app: 'Baby' });
 
   /** Calendar events in as appointments: Import from calendar and the new-in-your-calendar card. */
@@ -82,19 +90,19 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   let content: ReactNode;
   if (!store.ready) content = <p className="p-2 text-lg text-stone-600">Loading the baby's details</p>;
   else if (tab === 'appointments')
-    content = <Appointments store={store} calendarAvailable={calendar} onAdd={() => setAppointment('new')} onEdit={setAppointment} onImport={importEvents} />;
+    content = <Appointments store={store} calendarAvailable={calendar} onAdd={() => setAppointment('new')} onEdit={openAppointment} onImport={importEvents} />;
   else if (tab === 'checklists') content = <Checklists store={store} notify={notify} onAddContact={(role) => setContact({ contact: null, role })} />;
   else if (tab === 'contacts')
     content = <Contacts store={store} notify={notify} onAdd={() => setContact({ contact: null })} onEdit={(c) => setContact({ contact: c })} />;
-  else if (born) content = <LogScreen store={store} notify={notify} onEditProfile={() => setProfileMode('edit')} />;
+  else if (born) content = <LogScreen store={store} notify={notify} onEditProfile={canSettings ? () => setProfileMode('edit') : undefined} />;
   else
     content = (
       <Overview
         store={store}
-        onSetDueDate={() => setProfileMode('due')}
-        onBabyIsHere={() => setProfileMode('born')}
+        onSetDueDate={canSettings ? () => openProfile('due') : undefined}
+        onBabyIsHere={canSettings ? () => openProfile('born') : undefined}
         onAddAppointment={() => setAppointment('new')}
-        onEditAppointment={setAppointment}
+        onEditAppointment={openAppointment}
         onOpen={setTab}
       />
     );
@@ -132,6 +140,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
           now={now}
           contacts={store.data.contacts}
           calendarAvailable={calendar}
+          canMarkPrivate={canPrivate}
           onClose={() => setAppointment(null)}
           onSave={(input) => store.actions.saveAppointment(appointment === 'new' ? null : appointment.id, input)}
           onDelete={
@@ -153,6 +162,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
           role={contact.role}
           searchPlaceholder="Practice name and town"
           namePlaceholder="Example Pediatrics"
+          canMarkPrivate={canPrivate}
           onClose={() => setContact(null)}
           onSave={(input) => {
             store.actions.saveContact(contact.contact?.id ?? null, input);

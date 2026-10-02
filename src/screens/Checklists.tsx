@@ -5,6 +5,7 @@ import { groupChecklist, moveItem } from '../lib/checklist';
 import { LIMITS } from '../lib/model';
 import { contactForRole, roleForChecklistItem, type KnownRole } from '../lib/contacts';
 import type { BabyStore } from '../data/types';
+import { mayChange } from '../lib/roles';
 import { Dialog, Field, cardClass, ghostButton, iconButton, inputClass, linkClass, primaryButton } from '@huishouden/pwa-kit/react/ui';
 
 export function Checklists({ store, notify, onAddContact }: {
@@ -74,17 +75,19 @@ export function Checklists({ store, notify, onAddContact }: {
                   >
                     <ArrowDown size={18} />
                   </button>
-                  <button
-                    type="button"
-                    className={iconButton}
-                    aria-label={`Delete: ${item.text}`}
-                    onClick={() => {
-                      actions.deleteChecklistItem(item.id);
-                      notify(`Deleted "${item.text}"`, () => actions.restoreChecklistItem(item));
-                    }}
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  {mayChange(store.role, store.me, item) && (
+                    <button
+                      type="button"
+                      className={iconButton}
+                      aria-label={`Delete: ${item.text}`}
+                      onClick={() => {
+                        actions.deleteChecklistItem(item.id);
+                        notify(`Deleted "${item.text}"`, () => actions.restoreChecklistItem(item));
+                      }}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
                   </div>
                   {who && (
                     <div className="-mt-1 flex flex-wrap items-center gap-x-4 pb-1 pl-9 text-base text-stone-600">

@@ -1,4 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import { can, refusal } from '@huishouden/pwa-kit/roles';
+import { RoleNote } from '@huishouden/pwa-kit/react/roles';
+import { mayChange } from '../lib/roles';
 import { Baby, ChevronLeft, ChevronRight, Droplet, Droplets, Milk, Moon, Pencil, Sun } from 'lucide-react';
 import type { BabyEvent, DiaperKind, Side } from '../lib/model';
 import { dayTimeline, dayTotals, describeEvent, diaperBreakdown, feedDetail, latest, sleepState } from '../lib/summary';
@@ -15,7 +18,8 @@ const HISTORY_DAYS = 13;
 interface Props {
   store: BabyStore;
   notify: (message: string, undo?: () => void) => void;
-  onEditProfile: () => void;
+  /** Left out for helpers and kids: the baby's details are the household's settings. */
+  onEditProfile?: () => void;
 }
 
 /** After the birth: what happened last, one-tap logging, and today's totals and timeline. */
@@ -46,6 +50,7 @@ export function LogScreen({ store, notify, onEditProfile }: Props) {
   const toggleSleep = () => {
     if (sleep.state === 'asleep') {
       const before = sleep.event;
+      if (!mayChange(store.role, store.me, before)) return notify(refusal('edit-others'));
       const end = read();
       actions.updateEvent(before, { ...before, endAt: end });
       notify(`Woke up after ${formatDuration(end - before.at)}`, () => actions.restoreEvent(before));
@@ -64,9 +69,11 @@ export function LogScreen({ store, notify, onEditProfile }: Props) {
               {name ?? 'Baby'}
               {age && <span className="font-normal text-stone-600"> · {age}</span>}
             </h2>
-            <button type="button" onClick={onEditProfile} className={iconButton} aria-label="Edit baby details">
-              <Pencil size={18} />
-            </button>
+            {onEditProfile && (
+              <button type="button" onClick={onEditProfile} className={iconButton} aria-label="Edit baby details">
+                <Pencil size={18} />
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-3 gap-3 sm:gap-5">
             <Glance
@@ -139,6 +146,9 @@ export function LogScreen({ store, notify, onEditProfile }: Props) {
           <Total label="Diapers" value={String(totals.diaperCount)} detail={diaperBreakdown(totals.diapers)} />
           <Total label="Pumped" value={`${totals.pumpMl} ml`} detail={totals.pumps ? `${totals.pumps} time${totals.pumps === 1 ? '' : 's'}` : 'none yet'} />
         </dl>
+        {timeline.some((e) => !mayChange(store.role, store.me, e)) && !can(store.role, 'edit-others') && (
+          <RoleNote action="edit-others" className="border-b border-stone-200 px-5 py-2" />
+        )}
         <ol className="min-h-0 flex-1 overflow-y-auto" aria-label="Timeline">
           {timeline.length === 0 && <li className="px-5 py-6 text-base text-stone-600">Nothing logged {dayOffset === 0 ? 'yet today' : 'this day'}.</li>}
           {timeline.map((e) => (
@@ -156,9 +166,13 @@ export function LogScreen({ store, notify, onEditProfile }: Props) {
                 )}
               </div>
               <PersonBadge email={e.by} me={store.me} members={store.members} size={30} />
-              <button type="button" className={iconButton} aria-label={`Edit ${describeEvent(e, now)} at ${formatTime(e.at)}`} onClick={() => setEditing(e)}>
-                <Pencil size={18} />
-              </button>
+              {mayChange(store.role, store.me, e) ? (
+                <button type="button" className={iconButton} aria-label={`Edit ${describeEvent(e, now)} at ${formatTime(e.at)}`} onClick={() => setEditing(e)}>
+                  <Pencil size={18} />
+                </button>
+              ) : (
+                <span className="w-11 shrink-0" aria-hidden="true" />
+              )}
             </li>
           ))}
         </ol>

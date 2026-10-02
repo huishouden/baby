@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { signInSilently } from '@huishouden/pwa-kit/auth';
-import { markJoined, saveMyProfile, watchHousehold, type HouseholdState } from '@huishouden/pwa-kit/household';
+import { markJoined, saveMyProfile, watchHousehold, type Household, type HouseholdState } from '@huishouden/pwa-kit/household';
+import { useRole } from '@huishouden/pwa-kit/react/roles';
+import type { Role } from '@huishouden/pwa-kit/roles';
 import { auth, db, googleClientId, signInWithGoogle, signOutEverywhere } from './data/firebase';
 import { useLiveStore } from './data/useLiveStore';
 import { useDemoStore } from './data/useDemoStore';
@@ -65,7 +67,7 @@ function SignedIn({ user, ...frame }: FrameProps & { user: User }) {
     if (householdId) saveMyProfile(db, householdId, user).catch(() => {});
   }, [householdId, user]);
 
-  if (state.status === 'ready') return <LiveApp householdId={state.household.id} members={state.household.members} user={user} {...frame} />;
+  if (state.status === 'ready') return <LiveApp household={state.household} user={user} {...frame} />;
   if (state.status === 'loading') return <Plain user={user} {...frame}>Finding your household.</Plain>;
   if (state.status === 'error')
     return (
@@ -87,15 +89,23 @@ function SignedIn({ user, ...frame }: FrameProps & { user: User }) {
   );
 }
 
-function LiveApp({ householdId, members, user, ...frame }: FrameProps & { householdId: string; members: string[]; user: User }) {
+function LiveApp({ household, user, ...frame }: FrameProps & { household: Household; user: User }) {
   const { toast, notify, fail, clear } = useToast();
-  const store = useLiveStore(householdId, (user.email ?? '').toLowerCase(), members, fail);
+  const me = (user.email ?? '').toLowerCase();
+  const { role } = useRole(household, me);
+  const store = useLiveStore(household.id, me, household.members, role, fail);
   const read = useCallback(() => Date.now(), []);
   return (
     <ClockProvider read={read}>
       <BabyApp store={store} user={user} {...frame} toast={toast} notify={notify} clearToast={clear} />
     </ClockProvider>
   );
+}
+
+/** The sample as a helper or kid would see it (`?as=helper`), for screenshots of their view. */
+function demoRole(): Role {
+  const as = new URLSearchParams(location.search).get('as');
+  return as === 'helper' || as === 'kid' || as === 'member' ? as : 'admin';
 }
 
 function initialScenario(): DemoScenario {
@@ -129,7 +139,7 @@ function DemoInner({ scenario, read, onScenario, signInError, ...frame }: FrameP
   signInError: string | null;
 }) {
   const { toast, notify, clear } = useToast();
-  const store = useDemoStore(scenario, read);
+  const store = useDemoStore(scenario, read, demoRole());
   const banner = (
     <div className={`${cardClass} flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-1.5`} role="note">
       <span className="rounded-full bg-terracotta-light px-3 py-1 text-sm font-semibold text-terracotta-dark">Sample data</span>

@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import type { CalendarMatch } from '@huishouden/pwa-kit/calendar';
 import type { Contact } from '@huishouden/pwa-kit/contacts';
 import { CalendarFind, LinkedEvent } from '@huishouden/pwa-kit/react/calendar';
+import { PrivateCheckbox } from '@huishouden/pwa-kit/react/contacts';
 import { Dialog, Field, deleteButton, ghostButton, inputClass, primaryButton } from '@huishouden/pwa-kit/react/ui';
 import { addDays, fromLocalInput, toLocalInput } from '@huishouden/pwa-kit/time';
 import type { Appointment } from '../lib/model';
@@ -11,8 +12,10 @@ import { fromCalendar } from '../lib/calendarImport';
 import type { AppointmentInput } from '../data/types';
 import { auth } from '../data/firebase';
 
-export function AppointmentDialog({ appointment, now, contacts, calendarAvailable, onSave, onDelete, onClose }: {
+export function AppointmentDialog({ appointment, now, contacts, calendarAvailable, canMarkPrivate = true, onSave, onDelete, onClose }: {
   appointment: Appointment | null;
+  /** Admins and members may keep an appointment from helpers and kids. */
+  canMarkPrivate?: boolean;
   now: number;
   contacts: Contact[];
   calendarAvailable: boolean;
@@ -27,6 +30,7 @@ export function AppointmentDialog({ appointment, now, contacts, calendarAvailabl
   const [location, setLocation] = useState(appointment?.location ?? '');
   const [notes, setNotes] = useState(appointment?.notes ?? '');
   const [contactId, setContactId] = useState(appointment?.contactId ?? '');
+  const [isPrivate, setPrivate] = useState(appointment?.private === true);
   const [event, setEvent] = useState(appointment?.calendarEventId || appointment?.calendarLink ? { id: appointment.calendarEventId, link: appointment.calendarLink } : null);
   const at = fromLocalInput(`${date}T${time}`);
   const valid = title.trim().length > 0 && at !== null;
@@ -35,7 +39,7 @@ export function AppointmentDialog({ appointment, now, contacts, calendarAvailabl
 
   const save = () => {
     if (!valid || at === null) return;
-    onSave({ title, at, location, notes, contactId: contactId || undefined, calendarEventId: event?.id, calendarLink: event?.link });
+    onSave({ title, at, location, notes, contactId: contactId || undefined, calendarEventId: event?.id, calendarLink: event?.link, private: canMarkPrivate && isPrivate });
     onClose();
   };
 
@@ -123,6 +127,7 @@ export function AppointmentDialog({ appointment, now, contacts, calendarAvailabl
           <textarea className={`${inputClass} min-h-20`} maxLength={LIMITS.notes} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>
         {event && <LinkedEvent link={event.link} onUnlink={() => setEvent(null)} />}
+        {canMarkPrivate && <PrivateCheckbox checked={isPrivate} onChange={setPrivate} />}
         <button type="submit" hidden />
       </form>
     </Dialog>

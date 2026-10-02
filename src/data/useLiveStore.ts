@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
 import { deleteDoc, setDoc, updateDoc, writeBatch } from '@huishouden/pwa-kit/firestore';
-import { addContact, removeContactFromApp, restoreContact, updateContact, watchContacts, type Contact } from '@huishouden/pwa-kit/contacts';
+import { addContact, markUnflaggedOpen, removeContactFromApp, restoreContact, updateContact, watchContacts, type Contact } from '@huishouden/pwa-kit/contacts';
+import { can, isRestricted, type Role } from '@huishouden/pwa-kit/roles';
 import type { Appointment, BabyEvent, BabyProfile, ChecklistItem } from '../lib/model';
 import { APP } from '../lib/contacts';
 import { cleanEvent } from '../lib/model';
@@ -29,7 +30,9 @@ const publish = (p: Promise<unknown>) => void p.catch((e) => console.warn("Could
  * kit, which also notes each one in localStorage until Firestore has it, so a feed logged as the
  * app is closed is not lost. The kit's contact and agenda helpers write the same way.
  */
-export function useLiveStore(householdId: string, me: string, members: string[], onError: (message: string) => void): BabyStore {
+export function useLiveStore(householdId: string, me: string, members: string[], role: Role | null, onError: (message: string) => void): BabyStore {
+  // Helpers and kids read only appointments and contacts not marked private, and must ask for just those.
+  const restricted = isRestricted(role);
   const [profile, setProfile] = useState<BabyProfile | null>(null);
   const [events, setEvents] = useState<BabyEvent[]>([]);
   const [checklists, setChecklists] = useState<ChecklistItem[]>([]);
@@ -99,7 +102,7 @@ export function useLiveStore(householdId: string, me: string, members: string[],
         },
       ),
       onSnapshot(
-        collection(db, base, 'babyAppointments'),
+        restricted ? query(collection(db, base, 'babyAppointments'), where('private', '==', false)) : collection(db, base, 'babyAppointments'),
         { includeMetadataChanges: true },
         (s) => {
           setAppointments(s.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Appointment, 'id'>) })));
@@ -107,29 +110,37 @@ export function useLiveStore(householdId: string, me: string, members: string[],
         },
         fail('the appointments'),
       ),
-      watchContacts(db, householdId, setContacts, { app: APP, onError: fail('the contacts') }),
+      watchContacts(db, householdId, setContacts, { app: APP, restricted, onError: fail('the contacts') }),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [base, householdId, me]);
+  }, [base, householdId, me, restricted]);
+
+  // Appointments saved before the private flag are hidden from helpers and kids until written with
+  // `private: false`: an admin's or member's device does that once they have loaded.
+  const seesPrivate = can(role, 'see-private');
+  useEffect(() => {
+    if (!seesPrivate || !fromServer.appointments || !appointments.some((a) => typeof a.private !== 'boolean')) return;
+    markUnflaggedOpen(db, householdId, 'babyAppointments', appointments).catch(() => {});
+  }, [seesPrivate, fromServer.appointments, appointments, householdId]);
 
   useEffect(() => {
     if (!fromServer.profile || !fromServer.appointments || syncedFor.current === householdId) return;
     syncedFor.current = householdId;
-    publish(syncAgenda(db, householdId, APP, agendaItems({ profile, appointments }), { by: me }));
-  }, [fromServer, householdId, me, profile, appointments]);
+    publish(syncAgenda(db, householdId, APP, agendaItems({ profile, appointments }), { by: me, restricted }));
+  }, [fromServer, householdId, me, profile, appointments, restricted]);
 
   const actions = useMemo<BabyActions>(() => {
     const report = (p: Promise<unknown>) => void p.catch((e) => errorRef.current(readError(e, "Couldn't save")));
     const col = (name: string) => collection(db, base, name);
     const publishAppointment = (a: Appointment) =>
-      publish(replaceAgenda(db, householdId, APP, appointmentRef(a.id), appointmentAgenda(a, profileRef.current), { by: me }));
+      publish(replaceAgenda(db, householdId, APP, appointmentRef(a.id), appointmentAgenda(a, profileRef.current), { by: me, restricted }));
     return {
       saveProfile: (p) => {
         track('save baby profile');
         const data = profileDoc(p, me, Date.now());
         report(setDoc(doc(db, base, 'babyProfile', 'main'), data));
         // The due date and the baby's name on every appointment may both have changed.
-        publish(syncAgenda(db, householdId, APP, agendaItems({ profile: data, appointments: appointmentsRef.current }), { by: me }));
+        publish(syncAgenda(db, householdId, APP, agendaItems({ profile: data, appointments: appointmentsRef.current }), { by: me, restricted }));
       },
       logEvent: (f) => {
         track('log entry', { kind: f.kind });
@@ -168,7 +179,7 @@ export function useLiveStore(householdId: string, me: string, members: string[],
       },
       deleteAppointment: (id) => {
         report(deleteDoc(doc(col('babyAppointments'), id)));
-        publish(removeAgenda(db, householdId, APP, appointmentRef(id)));
+        publish(removeAgenda(db, householdId, APP, appointmentRef(id), { restricted }));
       },
       restoreAppointment: (a) => {
         report(setDoc(doc(col('babyAppointments'), a.id), withoutId(a)));
@@ -182,7 +193,7 @@ export function useLiveStore(householdId: string, me: string, members: string[],
       },
       restoreContact: (c) => report(restoreContact(db, householdId, c)),
     };
-  }, [base, householdId, me]);
+  }, [base, householdId, me, restricted]);
 
   return {
     data: { profile, events, checklists, appointments, contacts },
@@ -190,5 +201,6 @@ export function useLiveStore(householdId: string, me: string, members: string[],
     actions,
     members,
     me,
+    role,
   };
 }

@@ -6,11 +6,13 @@ import { countdown } from '../lib/time';
 import { useClock } from '@huishouden/pwa-kit/react/clock';
 import type { BabyStore } from '../data/types';
 import { cardClass, ghostButton, iconButton, overline, primaryButton } from '@huishouden/pwa-kit/react/ui';
+import { RoleNote } from '@huishouden/pwa-kit/react/roles';
 
 interface Props {
   store: BabyStore;
-  onSetDueDate: () => void;
-  onBabyIsHere: () => void;
+  /** Left out for helpers and kids, who see who can instead. */
+  onSetDueDate?: () => void;
+  onBabyIsHere?: () => void;
   onAddAppointment: () => void;
   onEditAppointment: (a: Appointment) => void;
   onOpen: (tab: 'appointments' | 'checklists') => void;
@@ -31,7 +33,7 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
         <section className={`${cardClass} px-8 py-6`} aria-label="Countdown">
           <div className="flex items-start justify-between gap-4">
             <p className={overline}>{profile?.name ? `Waiting for ${profile.name}` : 'Countdown'}</p>
-            {due && (
+            {due && onSetDueDate && (
               <button type="button" className={iconButton} aria-label="Edit due date and name" onClick={onSetDueDate}>
                 <Pencil size={18} />
               </button>
@@ -54,6 +56,8 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
               <p className="mt-2 text-lg text-stone-600">Add the due date to start the countdown.</p>
             </>
           )}
+          {!onSetDueDate && <RoleNote action="change-settings" className="mt-4" />}
+          {onSetDueDate && onBabyIsHere && (
           <div className="mt-5 flex flex-wrap gap-3">
             {!due && (
               <button type="button" className={primaryButton} onClick={onSetDueDate}>
@@ -64,6 +68,7 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
               <Baby size={20} /> Baby is here
             </button>
           </div>
+          )}
         </section>
 
         <section className={`${cardClass} flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-5`} aria-label="Next appointment">
