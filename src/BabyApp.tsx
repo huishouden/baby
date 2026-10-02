@@ -12,7 +12,7 @@ import { Header, type Tab } from './components/Header';
 import { ProfileDialog, type ProfileMode } from './components/ProfileDialog';
 import { AppointmentDialog } from './components/AppointmentDialog';
 import { APP, ROLES } from './lib/contacts';
-import { BABY_CALENDAR_QUERIES, fromCalendar } from './lib/calendarImport';
+import { BABY_CALENDAR_QUERIES, fromCalendar, importMessage } from './lib/calendarImport';
 import { auth } from './data/firebase';
 import { LogScreen } from './screens/LogScreen';
 import { Overview } from './screens/Overview';
@@ -56,7 +56,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   /** Calendar events in as appointments: Import from calendar and the new-in-your-calendar card. */
   const importEvents = (list: CalendarMatch[]) => {
     for (const m of list) store.actions.saveAppointment(null, fromCalendar(m));
-    notify(list.length === 1 ? `Added ${list[0].title}` : `Added ${list.length} appointments`);
+    notify(importMessage(list));
   };
 
   useEffect(() => {
