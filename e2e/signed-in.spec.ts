@@ -68,6 +68,8 @@ for (const leave of ['reload', 'close'] as const) {
 
 // Roles (pwa-kit STANDARD.md "Roles"): test-helper is the household's helper. They log their own
 // feeds and change those, but not what someone else logged, and are told who can.
+// A row's text runs on into the logger's initial ("320 mlT"), so the amount is matched without a
+// trailing word boundary.
 test.describe('as a helper', () => {
   test.beforeAll(async () => {
     // Other apps' runs may reseed the household with an older kit that has no helper: put it back.
@@ -94,7 +96,7 @@ test.describe('as a helper', () => {
     await signInTestUser(page, { email: 'test-helper@example.com' });
     await expect(page.getByRole('button', { name: 'Log bottle feed' })).toBeVisible({ timeout: 20_000 });
     const timeline = page.getByRole('list', { name: 'Timeline' });
-    const members = timeline.getByRole('listitem').filter({ hasText: new RegExp(`\\b${ml} ml\\b`) });
+    const members = timeline.getByRole('listitem').filter({ hasText: new RegExp(`\\b${ml} ml`) });
     await expect(members.first()).toBeVisible({ timeout: 20_000 });
     // Refused: no edit on the member's feed, and the reason said; the baby's details aren't theirs to edit.
     await expect(members.first().getByRole('button', { name: /^Edit / })).toHaveCount(0);
@@ -106,7 +108,7 @@ test.describe('as a helper', () => {
     await page.getByRole('button', { name: 'Log bottle feed' }).click();
     await page.getByRole('dialog', { name: 'Bottle feed' }).getByLabel('Amount in ml').fill(String(mine));
     await page.getByRole('dialog', { name: 'Bottle feed' }).getByRole('button', { name: 'Log bottle' }).click();
-    const own = timeline.getByRole('listitem').filter({ hasText: new RegExp(`\\b${mine} ml\\b`) }).first();
+    const own = timeline.getByRole('listitem').filter({ hasText: new RegExp(`\\b${mine} ml`) }).first();
     await expect(own).toBeVisible();
     await own.getByRole('button', { name: /^Edit / }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
