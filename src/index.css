@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "@piekstra/huishouden-pwa-kit/theme.css";
+@import "@huishouden/pwa-kit/theme.css";
 
 /* Tokens come from the kit so every Huishouden app shares one palette. */
 @theme {

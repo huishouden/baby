@@ -22,7 +22,7 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@piekstra/huishouden-pwa-kit": "github:piekstra/huishouden-pwa-kit#v0.9.0",
+    "@huishouden/pwa-kit": "github:huishouden/huishouden-pwa-kit#v0.11.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/bun": "^1.4.2",

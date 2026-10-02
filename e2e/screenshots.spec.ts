@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { captureScreenshot } from '@piekstra/huishouden-pwa-kit/e2e';
+import { captureScreenshot } from '@huishouden/pwa-kit/e2e';
 
 // README images of the signed-out app's invented sample family, refreshed by CI after each deploy.
 // The clock is frozen at the sample data's moment so every run renders the same.

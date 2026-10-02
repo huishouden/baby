@@ -41,7 +41,7 @@ bun run screenshots  # README screenshots (SCREENSHOT_DIR to override)
 bun run icons        # regenerate the logo and PNG icons
 ```
 
-Built on [huishouden-pwa-kit](https://github.com/piekstra/huishouden-pwa-kit) and follows its
-[design language](https://github.com/piekstra/huishouden-pwa-kit/blob/main/DESIGN.md) and
-[standard](https://github.com/piekstra/huishouden-pwa-kit/blob/main/STANDARD.md). Pushes to `main` deploy to
+Built on [huishouden-pwa-kit](https://github.com/huishouden/huishouden-pwa-kit) and follows its
+[design language](https://github.com/huishouden/huishouden-pwa-kit/blob/main/DESIGN.md) and
+[standard](https://github.com/huishouden/huishouden-pwa-kit/blob/main/STANDARD.md). Pushes to `main` deploy to
 Firebase Hosting (project `huishouden-piekstra`, site `huishouden-baby`), then run the smoke tests and refresh the screenshots.

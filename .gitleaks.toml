@@ -1,3 +1,3 @@
 # Kit defaults: secrets plus personal mailbox addresses. No exceptions.
 [extend]
-path = "node_modules/@piekstra/huishouden-pwa-kit/actions/leak-scan/gitleaks.toml"
+path = "node_modules/@huishouden/pwa-kit/actions/leak-scan/gitleaks.toml"

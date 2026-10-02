@@ -1,8 +1,8 @@
 import { getApps, initializeApp } from 'firebase/app';
 import { GoogleAuthProvider, getAuth, signInWithPopup, signOut } from 'firebase/auth';
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
-import { firebaseConfigFromEnv } from '@piekstra/huishouden-pwa-kit/firebase';
-import { forgetSilentSignIn } from '@piekstra/huishouden-pwa-kit/auth';
+import { firebaseConfigFromEnv } from '@huishouden/pwa-kit/firebase';
+import { forgetSilentSignIn } from '@huishouden/pwa-kit/auth';
 
 // From VITE_FIREBASE_* build variables: CI sets them from repo variables; locally `bun run env:pull`.
 export const app = getApps()[0] ?? initializeApp(firebaseConfigFromEnv(import.meta.env));

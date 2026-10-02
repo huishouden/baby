@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { signInSilently } from '@piekstra/huishouden-pwa-kit/auth';
-import { markJoined, watchHousehold, type HouseholdState } from '@piekstra/huishouden-pwa-kit/household';
+import { signInSilently } from '@huishouden/pwa-kit/auth';
+import { markJoined, watchHousehold, type HouseholdState } from '@huishouden/pwa-kit/household';
 import { auth, db, googleClientId, signInWithGoogle, signOutEverywhere } from './data/firebase';
 import { useLiveStore } from './data/useLiveStore';
 import { useDemoStore } from './data/useDemoStore';
