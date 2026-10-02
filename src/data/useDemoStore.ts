@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { cleanContact } from '@huishouden/pwa-kit/contacts';
 import type { Appointment, BabyEvent, ChecklistItem } from '../lib/model';
 import { cleanEvent } from '../lib/model';
 import { DEMO_MEMBERS, demoData, type BabyData, type DemoScenario } from '../lib/demo';
@@ -61,6 +62,15 @@ export function useDemoStore(scenario: DemoScenario, clock: () => number): BabyS
         }),
       deleteAppointment: (aid) => patch((d) => ({ ...d, appointments: d.appointments.filter((a) => a.id !== aid) })),
       restoreAppointment: (a) => patch((d) => ({ ...d, appointments: upsert(d.appointments, a) })),
+      saveContact: (cid, input) =>
+        patch((d) => {
+          const existing = cid ? d.contacts.find((c) => c.id === cid) : undefined;
+          const now = clock();
+          const contact = { id: cid ?? id(), ...cleanContact(input), createdAt: existing?.createdAt ?? now, ...(existing ? { updatedAt: now } : {}), by: me };
+          return { ...d, contacts: upsert(d.contacts, contact) };
+        }),
+      deleteContact: (cid) => patch((d) => ({ ...d, contacts: d.contacts.filter((c) => c.id !== cid) })),
+      restoreContact: (c) => patch((d) => ({ ...d, contacts: upsert(d.contacts, c) })),
     };
   }, [clock, me]);
 

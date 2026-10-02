@@ -52,6 +52,11 @@ export interface AppointmentData {
   at: number;
   location?: string;
   notes?: string;
+  /** The household contact this appointment is with (households/{id}/contacts). */
+  contactId?: string;
+  /** The Google Calendar event it came from, so an import never adds it twice. */
+  calendarEventId?: string;
+  calendarLink?: string;
   createdAt: number;
   by: string;
 }

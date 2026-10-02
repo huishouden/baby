@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { collection, deleteDoc, doc, onSnapshot, query, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore';
+import { addContact, cleanContact, deleteContact, updateContact, watchContacts, type Contact } from '@huishouden/pwa-kit/contacts';
 import type { Appointment, BabyEvent, BabyProfile, ChecklistItem } from '../lib/model';
+import { APP } from '../lib/contacts';
 import { cleanEvent } from '../lib/model';
 import { defaultChecklistDocs, nextOrder } from '../lib/checklist';
 import { DAY } from '../lib/time';
@@ -22,6 +24,9 @@ export function useLiveStore(householdId: string, me: string, members: string[],
   const [events, setEvents] = useState<BabyEvent[]>([]);
   const [checklists, setChecklists] = useState<ChecklistItem[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const contactsRef = useRef<Contact[]>([]);
+  contactsRef.current = contacts;
   const [answered, setAnswered] = useState({ profile: false, checklists: false });
   const checklistRef = useRef<ChecklistItem[]>([]);
   checklistRef.current = checklists;
@@ -80,6 +85,7 @@ export function useLiveStore(householdId: string, me: string, members: string[],
         (s) => setAppointments(s.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Appointment, 'id'>) }))),
         fail('the appointments'),
       ),
+      watchContacts(db, householdId, setContacts, { app: APP, onError: fail('the contacts') }),
     ];
     return () => unsubs.forEach((u) => u());
   }, [base, householdId, me]);
@@ -121,11 +127,25 @@ export function useLiveStore(householdId: string, me: string, members: string[],
       },
       deleteAppointment: (id) => report(deleteDoc(doc(col('babyAppointments'), id))),
       restoreAppointment: (a) => report(setDoc(doc(col('babyAppointments'), a.id), withoutId(a))),
+      saveContact: (id, input) => report(id ? updateContact(db, householdId, id, input, me) : addContact(db, householdId, input, me)),
+      deleteContact: (id) => {
+        const c = contactsRef.current.find((x) => x.id === id);
+        // A contact other apps also show stays for them; Baby only stops showing it.
+        const others = c?.apps.filter((a) => a !== APP) ?? [];
+        if (c && others.length) {
+          const { id: _id, createdAt: _c, updatedAt: _u, by: _b, ...input } = c;
+          report(updateContact(db, householdId, id, { ...input, apps: others }, me));
+        } else report(deleteContact(db, householdId, id));
+      },
+      restoreContact: (c) => {
+        const { id, createdAt, updatedAt, by, ...input } = c;
+        report(setDoc(doc(col('contacts'), id), { ...cleanContact(input), createdAt, ...(updatedAt ? { updatedAt } : {}), by }));
+      },
     };
-  }, [base, me]);
+  }, [base, householdId, me]);
 
   return {
-    data: { profile, events, checklists, appointments },
+    data: { profile, events, checklists, appointments, contacts },
     ready: answered.profile && answered.checklists,
     actions,
     members,

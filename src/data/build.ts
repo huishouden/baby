@@ -52,5 +52,8 @@ export function appointmentDoc(a: AppointmentInput, by: string, createdAt: numbe
   const notes = trimmed(a.notes, LIMITS.notes);
   if (location) out.location = location;
   if (notes) out.notes = notes;
+  if (a.contactId) out.contactId = a.contactId;
+  if (a.calendarEventId) out.calendarEventId = a.calendarEventId;
+  if (a.calendarLink && /^https:\/\//.test(a.calendarLink)) out.calendarLink = a.calendarLink;
   return out;
 }

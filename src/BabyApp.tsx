@@ -1,18 +1,22 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { User } from 'firebase/auth';
+import type { Contact } from '@huishouden/pwa-kit/contacts';
 import type { Appointment } from './lib/model';
 import { useClock } from './clock';
 import type { BabyStore } from './data/types';
 import { Header, type Tab } from './components/Header';
 import { ProfileDialog, type ProfileMode } from './components/ProfileDialog';
 import { AppointmentDialog } from './components/AppointmentDialog';
+import { ContactDialog } from './components/ContactDialog';
+import { calendarAvailable } from './data/calendar';
 import { Toast, type ToastState } from './components/ui';
 import { LogScreen } from './screens/LogScreen';
 import { Overview } from './screens/Overview';
 import { Appointments } from './screens/Appointments';
 import { Checklists } from './screens/Checklists';
+import { Contacts } from './screens/Contacts';
 
-type TabId = 'home' | 'appointments' | 'checklists';
+type TabId = 'home' | 'appointments' | 'checklists' | 'contacts';
 
 interface Props {
   store: BabyStore;
@@ -34,8 +38,10 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   const [tab, setTab] = useState<TabId>(initialTab);
   const [profileMode, setProfileMode] = useState<ProfileMode | null>(null);
   const [appointment, setAppointment] = useState<Appointment | 'new' | null>(null);
+  const [contact, setContact] = useState<{ contact: Contact | null; role?: string } | null>(null);
   const { profile } = store.data;
   const born = !!profile?.birthDate;
+  const calendar = calendarAvailable(user);
 
   useEffect(() => {
     document.title = 'Huishouden Baby';
@@ -45,12 +51,16 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
     { id: 'home', label: born ? 'Log' : 'Overview' },
     { id: 'appointments', label: 'Appointments' },
     { id: 'checklists', label: 'Checklists' },
+    { id: 'contacts', label: 'Contacts' },
   ];
 
   let content: ReactNode;
   if (!store.ready) content = <p className="p-2 text-lg text-stone-600">Loading the baby's details</p>;
-  else if (tab === 'appointments') content = <Appointments store={store} onAdd={() => setAppointment('new')} onEdit={setAppointment} />;
-  else if (tab === 'checklists') content = <Checklists store={store} notify={notify} />;
+  else if (tab === 'appointments')
+    content = <Appointments store={store} calendarAvailable={calendar} onAdd={() => setAppointment('new')} onEdit={setAppointment} notify={notify} />;
+  else if (tab === 'checklists') content = <Checklists store={store} notify={notify} onAddContact={(role) => setContact({ contact: null, role })} />;
+  else if (tab === 'contacts')
+    content = <Contacts store={store} notify={notify} onAdd={() => setContact({ contact: null })} onEdit={(c) => setContact({ contact: c })} />;
   else if (born) content = <LogScreen store={store} notify={notify} onEditProfile={() => setProfileMode('edit')} />;
   else
     content = (
@@ -92,6 +102,8 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
         <AppointmentDialog
           appointment={appointment === 'new' ? null : appointment}
           now={now}
+          contacts={store.data.contacts}
+          calendarAvailable={calendar}
           onClose={() => setAppointment(null)}
           onSave={(input) => store.actions.saveAppointment(appointment === 'new' ? null : appointment.id, input)}
           onDelete={
@@ -102,6 +114,26 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
                   store.actions.deleteAppointment(gone.id);
                   notify(`Deleted ${gone.title}`, () => store.actions.restoreAppointment(gone));
                 }
+          }
+        />
+      )}
+      {contact && (
+        <ContactDialog
+          contact={contact.contact}
+          role={contact.role}
+          onClose={() => setContact(null)}
+          onSave={(input) => {
+            store.actions.saveContact(contact.contact?.id ?? null, input);
+            if (!contact.contact) notify(`Added ${input.name}`);
+          }}
+          onDelete={
+            contact.contact
+              ? () => {
+                  const gone = contact.contact!;
+                  store.actions.deleteContact(gone.id);
+                  notify(`Deleted ${gone.name}`, () => store.actions.restoreContact(gone));
+                }
+              : undefined
           }
         />
       )}

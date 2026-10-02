@@ -1,11 +1,18 @@
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, Check, ListPlus, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ListPlus, Phone, Plus, Trash2, UserPlus, UserRound } from 'lucide-react';
+import { telHref } from '@huishouden/pwa-kit/places';
 import { groupChecklist, moveItem } from '../lib/checklist';
 import { LIMITS } from '../lib/model';
+import { contactForRole, roleForChecklistItem, type KnownRole } from '../lib/contacts';
 import type { BabyStore } from '../data/types';
-import { Dialog, Field, cardClass, ghostButton, iconButton, inputClass, primaryButton } from '../components/ui';
+import { Dialog, Field, cardClass, ghostButton, iconButton, inputClass, linkClass, primaryButton } from '../components/ui';
 
-export function Checklists({ store, notify }: { store: BabyStore; notify: (message: string, undo?: () => void) => void }) {
+export function Checklists({ store, notify, onAddContact }: {
+  store: BabyStore;
+  notify: (message: string, undo?: () => void) => void;
+  /** Opens the contact dialog with the role filled in. */
+  onAddContact: (role: KnownRole) => void;
+}) {
   const { actions } = store;
   const groups = groupChecklist(store.data.checklists);
   const [newList, setNewList] = useState(false);
@@ -29,8 +36,12 @@ export function Checklists({ store, notify }: { store: BabyStore; notify: (messa
               </p>
             </div>
             <ul>
-              {g.items.map((item, i) => (
-                <li key={item.id} className="group flex min-h-12 items-center gap-1 border-b border-stone-200 last:border-b-0">
+              {g.items.map((item, i) => {
+                const role = roleForChecklistItem(item.text);
+                const who = role ? contactForRole(store.data.contacts, role) : undefined;
+                return (
+                <li key={item.id} className="border-b border-stone-200 last:border-b-0">
+                  <div className="flex min-h-12 items-center gap-1">
                   <button
                     type="button"
                     role="checkbox"
@@ -46,6 +57,11 @@ export function Checklists({ store, notify }: { store: BabyStore; notify: (messa
                     </span>
                     <span className={`text-base ${item.done ? 'text-stone-600 line-through' : 'text-stone-800'}`}>{item.text}</span>
                   </button>
+                  {role && !who && (
+                    <button type="button" className={`${ghostButton} px-2 text-forest-700`} onClick={() => onAddContact(role)} aria-label={`Add contact: ${role}`}>
+                      <UserPlus size={18} /> Add contact
+                    </button>
+                  )}
                   <button type="button" className={iconButton} aria-label={`Move up: ${item.text}`} disabled={i === 0} onClick={() => actions.reorderChecklist(moveItem(g.items, item.id, -1))}>
                     <ArrowUp size={18} />
                   </button>
@@ -69,8 +85,22 @@ export function Checklists({ store, notify }: { store: BabyStore; notify: (messa
                   >
                     <Trash2 size={18} />
                   </button>
+                  </div>
+                  {who && (
+                    <div className="-mt-1 flex flex-wrap items-center gap-x-4 pb-1 pl-9 text-base text-stone-600">
+                      <span className="flex items-center gap-1.5">
+                        <UserRound size={16} aria-hidden="true" /> {who.name}
+                      </span>
+                      {who.phone && (
+                        <a className={`${linkClass} tabular-nums`} href={telHref(who.phone)} aria-label={`Call ${who.name}, ${who.phone}`}>
+                          <Phone size={16} aria-hidden="true" /> {who.phone}
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </li>
-              ))}
+                );
+              })}
             </ul>
             <AddItem list={g.list} onAdd={(text) => actions.addChecklistItem(g.list, text)} />
           </section>
