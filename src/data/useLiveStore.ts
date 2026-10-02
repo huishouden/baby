@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { collection, deleteDoc, doc, onSnapshot, query, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore';
-import { addContact, cleanContact, deleteContact, updateContact, watchContacts, type Contact } from '@huishouden/pwa-kit/contacts';
+import { addContact, removeContactFromApp, restoreContact, updateContact, watchContacts, type Contact } from '@huishouden/pwa-kit/contacts';
 import type { Appointment, BabyEvent, BabyProfile, ChecklistItem } from '../lib/model';
 import { APP } from '../lib/contacts';
 import { cleanEvent } from '../lib/model';
@@ -131,16 +131,9 @@ export function useLiveStore(householdId: string, me: string, members: string[],
       deleteContact: (id) => {
         const c = contactsRef.current.find((x) => x.id === id);
         // A contact other apps also show stays for them; Baby only stops showing it.
-        const others = c?.apps.filter((a) => a !== APP) ?? [];
-        if (c && others.length) {
-          const { id: _id, createdAt: _c, updatedAt: _u, by: _b, ...input } = c;
-          report(updateContact(db, householdId, id, { ...input, apps: others }, me));
-        } else report(deleteContact(db, householdId, id));
+        if (c) report(removeContactFromApp(db, householdId, c, APP, me));
       },
-      restoreContact: (c) => {
-        const { id, createdAt, updatedAt, by, ...input } = c;
-        report(setDoc(doc(col('contacts'), id), { ...cleanContact(input), createdAt, ...(updatedAt ? { updatedAt } : {}), by }));
-      },
+      restoreContact: (c) => report(restoreContact(db, householdId, c)),
     };
   }, [base, householdId, me]);
 
