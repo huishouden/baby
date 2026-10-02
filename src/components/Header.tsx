@@ -38,7 +38,7 @@ export function Header({ tabs, tab, onTab, user, onSignIn, onSignOut, signingIn 
                 type="button"
                 onClick={() => onTab(t.id)}
                 aria-current={t.id === tab ? 'page' : undefined}
-                className={`min-h-11 flex-1 rounded-xl px-5 text-base font-medium whitespace-nowrap transition-colors duration-150 sm:flex-none ${
+                className={`min-h-11 flex-1 rounded-xl px-2 text-sm font-medium whitespace-nowrap transition-colors duration-150 sm:flex-none sm:px-5 sm:text-base ${
                   t.id === tab ? 'bg-forest-700 text-white' : 'text-stone-600 hover:bg-stone-100'
                 }`}
               >

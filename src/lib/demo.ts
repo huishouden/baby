@@ -1,3 +1,4 @@
+import type { Contact } from '@huishouden/pwa-kit/contacts';
 import type { Appointment, BabyEvent, BabyProfile, ChecklistItem } from './model';
 import { defaultChecklistDocs } from './checklist';
 import { toYmd } from './time';
@@ -18,6 +19,8 @@ export interface BabyData {
   events: BabyEvent[];
   checklists: ChecklistItem[];
   appointments: Appointment[];
+  /** The household's contacts shown in Baby. */
+  contacts: Contact[];
 }
 
 /** Local time on the day `dayOffset` days from the demo day. */
@@ -90,28 +93,69 @@ function afterEvents(): BabyEvent[] {
   return [...day(-1, yesterday, 100), ...day(0, today, 200)];
 }
 
+const PEDIATRICS = 'demo-contact-1';
+const CLINIC = 'demo-contact-2';
+const HOSPITAL = 'demo-contact-3';
+
+/** Invented practices on an invented street; 555-01xx numbers are reserved for fiction. */
+function contacts(): Contact[] {
+  const base = { apps: ['baby'], createdAt: at(-60, '12:00'), by: SAM };
+  return [
+    {
+      id: PEDIATRICS,
+      name: 'Example Pediatrics',
+      role: 'Pediatrician',
+      phone: '(555) 010-0142',
+      website: 'https://pediatrics.example.com',
+      address: '12 Example Street, Springfield',
+      notes: 'Taking new patients. Newborn visit within 3 days of coming home.',
+      ...base,
+    },
+    {
+      id: CLINIC,
+      name: 'Riverside Family Clinic',
+      role: 'OB / midwife',
+      phone: '(555) 010-0187',
+      email: 'frontdesk@clinic.example.com',
+      website: 'https://clinic.example.com',
+      address: '40 River Road, Springfield',
+      ...base,
+    },
+    {
+      id: HOSPITAL,
+      name: 'City Hospital',
+      role: 'Hospital',
+      phone: '(555) 010-0100',
+      address: '1 Hospital Way, Springfield',
+      notes: 'Labor and delivery is on level 3. Park in garage B.',
+      ...base,
+    },
+  ];
+}
+
 function appointments(after: boolean): Appointment[] {
-  const list: [number, string, string, string, string?][] = after
+  const list: [number, string, string, string, string?, string?][] = after
     ? [
-        [2, '11:00', 'Two-week weight check', 'Riverside Family Clinic'],
-        [9, '09:30', 'Postpartum check-up', 'Riverside Family Clinic', 'Bring the feeding log'],
-        [27, '10:15', 'One-month check and vaccines', 'Riverside Family Clinic'],
-        [-12, '14:00', 'Newborn hearing test', 'City Hospital, level 2'],
+        [2, '11:00', 'Two-week weight check', '12 Example Street, Springfield', undefined, PEDIATRICS],
+        [9, '09:30', 'Postpartum check-up', 'Riverside Family Clinic', 'Bring the feeding log', CLINIC],
+        [27, '10:15', 'One-month check and vaccines', '12 Example Street, Springfield', undefined, PEDIATRICS],
+        [-12, '14:00', 'Newborn hearing test', 'City Hospital, level 2', undefined, HOSPITAL],
       ]
     : [
-        [2, '09:30', 'Midwife check-up', 'Riverside Family Clinic, room 4', 'Ask about the birth plan and the hospital tour'],
+        [2, '09:30', 'Midwife check-up', 'Riverside Family Clinic, room 4', 'Ask about the birth plan and the hospital tour', CLINIC],
         [9, '08:00', 'Glucose test', 'Riverside lab', 'Fast from midnight'],
-        [16, '18:30', 'Hospital tour', 'City Hospital, main entrance'],
+        [16, '18:30', 'Hospital tour', 'City Hospital, main entrance', undefined, HOSPITAL],
         [23, '19:00', 'Birth class, part 2', 'Community centre, room B'],
         [-14, '19:00', 'Birth class, part 1', 'Community centre, room B'],
-        [-42, '10:00', '20-week scan', 'City Hospital, imaging'],
+        [-42, '10:00', '20-week scan', 'City Hospital, imaging', undefined, HOSPITAL],
       ];
-  return list.map(([d, time, title, location, notes], i) => ({
+  return list.map(([d, time, title, location, notes, contactId], i) => ({
     id: `demo-appt-${i + 1}`,
     title,
     at: at(d, time),
     location,
     ...(notes ? { notes } : {}),
+    ...(contactId ? { contactId } : {}),
     createdAt: at(-60, '12:00'),
     by: i % 2 ? ALEX : SAM,
   }));
@@ -119,11 +163,14 @@ function appointments(after: boolean): Appointment[] {
 
 function checklists(after: boolean): ChecklistItem[] {
   const doneBefore = new Set(['default-1-1', 'default-1-2', 'default-1-4', 'default-2-1', 'default-2-2', 'default-3-1', 'default-3-2', 'default-3-3', 'default-4-1', 'default-4-2']);
-  return defaultChecklistDocs(at(-60, '12:00'), SAM).map(({ id, data }) => ({
+  const items: ChecklistItem[] = defaultChecklistDocs(at(-60, '12:00'), SAM).map(({ id, data }) => ({
     id,
     ...data,
     done: after ? !id.startsWith('default-4-5') && !id.startsWith('default-4-6') : doneBefore.has(id),
   }));
+  // One of the household's own items, about finding someone the care team does not have yet.
+  items.push({ id: 'demo-item-1', list: 'Paperwork', text: 'Find a lactation consultant', done: false, order: 4100, createdAt: at(-20, '12:00'), by: ALEX });
+  return items;
 }
 
 export function demoData(scenario: DemoScenario): BabyData {
@@ -136,5 +183,6 @@ export function demoData(scenario: DemoScenario): BabyData {
     events: after ? afterEvents() : [],
     checklists: checklists(after),
     appointments: appointments(after),
+    contacts: contacts(),
   };
 }

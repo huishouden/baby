@@ -131,3 +131,21 @@ export function Toast({ toast, onDone }: { toast: ToastState | null; onDone: () 
     </div>
   );
 }
+
+/** A text link with a 44px target: phone numbers, Open in Google Maps, Open in Calendar. */
+export const linkClass =
+  '-mx-2 inline-flex min-h-11 items-center gap-1.5 rounded-xl px-2 font-medium text-forest-700 underline-offset-4 transition-colors duration-150 hover:bg-forest-50 hover:underline';
+
+/** The second action next to a primary button. */
+export const secondaryButton = `${ghostButton} border border-stone-200 bg-white disabled:opacity-50`;
+
+export function ErrorNotice({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-red-50 px-3 py-2 text-base text-red-700">
+      <span className="min-w-0 flex-1">{message}</span>
+      <button type="button" className="min-h-11 rounded-xl px-3 font-semibold underline-offset-4 hover:underline" onClick={onRetry}>
+        Try again
+      </button>
+    </div>
+  );
+}

@@ -1,3 +1,4 @@
+import type { Contact, ContactInput } from '@huishouden/pwa-kit/contacts';
 import type { Appointment, BabyEvent, ChecklistItem, EventFields } from '../lib/model';
 import type { BabyData } from '../lib/demo';
 
@@ -14,6 +15,9 @@ export interface AppointmentInput {
   at: number;
   location?: string;
   notes?: string;
+  contactId?: string;
+  calendarEventId?: string;
+  calendarLink?: string;
 }
 
 /** Writes return immediately (Firestore queues them offline); failures arrive through `onError`. */
@@ -31,6 +35,10 @@ export interface BabyActions {
   saveAppointment(id: string | null, input: AppointmentInput): void;
   deleteAppointment(id: string): void;
   restoreAppointment(a: Appointment): void;
+  saveContact(id: string | null, input: ContactInput): void;
+  deleteContact(id: string): void;
+  /** Puts a deleted contact back under its old id, so appointments that point at it still do. */
+  restoreContact(c: Contact): void;
 }
 
 export interface BabyStore {

@@ -1,0 +1,20 @@
+[
+  {
+    "osm_type": "node",
+    "osm_id": 1000001,
+    "lat": "40.0001",
+    "lon": "-75.0001",
+    "name": "Example Kids Clinic",
+    "display_name": "Example Kids Clinic, 7 Sample Avenue, Springfield, 00000, United States",
+    "extratags": { "phone": "+1 555 010 0177", "website": "kids.example.com" }
+  },
+  {
+    "osm_type": "way",
+    "osm_id": 1000002,
+    "lat": "40.0002",
+    "lon": "-75.0002",
+    "name": "Example Lactation Center",
+    "display_name": "Example Lactation Center, 3 Demo Lane, Springfield, 00000, United States",
+    "extratags": {}
+  }
+]
