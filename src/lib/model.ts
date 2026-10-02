@@ -57,6 +57,8 @@ export interface AppointmentData {
   /** The Google Calendar event it came from, so an import never adds it twice. */
   calendarEventId?: string;
   calendarLink?: string;
+  /** Only admins and members see it (pwa-kit roles); always written, `false` included. */
+  private?: boolean;
   createdAt: number;
   by: string;
 }

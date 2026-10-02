@@ -156,6 +156,8 @@ function appointments(after: boolean): Appointment[] {
     location,
     ...(notes ? { notes } : {}),
     ...(contactId ? { contactId } : {}),
+    // The glucose test is kept to admins and members, to show the private flag.
+    private: title === 'Glucose test',
     createdAt: at(-60, '12:00'),
     by: i % 2 ? ALEX : SAM,
   }));

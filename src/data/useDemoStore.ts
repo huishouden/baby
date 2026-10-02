@@ -6,14 +6,24 @@ import { DEMO_MEMBERS, demoData, type BabyData, type DemoScenario } from '../lib
 import { nextOrder } from '../lib/checklist';
 import { appointmentDoc, eventFields, newEventDoc, profileDoc } from './build';
 import type { BabyActions, BabyStore } from './types';
+import type { Role } from '@huishouden/pwa-kit/roles';
+
+/** A helper for the sample (`?as=helper`), someone the sample's entries don't belong to. */
+export const DEMO_HELPER = 'jo@example.com';
 
 /**
  * Sample data kept in memory: the signed-out app is fully clickable, nothing is saved, and a reload
  * starts over. `clock` is the demo's moving "now" (fixed 2031 start plus time since load).
  */
-export function useDemoStore(scenario: DemoScenario, clock: () => number): BabyStore {
-  const [data, setData] = useState<BabyData>(() => demoData(scenario));
-  const me = DEMO_MEMBERS[0];
+export function useDemoStore(scenario: DemoScenario, clock: () => number, role: Role = 'admin'): BabyStore {
+  const [data, setData] = useState<BabyData>(() => {
+    const d = demoData(scenario);
+    // A helper's view: what the rules would let them read (no private appointments or contacts).
+    return role === 'helper' || role === 'kid'
+      ? { ...d, appointments: d.appointments.filter((a) => !a.private), contacts: d.contacts.filter((c) => !c.private) }
+      : d;
+  });
+  const me = role === 'helper' || role === 'kid' ? DEMO_HELPER : DEMO_MEMBERS[0];
 
   const actions = useMemo<BabyActions>(() => {
     let seq = 0;
@@ -74,5 +84,5 @@ export function useDemoStore(scenario: DemoScenario, clock: () => number): BabyS
     };
   }, [clock, me]);
 
-  return { data, ready: true, actions, members: DEMO_MEMBERS, me };
+  return { data, ready: true, actions, members: role === 'helper' || role === 'kid' ? [...DEMO_MEMBERS, DEMO_HELPER] : DEMO_MEMBERS, me, role };
 }

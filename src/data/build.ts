@@ -55,5 +55,7 @@ export function appointmentDoc(a: AppointmentInput, by: string, createdAt: numbe
   if (a.contactId) out.contactId = a.contactId;
   if (a.calendarEventId) out.calendarEventId = a.calendarEventId;
   if (a.calendarLink && /^https:\/\//.test(a.calendarLink)) out.calendarLink = a.calendarLink;
+  // Written every time: an appointment without the flag is hidden from helpers and kids.
+  out.private = a.private === true;
   return out;
 }

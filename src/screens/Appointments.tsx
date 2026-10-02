@@ -11,6 +11,8 @@ import { BABY_CALENDAR_QUERIES } from '../lib/calendarImport';
 import type { CalendarMatch } from '@huishouden/pwa-kit/calendar';
 import type { BabyStore } from '../data/types';
 import { auth } from '../data/firebase';
+import { PrivateMark } from '@huishouden/pwa-kit/react/contacts';
+import { mayChange } from '../lib/roles';
 
 export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport }: {
   store: BabyStore;
@@ -62,7 +64,7 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
         {upcoming.length === 0 && <p className="p-6 text-lg text-stone-600">No appointments coming up.</p>}
         <ul>
           {upcoming.map((a, i) => (
-            <Row key={a.id} a={a} now={now} contacts={contacts} first={i === 0} onEdit={() => onEdit(a)} />
+            <Row key={a.id} a={a} now={now} contacts={contacts} first={i === 0} onEdit={mayChange(store.role, store.me, a) ? () => onEdit(a) : undefined} />
           ))}
         </ul>
       </section>
@@ -75,7 +77,7 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
           {showPast && (
             <ul className={`${cardClass} mt-2`}>
               {past.map((a) => (
-                <Row key={a.id} a={a} now={now} contacts={contacts} onEdit={() => onEdit(a)} />
+                <Row key={a.id} a={a} now={now} contacts={contacts} onEdit={mayChange(store.role, store.me, a) ? () => onEdit(a) : undefined} />
               ))}
             </ul>
           )}
@@ -101,7 +103,7 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
   );
 }
 
-function Row({ a, now, contacts, first, onEdit }: { a: Appointment; now: number; contacts: Contact[]; first?: boolean; onEdit: () => void }) {
+function Row({ a, now, contacts, first, onEdit }: { a: Appointment; now: number; contacts: Contact[]; first?: boolean; onEdit?: () => void }) {
   const d = new Date(a.at);
   const who = a.contactId ? contacts.find((c) => c.id === a.contactId) : undefined;
   return (
@@ -139,9 +141,12 @@ function Row({ a, now, contacts, first, onEdit }: { a: Appointment; now: number;
           </a>
         )}
       </div>
-      <button type="button" className={iconButton} onClick={onEdit} aria-label={`Edit ${a.title}`}>
-        <Pencil size={18} />
-      </button>
+      {a.private && <PrivateMark />}
+      {onEdit && (
+        <button type="button" className={iconButton} onClick={onEdit} aria-label={`Edit ${a.title}`}>
+          <Pencil size={18} />
+        </button>
+      )}
     </li>
   );
 }

@@ -20,13 +20,18 @@ describe('an appointment on the agenda', () => {
         detail: 'Riverside Family Clinic, 40 River Road, Springfield',
         url: 'https://huishouden-baby.web.app/#appointments',
         who: 'Robin',
+        private: false,
       },
     ]);
   });
 
+  test('a private appointment stays private on the household calendar', () => {
+    expect(appointmentAgenda({ ...visit, private: true }, profile)[0]?.private).toBe(true);
+  });
+
   test('has no status, no detail without a place and no who without a name', () => {
     const [item] = appointmentAgenda(tour, { ...profile, name: '  ' });
-    expect(item).toEqual({ kind: 'appointment', title: 'Hospital tour', start: tour.at, allDay: false, url: `${APP_URL}/#appointments` });
+    expect(item).toEqual({ kind: 'appointment', title: 'Hospital tour', start: tour.at, allDay: false, url: `${APP_URL}/#appointments`, private: false });
   });
 
   test('notes stay in the app', () => {

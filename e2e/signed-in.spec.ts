@@ -65,3 +65,51 @@ for (const leave of ['reload', 'close'] as const) {
     await expect.poll(() => page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('hh-outbox:')).length)).toBe(0);
   });
 }
+
+// Roles (pwa-kit STANDARD.md "Roles"): test-helper is the household's helper. They log their own
+// feeds and change those, but not what someone else logged, and are told who can.
+test.describe('as a helper', () => {
+  test.beforeAll(async () => {
+    // Other apps' runs may reseed the household with an older kit that has no helper: put it back.
+    const { seedTestHousehold } = await import('@huishouden/pwa-kit/staging');
+    await seedTestHousehold({ accessToken: process.env.HH_STAGING_ACCESS_TOKEN! });
+  });
+
+  test("a helper logs and changes their own feed but can't change a member's", async ({ page, browser }) => {
+    // A member's feed, logged first (which also starts the log in a fresh household).
+    const ml = 201 + (Date.now() % 799);
+    const admin = await browser.newContext({ baseURL: test.info().project.use.baseURL });
+    try {
+      const theirs = await admin.newPage();
+      await signInTestUser(theirs, { email: 'test-a@example.com' });
+      await openLog(theirs);
+      await theirs.getByRole('button', { name: 'Log bottle feed' }).click();
+      await theirs.getByRole('dialog', { name: 'Bottle feed' }).getByLabel('Amount in ml').fill(String(ml));
+      await theirs.getByRole('dialog', { name: 'Bottle feed' }).getByRole('button', { name: 'Log bottle' }).click();
+      await expect(theirs.getByText(new RegExp(`^Logged bottle, ${ml} ml at `))).toBeVisible();
+    } finally {
+      await admin.close();
+    }
+
+    await signInTestUser(page, { email: 'test-helper@example.com' });
+    await expect(page.getByRole('button', { name: 'Log bottle feed' })).toBeVisible({ timeout: 20_000 });
+    const timeline = page.getByRole('list', { name: 'Timeline' });
+    const members = timeline.getByRole('listitem').filter({ hasText: new RegExp(`\\b${ml} ml\\b`) });
+    await expect(members.first()).toBeVisible({ timeout: 20_000 });
+    // Refused: no edit on the member's feed, and the reason said; the baby's details aren't theirs to edit.
+    await expect(members.first().getByRole('button', { name: /^Edit / })).toHaveCount(0);
+    await expect(page.getByText('Only admins and members can change or delete what someone else added.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Edit baby details' })).toHaveCount(0);
+
+    // Permitted: their own feed, which they can open and delete.
+    const mine = ml === 999 ? 998 : ml + 1;
+    await page.getByRole('button', { name: 'Log bottle feed' }).click();
+    await page.getByRole('dialog', { name: 'Bottle feed' }).getByLabel('Amount in ml').fill(String(mine));
+    await page.getByRole('dialog', { name: 'Bottle feed' }).getByRole('button', { name: 'Log bottle' }).click();
+    const own = timeline.getByRole('listitem').filter({ hasText: new RegExp(`\\b${mine} ml\\b`) }).first();
+    await expect(own).toBeVisible();
+    await own.getByRole('button', { name: /^Edit / }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
+    await expect(timeline.getByText(new RegExp(`\\b${mine} ml\\b`))).toHaveCount(0, { timeout: 20_000 });
+  });
+});

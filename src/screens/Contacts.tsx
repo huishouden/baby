@@ -4,6 +4,7 @@ import { ContactCard } from '@huishouden/pwa-kit/react/contacts';
 import { cardClass, primaryButton } from '@huishouden/pwa-kit/react/ui';
 import { ROLES } from '../lib/contacts';
 import type { BabyStore } from '../data/types';
+import { mayChange } from '../lib/roles';
 
 /** The care team: everyone the household may need to call about the baby, one tap away. */
 export function Contacts({ store, onAdd, onEdit, notify }: {
@@ -32,11 +33,15 @@ export function Contacts({ store, onAdd, onEdit, notify }: {
               key={c.id}
               contact={c}
               role={g.role}
-              onEdit={() => onEdit(c)}
-              onDelete={() => {
-                store.actions.deleteContact(c.id);
-                notify(`Deleted ${c.name}`, () => store.actions.restoreContact(c));
-              }}
+              onEdit={mayChange(store.role, store.me, c) ? () => onEdit(c) : undefined}
+              onDelete={
+                mayChange(store.role, store.me, c)
+                  ? () => {
+                      store.actions.deleteContact(c.id);
+                      notify(`Deleted ${c.name}`, () => store.actions.restoreContact(c));
+                    }
+                  : undefined
+              }
             />
           )),
         )}
