@@ -1,13 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Smoke tests against a deployed site: BASE_URL defaults to production.
+// Smoke tests against a deployed site: BASE_URL defaults to production, Baby's path on the suite's
+// one site. Specs use relative paths (`./`, `./?demo=after`): a leading `/` would open the portal.
 export default defineConfig({
   testDir: 'e2e',
   timeout: 45_000,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
   use: {
-    baseURL: process.env.BASE_URL ?? 'https://huishouden-baby.web.app',
+    baseURL: process.env.BASE_URL ?? 'https://huishouden-piekstra.web.app/baby/',
     trace: 'retain-on-failure',
   },
   projects: [

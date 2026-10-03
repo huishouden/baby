@@ -7,7 +7,7 @@ main screen becomes a one-tap log of feeds, sleep, diapers and pumping, readable
 when the baby last ate, how long they have been asleep or awake, and today's totals. Every entry shows
 who logged it, and the whole household sees the same log.
 
-Live at https://huishouden-baby.web.app, also linked from the [Huishouden portal](https://huishouden-piekstra.web.app).
+Live at https://huishouden-piekstra.web.app/baby/, also linked from the [Huishouden portal](https://huishouden-piekstra.web.app). The old address, huishouden-baby.web.app, redirects there.
 Installable on the tablet, phones and laptops, and works offline (entries sync when the connection is back).
 
 ## Screenshots

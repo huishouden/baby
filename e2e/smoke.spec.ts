@@ -12,7 +12,7 @@ test('loads without runtime errors and shows the sample countdown', async ({ pag
   await expectCleanLoad(page);
   await expect(page.getByText('Sample data')).toBeVisible();
   await expect(page.getByText('12 weeks')).toBeVisible();
-  await expectHuishoudenFrame(page, { app: 'Baby', portalUrl: 'https://huishouden-piekstra.web.app' });
+  await expectHuishoudenFrame(page, { app: 'Baby', portalUrl: '/' });
 });
 
 test('the sample log answers a one-tap feed with an undo', async ({ page }) => {
@@ -41,6 +41,6 @@ test('agenda links open their tab', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Appointments', exact: true })).toHaveCount(0);
 });
 
-test('sends the security headers and leaves sign-in un-framed', ({ request }) => expectSecurityHeaders(request, '/', { camera: true }));
+test('sends the security headers and leaves sign-in un-framed', ({ request }) => expectSecurityHeaders(request, './', { camera: true }));
 
-test('the Sample data banner is one line on a phone', ({ page }) => expectCompactSampleBanner(page, '/'));
+test('the Sample data banner is one line on a phone', ({ page }) => expectCompactSampleBanner(page, './'));

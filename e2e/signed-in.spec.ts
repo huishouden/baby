@@ -57,7 +57,7 @@ for (const leave of ['reload', 'close'] as const) {
     else {
       await page.close();
       page = await context.newPage();
-      await page.goto('/');
+      await page.goto('./');
     }
     await openLog(page);
     await expect(page.getByText(new RegExp(`\\b${ml} ml\\b`)).first()).toBeVisible({ timeout: 20_000 });

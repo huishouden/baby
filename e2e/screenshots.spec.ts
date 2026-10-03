@@ -15,7 +15,7 @@ test('before: countdown', ({ page }) =>
 
 test('after: log', ({ page }) =>
   captureScreenshot(page, 'log', {
-    path: '/?demo=after',
+    path: './?demo=after',
     fixedTime,
     prepare: (p) => expect(p.getByText('Last fed')).toBeVisible(),
   }));
@@ -32,7 +32,7 @@ test('checklists', ({ page }) =>
 test('phone: log', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await captureScreenshot(page, 'phone-log', {
-    path: '/?demo=after',
+    path: './?demo=after',
     fixedTime,
     prepare: (p) => expect(p.getByText('Last fed')).toBeVisible(),
   });

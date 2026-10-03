@@ -9,6 +9,10 @@ const profile = fixture.profile as BabyProfile;
 const appointments = fixture.appointments as Appointment[];
 const [visit, tour] = appointments;
 
+test('the app lives at /baby/ on the suite\'s one site', () => {
+  expect(APP_URL).toBe('https://huishouden-piekstra.web.app/baby/');
+});
+
 describe('an appointment on the agenda', () => {
   test('is one timed item at its place, for the baby, linking to the Appointments tab', () => {
     expect(appointmentAgenda(visit, profile)).toEqual([
@@ -18,7 +22,7 @@ describe('an appointment on the agenda', () => {
         start: visit.at,
         allDay: false,
         detail: 'Riverside Family Clinic, 40 River Road, Springfield',
-        url: 'https://huishouden-baby.web.app/#appointments',
+        url: 'https://huishouden-piekstra.web.app/baby/#appointments',
         who: 'Robin',
         private: false,
       },
@@ -31,7 +35,7 @@ describe('an appointment on the agenda', () => {
 
   test('has no status, no detail without a place and no who without a name', () => {
     const [item] = appointmentAgenda(tour, { ...profile, name: '  ' });
-    expect(item).toEqual({ kind: 'appointment', title: 'Hospital tour', start: tour.at, allDay: false, url: `${APP_URL}/#appointments`, private: false });
+    expect(item).toEqual({ kind: 'appointment', title: 'Hospital tour', start: tour.at, allDay: false, url: `${APP_URL}#appointments`, private: false });
   });
 
   test('notes stay in the app', () => {
@@ -46,7 +50,7 @@ describe('an appointment on the agenda', () => {
 describe('the due date on the agenda', () => {
   test('is an all-day item from local midnight, linking to the app', () => {
     expect(dueDateAgenda(profile)).toEqual([
-      { kind: 'other', title: 'Due date', start: allDayStart('2031-08-06'), allDay: true, url: `${APP_URL}/`, who: 'Robin' },
+      { kind: 'other', title: 'Due date', start: allDayStart('2031-08-06'), allDay: true, url: APP_URL, who: 'Robin' },
     ]);
     expect(new Date(dueDateAgenda(profile)[0].start).getHours()).toBe(0);
   });
@@ -78,10 +82,10 @@ describe('everything Baby publishes', () => {
     expect(items.every((i) => inAgendaWindow(i, DEMO_NOW))).toBe(true);
   });
 
-  test('another address gives links into it', () => {
+  test('another origin (staging) gives links into the app there', () => {
     expect(agendaItems({ profile, appointments: [tour] }, 'https://baby.example.com').map((i) => i.url)).toEqual([
-      'https://baby.example.com/',
-      'https://baby.example.com/#appointments',
+      'https://baby.example.com/baby/',
+      'https://baby.example.com/baby/#appointments',
     ]);
   });
 
