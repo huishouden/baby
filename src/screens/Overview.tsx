@@ -41,19 +41,19 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
           </div>
           {due ? (
             <>
-              <p className="mt-1 text-stone-800">
+              <p className="mt-1 text-ink">
                 <span className="text-6xl font-semibold tracking-tight tabular-nums">{due.headline}</span>
-                {due.suffix && <span className="ml-3 text-3xl font-medium text-stone-600">{due.suffix}</span>}
+                {due.suffix && <span className="ml-3 text-3xl font-medium text-muted">{due.suffix}</span>}
               </p>
-              <p className="mt-3 text-xl text-stone-600">
+              <p className="mt-3 text-xl text-muted">
                 Due {formatDateLong(parseYmd(profile!.dueDate)!)}
                 {due.week ? ` · week ${due.week} of 40` : ''}
               </p>
             </>
           ) : (
             <>
-              <p className="mt-2 text-3xl font-semibold text-stone-800">When is the baby due?</p>
-              <p className="mt-2 text-lg text-stone-600">Add the due date to start the countdown.</p>
+              <p className="mt-2 text-3xl font-semibold text-ink">When is the baby due?</p>
+              <p className="mt-2 text-lg text-muted">Add the due date to start the countdown.</p>
             </>
           )}
           {!onSetDueDate && <RoleNote action="change-settings" className="mt-4" />}
@@ -85,26 +85,26 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
           </div>
           {next ? (
             <>
-              <button type="button" className="mt-1 -mx-2 rounded-xl px-2 py-1 text-left hover:bg-stone-50" onClick={() => onEditAppointment(next)}>
-                <p className="text-3xl font-semibold text-stone-800">{next.title}</p>
-                <p className="mt-1 text-xl text-stone-700">
-                  <span className="font-semibold text-forest-700">{relativeDay(next.at, now)}</span> · {formatDayLong(next.at)}, {formatTime(next.at)}
+              <button type="button" className="mt-1 -mx-2 rounded-xl px-2 py-1 text-left hover:bg-sunken" onClick={() => onEditAppointment(next)}>
+                <p className="text-3xl font-semibold text-ink">{next.title}</p>
+                <p className="mt-1 text-xl text-ink-soft">
+                  <span className="font-semibold text-link">{relativeDay(next.at, now)}</span> · {formatDayLong(next.at)}, {formatTime(next.at)}
                 </p>
                 {next.location && (
-                  <p className="mt-1 flex items-center gap-1.5 text-lg text-stone-600">
+                  <p className="mt-1 flex items-center gap-1.5 text-lg text-muted">
                     <MapPin size={18} aria-hidden="true" /> {next.location}
                   </p>
                 )}
-                {next.notes && <p className="mt-1 text-base text-stone-600">{next.notes}</p>}
+                {next.notes && <p className="mt-1 text-base text-muted">{next.notes}</p>}
               </button>
               {later.length > 0 && (
-                <ul className="mt-4 border-t border-stone-200">
+                <ul className="mt-4 border-t border-line">
                   {later.slice(0, 2).map((a) => (
                     <li key={a.id}>
-                      <button type="button" onClick={() => onEditAppointment(a)} className="flex min-h-12 w-full items-center gap-4 border-b border-stone-200 py-2 text-left hover:bg-stone-50">
-                        <span className="w-28 shrink-0 text-base font-medium text-stone-600">{relativeDay(a.at, now)}</span>
-                        <span className="min-w-0 flex-1 truncate text-base text-stone-800">{a.title}</span>
-                        <span className="text-sm text-stone-600 tabular-nums">{formatTime(a.at)}</span>
+                      <button type="button" onClick={() => onEditAppointment(a)} className="flex min-h-12 w-full items-center gap-4 border-b border-line py-2 text-left hover:bg-sunken">
+                        <span className="w-28 shrink-0 text-base font-medium text-muted">{relativeDay(a.at, now)}</span>
+                        <span className="min-w-0 flex-1 truncate text-base text-ink">{a.title}</span>
+                        <span className="text-sm text-muted tabular-nums">{formatTime(a.at)}</span>
                       </button>
                     </li>
                   ))}
@@ -112,46 +112,46 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
               )}
             </>
           ) : (
-            <p className="mt-2 text-lg text-stone-600">No appointments coming up.</p>
+            <p className="mt-2 text-lg text-muted">No appointments coming up.</p>
           )}
         </section>
       </div>
 
       <section className={`${cardClass} flex min-h-0 flex-col p-6`} aria-label="Checklists">
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-stone-800">Checklists</h2>
+          <h2 className="text-xl font-semibold text-ink">Checklists</h2>
           <button type="button" className={ghostButton} onClick={() => onOpen('checklists')}>
             Open <ChevronRight size={18} />
           </button>
         </div>
-        {groups.length === 0 && <p className="text-base text-stone-600">No checklists yet.</p>}
+        {groups.length === 0 && <p className="text-base text-muted">No checklists yet.</p>}
         <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto">
           {groups.map((g) => {
             const nextItem = g.items.find(isOpen);
             const pct = g.total ? Math.round((g.done / g.total) * 100) : 0;
             return (
-              <li key={g.list} className="border-b border-stone-200 py-3 last:border-b-0">
+              <li key={g.list} className="border-b border-line py-3 last:border-b-0">
                 <div className="flex items-baseline justify-between gap-3">
-                  <p className="text-lg font-semibold text-stone-800">{g.list}</p>
-                  <p className="text-base text-stone-600 tabular-nums">
+                  <p className="text-lg font-semibold text-ink">{g.list}</p>
+                  <p className="text-base text-muted tabular-nums">
                     {g.done} of {g.total}
                   </p>
                 </div>
-                <div className="mt-2 h-2 rounded-full bg-stone-100" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${g.list} progress`}>
-                  <div className="h-2 rounded-full bg-forest-600" style={{ width: `${pct}%` }} />
+                <div className="mt-2 h-2 rounded-full bg-sunken" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${g.list} progress`}>
+                  <div className="h-2 rounded-full bg-forest-600 dark:bg-forest-300" style={{ width: `${pct}%` }} />
                 </div>
                 {nextItem ? (
                   <button
                     type="button"
                     onClick={() => store.actions.setChecklistDone(nextItem.id, true)}
-                    className="mt-2 -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 text-left hover:bg-stone-50"
+                    className="mt-2 -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 text-left hover:bg-sunken"
                     aria-label={`Mark done: ${nextItem.text}`}
                   >
                     <span className="h-6 w-6 shrink-0 rounded-md border-2 border-stone-400" aria-hidden="true" />
-                    <span className="min-w-0 flex-1 truncate text-base text-stone-800">{nextItem.text}</span>
+                    <span className="min-w-0 flex-1 truncate text-base text-ink">{nextItem.text}</span>
                   </button>
                 ) : (
-                  <p className="mt-2 flex min-h-11 items-center gap-2 text-base text-forest-700">
+                  <p className="mt-2 flex min-h-11 items-center gap-2 text-base text-link">
                     <Check size={18} aria-hidden="true" /> All done
                   </p>
                 )}

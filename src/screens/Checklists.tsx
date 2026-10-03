@@ -21,18 +21,18 @@ export function Checklists({ store, notify, onAddContact }: {
   return (
     <div className="space-y-6 lg:h-full lg:overflow-y-auto">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-2xl font-semibold text-stone-800">Checklists</h2>
+        <h2 className="text-2xl font-semibold text-ink">Checklists</h2>
         <button type="button" className={primaryButton} onClick={() => setNewList(true)}>
           <ListPlus size={20} /> New list
         </button>
       </div>
-      {groups.length === 0 && <p className="text-lg text-stone-600">No checklists yet. Start one with New list.</p>}
+      {groups.length === 0 && <p className="text-lg text-muted">No checklists yet. Start one with New list.</p>}
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 md:grid-cols-2">
         {groups.map((g) => (
           <section key={g.list} className={`${cardClass} p-5`} aria-label={g.list}>
             <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
-              <h3 className="text-xl font-semibold text-stone-800">{g.list}</h3>
-              <p className="text-base text-stone-600 tabular-nums">
+              <h3 className="text-xl font-semibold text-ink">{g.list}</h3>
+              <p className="text-base text-muted tabular-nums">
                 {g.done} of {g.total} done{g.skipped > 0 && `, ${g.skipped} skipped`}
               </p>
             </div>
@@ -43,14 +43,14 @@ export function Checklists({ store, notify, onAddContact }: {
                 const mine = mayChange(store.role, store.me, item);
                 const skipped = item.skipped === true && !item.done;
                 return (
-                <li key={item.id} className="border-b border-stone-200 last:border-b-0">
+                <li key={item.id} className="border-b border-line last:border-b-0">
                   <div className="flex min-h-12 items-center gap-1">
                   {skipped ? (
                     <div className="flex min-h-12 min-w-0 flex-1 items-center gap-3 py-1 pr-2">
-                      <span className="inline-flex h-6 w-6 shrink-0 rounded-md border-2 border-dashed border-stone-300" aria-hidden="true" />
-                      <span className="min-w-0 text-base text-stone-600">
+                      <span className="inline-flex h-6 w-6 shrink-0 rounded-md border-2 border-dashed border-line" aria-hidden="true" />
+                      <span className="min-w-0 text-base text-muted">
                         {item.text}
-                        <span className="block text-sm font-medium text-stone-600">Skipped</span>
+                        <span className="block text-sm font-medium text-muted">Skipped</span>
                       </span>
                     </div>
                   ) : (
@@ -62,12 +62,12 @@ export function Checklists({ store, notify, onAddContact }: {
                     className="flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-xl py-1 pr-2 text-left"
                   >
                     <span
-                      className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${item.done ? 'border-forest-700 bg-forest-700 text-white' : 'border-stone-400'}`}
+                      className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${item.done ? 'border-primary bg-primary text-on-primary' : 'border-stone-400'}`}
                       aria-hidden="true"
                     >
                       {item.done && <Check size={16} strokeWidth={3} />}
                     </span>
-                    <span className={`text-base ${item.done ? 'text-stone-600 line-through' : 'text-stone-800'}`}>{item.text}</span>
+                    <span className={`text-base ${item.done ? 'text-muted line-through' : 'text-ink'}`}>{item.text}</span>
                   </button>
                   )}
                   <button type="button" className={iconButton} aria-label={`Move up: ${item.text}`} disabled={i === 0} onClick={() => actions.reorderChecklist(moveItem(g.items, item.id, -1))}>
@@ -123,7 +123,7 @@ export function Checklists({ store, notify, onAddContact }: {
                     </div>
                   )}
                   {who && (
-                    <div className="-mt-1 flex flex-wrap items-center gap-x-4 pb-1 pl-9 text-base text-stone-600">
+                    <div className="-mt-1 flex flex-wrap items-center gap-x-4 pb-1 pl-9 text-base text-muted">
                       <span className="flex items-center gap-1.5">
                         <UserRound size={16} aria-hidden="true" /> {who.name}
                       </span>
@@ -166,7 +166,7 @@ function AddItem({ list, onAdd }: { list: string; onAdd: (text: string) => void 
       }}
     >
       <input className={inputClass} value={text} maxLength={LIMITS.itemText} onChange={(e) => setText(e.target.value)} placeholder={`Add to ${list.toLowerCase()}`} aria-label={`Add to ${list}`} />
-      <button type="submit" className={`${ghostButton} border border-stone-200`} aria-label={`Add item to ${list}`} disabled={!text.trim()}>
+      <button type="submit" className={`${ghostButton} border border-line`} aria-label={`Add item to ${list}`} disabled={!text.trim()}>
         <Plus size={20} />
       </button>
     </form>

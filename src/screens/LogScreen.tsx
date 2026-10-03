@@ -66,9 +66,9 @@ export function LogScreen({ store, notify, onEditProfile }: Props) {
       <div className="flex min-h-0 flex-col gap-6">
         <section className={`${cardClass} px-6 py-5`} aria-live="polite" aria-label="At a glance">
           <div className="mb-2 flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-stone-800">
+            <h2 className="text-lg font-semibold text-ink">
               {name ?? 'Baby'}
-              {age && <span className="font-normal text-stone-600"> · {age}</span>}
+              {age && <span className="font-normal text-muted"> · {age}</span>}
             </h2>
             {onEditProfile && (
               <button type="button" onClick={onEditProfile} className={iconButton} aria-label="Edit baby details">
@@ -116,14 +116,14 @@ export function LogScreen({ store, notify, onEditProfile }: Props) {
             onClick={toggleSleep}
             className={`col-span-2 flex min-h-24 w-full items-center justify-center gap-4 rounded-2xl border px-4 transition-colors duration-150 sm:col-span-4 ${
               sleep.state === 'asleep'
-                ? 'border-forest-700 bg-forest-700 text-white hover:bg-forest-600'
-                : 'border-stone-200 bg-cream text-forest-700 hover:border-forest-400 hover:bg-forest-50'
+                ? 'border-primary bg-primary text-on-primary hover:bg-primary-hover'
+                : 'border-line bg-page text-link hover:border-forest-400 hover:bg-tint'
             }`}
           >
             {sleep.state === 'asleep' ? <Sun size={32} /> : <Moon size={32} />}
             <span className="text-left">
               <span className="block text-2xl font-semibold">{sleep.state === 'asleep' ? 'Woke up' : 'Fell asleep'}</span>
-              <span className={`block text-base tabular-nums ${sleep.state === 'asleep' ? 'text-forest-100' : 'text-stone-600'}`}>
+              <span className={`block text-base tabular-nums ${sleep.state === 'asleep' ? 'text-forest-100 dark:text-forest-900' : 'text-muted'}`}>
                 {sleep.state === 'asleep' ? `Asleep ${formatDuration(now - sleep.since)}. Tap to stop the sleep timer.` : 'Starts the sleep timer'}
               </span>
             </span>
@@ -132,34 +132,34 @@ export function LogScreen({ store, notify, onEditProfile }: Props) {
       </div>
 
       <section className={`${cardClass} flex min-h-0 flex-col`} aria-label="Day">
-        <div className="flex items-center justify-between gap-2 border-b border-stone-200 px-3 py-2">
+        <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
           <button type="button" className={iconButton} aria-label="Previous day" disabled={dayOffset >= HISTORY_DAYS} onClick={() => setDayOffset((d) => d + 1)}>
             <ChevronLeft size={22} />
           </button>
-          <h2 className="text-lg font-semibold text-stone-800">{dayOffset === 0 ? 'Today' : dayOffset === 1 ? 'Yesterday' : formatDayLong(day)}</h2>
+          <h2 className="text-lg font-semibold text-ink">{dayOffset === 0 ? 'Today' : dayOffset === 1 ? 'Yesterday' : formatDayLong(day)}</h2>
           <button type="button" className={iconButton} aria-label="Next day" disabled={dayOffset === 0} onClick={() => setDayOffset((d) => d - 1)}>
             <ChevronRight size={22} />
           </button>
         </div>
-        <dl className="grid grid-cols-2 gap-px border-b border-stone-200 bg-stone-200">
+        <dl className="grid grid-cols-2 gap-px border-b border-line bg-line">
           <Total label="Feeds" value={String(totals.feeds)} detail={feedTotalsDetail(totals.breastFeeds, totals.bottleFeeds, totals.bottleMl)} />
           <Total label="Sleep" value={formatHours(totals.sleepMs)} detail={totals.sleepMs ? formatDuration(totals.sleepMs) : 'none yet'} />
           <Total label="Diapers" value={String(totals.diaperCount)} detail={diaperBreakdown(totals.diapers)} />
           <Total label="Pumped" value={`${totals.pumpMl} ml`} detail={totals.pumps ? `${totals.pumps} time${totals.pumps === 1 ? '' : 's'}` : 'none yet'} />
         </dl>
         {timeline.some((e) => !mayChange(store.role, store.me, e)) && !can(store.role, 'edit-others') && (
-          <RoleNote action="edit-others" className="border-b border-stone-200 px-5 py-2" />
+          <RoleNote action="edit-others" className="border-b border-line px-5 py-2" />
         )}
         <ol className="min-h-0 flex-1 overflow-y-auto" aria-label="Timeline">
-          {timeline.length === 0 && <li className="px-5 py-6 text-base text-stone-600">Nothing logged {dayOffset === 0 ? 'yet today' : 'this day'}.</li>}
+          {timeline.length === 0 && <li className="px-5 py-6 text-base text-muted">Nothing logged {dayOffset === 0 ? 'yet today' : 'this day'}.</li>}
           {timeline.map((e) => (
-            <li key={e.id} className="flex min-h-16 items-center gap-3 border-b border-stone-200 py-2 pr-2 pl-5 last:border-b-0">
-              <span className="w-[4.5rem] shrink-0 text-sm text-stone-600 tabular-nums">{formatTime(e.at)}</span>
+            <li key={e.id} className="flex min-h-16 items-center gap-3 border-b border-line py-2 pr-2 pl-5 last:border-b-0">
+              <span className="w-[4.5rem] shrink-0 text-sm text-muted tabular-nums">{formatTime(e.at)}</span>
               <KindIcon event={e} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-medium text-stone-800">{describeEvent(e, now)}</p>
+                <p className="truncate text-base font-medium text-ink">{describeEvent(e, now)}</p>
                 {(e.kind === 'sleep' || e.note) && (
-                  <p className="truncate text-sm text-stone-600">
+                  <p className="truncate text-sm text-muted">
                     {e.kind === 'sleep' && (e.endAt != null ? `${formatTime(e.at)} to ${formatTime(e.endAt)}` : 'Running')}
                     {e.kind === 'sleep' && e.note ? ' · ' : ''}
                     {e.note}
@@ -229,9 +229,9 @@ function ago(at: number | undefined, now: number): { value: string; prefix?: str
 function Glance({ label, value, prefix, detail, attention }: { label: string; value: string; prefix?: string; detail: string; attention?: boolean }) {
   return (
     <div>
-      <p className="text-sm font-medium text-stone-600 sm:text-base">{label}</p>
-      <p className={`text-2xl leading-tight font-semibold tracking-tight whitespace-nowrap sm:text-5xl tabular-nums ${attention ? 'text-forest-700' : 'text-stone-800'}`}>{value}</p>
-      <p className="text-sm text-stone-600 sm:text-lg">
+      <p className="text-sm font-medium text-muted sm:text-base">{label}</p>
+      <p className={`text-2xl leading-tight font-semibold tracking-tight whitespace-nowrap sm:text-5xl tabular-nums ${attention ? 'text-link' : 'text-ink'}`}>{value}</p>
+      <p className="text-sm text-muted sm:text-lg">
         {prefix ? `${prefix} · ` : ''}
         {detail}
       </p>
@@ -245,21 +245,21 @@ function BigButton({ onClick, label, sub, icon, ariaLabel }: { onClick: () => vo
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className="flex h-full min-h-24 w-full flex-col items-center justify-center gap-0.5 rounded-2xl border border-stone-200 bg-cream px-2 py-2 text-forest-700 transition-colors duration-150 hover:border-forest-400 hover:bg-forest-50 active:bg-forest-100"
+      className="flex h-full min-h-24 w-full flex-col items-center justify-center gap-0.5 rounded-2xl border border-line bg-page px-2 py-2 text-link transition-colors duration-150 hover:border-forest-400 hover:bg-tint active:bg-tint-strong"
     >
       {icon}
       <span className="text-xl font-semibold">{label}</span>
-      {sub && <span className="text-sm text-stone-600">{sub}</span>}
+      {sub && <span className="text-sm text-muted">{sub}</span>}
     </button>
   );
 }
 
 function Total({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className="bg-white px-5 py-3">
-      <dt className="text-sm font-medium text-stone-600">{label}</dt>
-      <dd className="text-2xl font-semibold text-stone-800 tabular-nums">{value}</dd>
-      <dd className="text-sm text-stone-600">
+    <div className="bg-surface px-5 py-3">
+      <dt className="text-sm font-medium text-muted">{label}</dt>
+      <dd className="text-2xl font-semibold text-ink tabular-nums">{value}</dd>
+      <dd className="text-sm text-muted">
         {detail}
       </dd>
     </div>
@@ -269,7 +269,7 @@ function Total({ label, value, detail }: { label: string; value: string; detail:
 function KindIcon({ event }: { event: BabyEvent }) {
   const Icon = event.kind === 'feed' ? Milk : event.kind === 'sleep' ? Moon : event.kind === 'diaper' ? Baby : Droplets;
   return (
-    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-forest-50 text-forest-700" aria-hidden="true">
+    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-tint text-link" aria-hidden="true">
       <Icon size={18} />
     </span>
   );
