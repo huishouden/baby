@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/huishouden/baby/compare/v1.9.0...v1.10.0) (2026-10-03)
+
+
+### Features
+
+* publish checklist items to the household to-do list, with Skip ([#38](https://github.com/huishouden/baby/issues/38)) ([8cbf511](https://github.com/huishouden/baby/commit/8cbf511453c1e774b282632a62481ecb2a058838))
+
 ## [1.9.0](https://github.com/huishouden/baby/compare/v1.8.1...v1.9.0) (2026-10-03)
 
 
