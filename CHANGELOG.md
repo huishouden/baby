@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/huishouden/baby/compare/v1.5.0...v1.6.0) (2026-10-03)
+
+
+### Features
+
+* **security:** security headers; one-line Sample data banner on phones ([#27](https://github.com/huishouden/baby/issues/27)) ([0a816d4](https://github.com/huishouden/baby/commit/0a816d4dc0ca9fe9c8172cd4fe547083cbb27b82))
+
 ## [1.5.0](https://github.com/huishouden/baby/compare/v1.4.0...v1.5.0) (2026-10-02)
 
 
