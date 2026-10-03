@@ -1,7 +1,8 @@
 import { expect, test } from 'bun:test';
 import { DEMO_NOW, demoData } from './demo';
 import { countdown } from './time';
-import { latest, sleepState } from './summary';
+import { ofKind, sleepState } from './summary';
+import { latest } from '@huishouden/pwa-kit/log';
 import { formatAgo } from '@huishouden/pwa-kit/time';
 
 test('the before demo is twelve weeks out', () => {
@@ -14,7 +15,7 @@ test('the before demo is twelve weeks out', () => {
 test('the after demo has a sleeping baby fed 2h 10m ago', () => {
   const d = demoData('after');
   expect(d.profile?.birthDate).toBeTruthy();
-  expect(formatAgo(latest(d.events, 'feed', DEMO_NOW)!.at, DEMO_NOW)).toBe('2h 10m ago');
+  expect(formatAgo(latest(d.events, DEMO_NOW, ofKind('feed'))!.at, DEMO_NOW)).toBe('2h 10m ago');
   expect(sleepState(d.events, DEMO_NOW).state).toBe('asleep');
   expect(new Set(d.events.map((e) => e.id)).size).toBe(d.events.length);
   for (const e of [...d.events, ...d.appointments, ...d.checklists, ...d.contacts]) expect(e.by).toMatch(/@example\.com$/);

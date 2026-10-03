@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import fixture from './__fixtures__/night-and-morning.json';
 import type { BabyEvent } from './model';
-import { dayTimeline, dayTotals, describeEvent, diaperBreakdown, feedDetail, latest, sleepSessions, sleepState } from './summary';
+import { dayTimeline, dayTotals, describeEvent, diaperBreakdown, feedDetail, ofKind, sleepState } from './summary';
+import { latest, spans } from '@huishouden/pwa-kit/log';
 import { MINUTE, formatAgo, formatDuration, startOfDay } from '@huishouden/pwa-kit/time';
 
 // Fixture times are local ("2031-03-05T10:30" without an offset), so results hold in any time zone.
@@ -17,7 +18,7 @@ const exp = fixture.expected;
 
 describe('glance', () => {
   test('last feed ignores entries after now', () => {
-    const feed = latest(events, 'feed', now)!;
+    const feed = latest(events, now, ofKind('feed'))!;
     expect(feed.id).toBe(exp.lastFeedId);
     expect(formatAgo(feed.at, now)).toBe(exp.lastFeedAgo);
     expect(feedDetail(feed)).toBe(exp.lastFeedDetail);
@@ -36,7 +37,7 @@ describe('glance', () => {
   });
 
   test('last diaper', () => {
-    expect(latest(events, 'diaper', now)!.id).toBe(exp.lastDiaperId);
+    expect(latest(events, now, ofKind('diaper'))!.id).toBe(exp.lastDiaperId);
   });
 });
 
@@ -51,8 +52,8 @@ describe('day totals', () => {
   });
 
   test('sleep is clipped to midnight and a running sleep counts up to now', () => {
-    const sessions = sleepSessions(events, startOfDay(now), now, now);
-    expect(sessions.map((s) => s.event.id)).toEqual(['e11', 'e4', 'e1']);
+    const sessions = spans(events, startOfDay(now), now, now, ofKind('sleep'));
+    expect(sessions.map((s) => s.entry.id)).toEqual(['e11', 'e4', 'e1']);
     expect(sessions[0].running).toBe(true);
   });
 

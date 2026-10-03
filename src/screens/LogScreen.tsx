@@ -4,7 +4,8 @@ import { RoleNote } from '@huishouden/pwa-kit/react/roles';
 import { mayChange } from '../lib/roles';
 import { Baby, ChevronLeft, ChevronRight, Droplet, Droplets, Milk, Moon, Pencil, Sun } from 'lucide-react';
 import type { BabyEvent, DiaperKind, Side } from '../lib/model';
-import { dayTimeline, dayTotals, describeEvent, diaperBreakdown, feedDetail, latest, sleepState } from '../lib/summary';
+import { dayTimeline, dayTotals, describeEvent, diaperBreakdown, feedDetail, ofKind, sleepState } from '../lib/summary';
+import { latest } from '@huishouden/pwa-kit/log';
 import { addDays, formatDayLong, formatDuration, formatHours, formatTime, startOfDay } from '@huishouden/pwa-kit/time';
 import { babyAge } from '../lib/time';
 import { useClock } from '@huishouden/pwa-kit/react/clock';
@@ -31,14 +32,14 @@ export function LogScreen({ store, notify, onEditProfile }: Props) {
   const [dayOffset, setDayOffset] = useState(0);
 
   const events = data.events;
-  const lastFeed = latest(events, 'feed', now);
+  const lastFeed = latest(events, now, ofKind('feed'));
   const sleep = sleepState(events, now);
-  const lastDiaper = latest(events, 'diaper', now);
+  const lastDiaper = latest(events, now, ofKind('diaper'));
   const day = addDays(now, -dayOffset);
   const dayStart = startOfDay(day);
   const totals = useMemo(() => dayTotals(events, dayStart, now), [events, dayStart, now]);
   const timeline = useMemo(() => dayTimeline(events, dayStart, now), [events, dayStart, now]);
-  const lastPump = latest(events, 'pump', now);
+  const lastPump = latest(events, now, ofKind('pump'));
   const lastBottle = useMemo(() => events.filter((e) => e.kind === 'feed' && e.method === 'bottle' && e.amountMl).sort((a, b) => b.at - a.at)[0], [events]);
 
   const log = (fields: Parameters<typeof actions.logEvent>[0], what: string) => {
