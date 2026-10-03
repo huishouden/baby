@@ -49,7 +49,7 @@ export function ProfileDialog({ mode, profile, now, onSave, onClose }: {
           if (valid) save();
         }}
       >
-        {mode === 'born' && <p className="text-base text-stone-600">The main screen becomes the feeding, sleep and diaper log. You can change these later.</p>}
+        {mode === 'born' && <p className="text-base text-muted">The main screen becomes the feeding, sleep and diaper log. You can change these later.</p>}
         <Field label={mode === 'due' ? 'Name (optional)' : 'Name'}>
           <input className={inputClass} value={name} maxLength={LIMITS.name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
         </Field>

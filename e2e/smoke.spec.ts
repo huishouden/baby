@@ -7,6 +7,7 @@ import {
   expectHuishoudenFrame,
   expectInstallable,
   expectSecurityHeaders,
+  expectThemeConsistent,
 } from '@huishouden/pwa-kit/e2e';
 
 test('loads without runtime errors and shows the sample countdown', async ({ page }) => {
@@ -63,3 +64,5 @@ test('a sample checklist item is skipped and put back, counting neither as done 
   await expect(nursery.getByRole('checkbox', { name: 'Night light' })).toBeVisible();
   await expect(nursery.getByText('3 of 6 done')).toBeVisible();
 });
+
+test('follows the suite theme: dark on a dark device, readable', ({ page }) => expectThemeConsistent(page, { path: './' }));

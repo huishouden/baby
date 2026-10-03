@@ -89,7 +89,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   ];
 
   let content: ReactNode;
-  if (!store.ready) content = <p className="p-2 text-lg text-stone-600">Loading the baby's details</p>;
+  if (!store.ready) content = <p className="p-2 text-lg text-muted">Loading the baby's details</p>;
   else if (tab === 'appointments')
     content = <Appointments store={store} calendarAvailable={calendar} onAdd={() => setAppointment('new')} onEdit={openAppointment} onImport={importEvents} />;
   else if (tab === 'checklists') content = <Checklists store={store} notify={notify} onAddContact={(role) => setContact({ contact: null, role })} />;
@@ -109,7 +109,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
     );
 
   return (
-    <div className="flex min-h-dvh flex-col bg-cream font-sans text-stone-800 antialiased lg:h-dvh lg:overflow-hidden">
+    <div className="flex min-h-dvh flex-col bg-page font-sans text-ink antialiased lg:h-dvh lg:overflow-hidden">
       <Header tabs={tabs} tab={tab} onTab={(id) => setTab(id as TabId)} user={user} onSignIn={onSignIn} onSignOut={onSignOut} signingIn={signingIn} />
       <main className="mx-auto flex w-full max-w-[1200px] min-h-0 flex-1 flex-col gap-4 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-6">
         {banner}

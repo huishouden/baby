@@ -52,7 +52,7 @@ export function EventDialog({ event, onSave, onDelete, onClose }: {
         <>
           <button
             type="button"
-            className="mr-auto inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-medium text-red-700 hover:bg-stone-100"
+            className="mr-auto inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-medium text-error hover:bg-sunken"
             onClick={() => {
               onDelete();
               onClose();
@@ -82,8 +82,8 @@ export function EventDialog({ event, onSave, onDelete, onClose }: {
 
         {event.kind === 'sleep' && (
           <>
-            <label className="flex min-h-11 items-center gap-3 text-base text-stone-800">
-              <input type="checkbox" className="h-5 w-5 accent-forest-700" checked={running} onChange={(e) => setRunning(e.target.checked)} />
+            <label className="flex min-h-11 items-center gap-3 text-base text-ink">
+              <input type="checkbox" className="h-5 w-5 accent-forest-700 dark:accent-forest-300" checked={running} onChange={(e) => setRunning(e.target.checked)} />
               Still asleep
             </label>
             {!running && (
