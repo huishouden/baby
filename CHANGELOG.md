@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/huishouden/baby/compare/v1.6.0...v1.7.0) (2026-10-03)
+
+
+### Features
+
+* **contacts:** add the care team from your own contacts ([#30](https://github.com/huishouden/baby/issues/30)) ([3be8178](https://github.com/huishouden/baby/commit/3be81783fb866bdf90051e745f45ab5ddd2e580b))
+
 ## [1.6.0](https://github.com/huishouden/baby/compare/v1.5.0...v1.6.0) (2026-10-03)
 
 
