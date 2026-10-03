@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/huishouden/baby/compare/v1.10.0...v1.11.0) (2026-10-03)
+
+
+### Features
+
+* dark mode that follows the suite's theme ([#40](https://github.com/huishouden/baby/issues/40)) ([e25231f](https://github.com/huishouden/baby/commit/e25231f2bbf2d49c9d9299f1c78ba4fd1bc1368e))
+
 ## [1.10.0](https://github.com/huishouden/baby/compare/v1.9.0...v1.10.0) (2026-10-03)
 
 
