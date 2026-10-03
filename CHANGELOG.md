@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/huishouden/baby/compare/v1.7.0...v1.8.0) (2026-10-03)
+
+
+### Features
+
+* Baby moves to /baby/ on the suite's one site (pwa-kit 0.48.0) ([#32](https://github.com/huishouden/baby/issues/32)) ([4287334](https://github.com/huishouden/baby/commit/428733486139d31b7368fa9eee1576ef4558594e))
+
 ## [1.7.0](https://github.com/huishouden/baby/compare/v1.6.0...v1.7.0) (2026-10-03)
 
 
