@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/huishouden/baby/compare/v1.8.1...v1.9.0) (2026-10-03)
+
+
+### Features
+
+* sections in a bottom bar on phones (kit 0.52.0) ([#36](https://github.com/huishouden/baby/issues/36)) ([34dff79](https://github.com/huishouden/baby/commit/34dff793cb64ea1c1c65d1e7f5d7084e69471740))
+
 ## [1.8.1](https://github.com/huishouden/baby/compare/v1.8.0...v1.8.1) (2026-10-03)
 
 
