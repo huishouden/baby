@@ -1,3 +1,4 @@
+import { Baby as BabyIcon, CalendarDays, Contact as ContactIcon, ListChecks, NotebookPen } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import type { Contact } from '@huishouden/pwa-kit/contacts';
@@ -81,10 +82,10 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   }, []);
 
   const tabs: Tab[] = [
-    { id: 'home', label: born ? 'Log' : 'Overview' },
-    { id: 'appointments', label: 'Appointments' },
-    { id: 'checklists', label: 'Checklists' },
-    { id: 'contacts', label: 'Contacts' },
+    { id: 'home', label: born ? 'Log' : 'Overview', icon: born ? NotebookPen : BabyIcon },
+    { id: 'appointments', label: 'Appointments', short: 'Visits', icon: CalendarDays },
+    { id: 'checklists', label: 'Checklists', icon: ListChecks },
+    { id: 'contacts', label: 'Contacts', icon: ContactIcon },
   ];
 
   let content: ReactNode;
