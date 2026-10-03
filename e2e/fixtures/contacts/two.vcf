@@ -1,0 +1,15 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Riley Sample
+N:Sample;Riley;;;
+TEL;TYPE=CELL:555-010-0133
+item1.ORG:Example Babysitting
+CATEGORIES:myContacts
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Example Birth Center
+ORG:Example Birth Center
+TEL;TYPE=WORK:555-010-0134
+CATEGORIES:myContacts
+END:VCARD

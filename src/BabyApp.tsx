@@ -162,6 +162,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
           role={contact.role}
           searchPlaceholder="Practice name and town"
           namePlaceholder="Example Pediatrics"
+          auth={auth}
           canMarkPrivate={canPrivate}
           onClose={() => setContact(null)}
           onSave={(input) => {
