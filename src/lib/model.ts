@@ -39,6 +39,9 @@ export interface ChecklistItemData {
   text: string;
   done: boolean;
   order: number;
+  /** Not needed after all: kept in its list as "Skipped", counted neither as done nor as left to do. */
+  skipped?: boolean;
+  skippedAt?: number;
   createdAt: number;
   by: string;
 }

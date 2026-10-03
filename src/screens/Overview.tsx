@@ -1,6 +1,6 @@
 import { Baby, CalendarPlus, Check, ChevronRight, MapPin, Pencil } from 'lucide-react';
 import type { Appointment } from '../lib/model';
-import { groupChecklist } from '../lib/checklist';
+import { groupChecklist, isOpen } from '../lib/checklist';
 import { formatDateLong, formatDayLong, formatTime, parseYmd, relativeDay } from '@huishouden/pwa-kit/time';
 import { countdown } from '../lib/time';
 import { useClock } from '@huishouden/pwa-kit/react/clock';
@@ -127,14 +127,14 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
         {groups.length === 0 && <p className="text-base text-stone-600">No checklists yet.</p>}
         <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto">
           {groups.map((g) => {
-            const nextItem = g.items.find((i) => !i.done);
-            const pct = g.items.length ? Math.round((g.done / g.items.length) * 100) : 0;
+            const nextItem = g.items.find(isOpen);
+            const pct = g.total ? Math.round((g.done / g.total) * 100) : 0;
             return (
               <li key={g.list} className="border-b border-stone-200 py-3 last:border-b-0">
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="text-lg font-semibold text-stone-800">{g.list}</p>
                   <p className="text-base text-stone-600 tabular-nums">
-                    {g.done} of {g.items.length}
+                    {g.done} of {g.total}
                   </p>
                 </div>
                 <div className="mt-2 h-2 rounded-full bg-stone-100" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${g.list} progress`}>

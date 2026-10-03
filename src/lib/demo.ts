@@ -163,12 +163,16 @@ function appointments(after: boolean): Appointment[] {
   }));
 }
 
+const SKIPPED = 'default-3-6';
+
 function checklists(after: boolean): ChecklistItem[] {
   const doneBefore = new Set(['default-1-1', 'default-1-2', 'default-1-4', 'default-2-1', 'default-2-2', 'default-3-1', 'default-3-2', 'default-3-3', 'default-4-1', 'default-4-2']);
   const items: ChecklistItem[] = defaultChecklistDocs(at(-60, '12:00'), SAM).map(({ id, data }) => ({
     id,
     ...data,
-    done: after ? !id.startsWith('default-4-5') && !id.startsWith('default-4-6') : doneBefore.has(id),
+    done: after ? !id.startsWith('default-4-5') && !id.startsWith('default-4-6') && id !== SKIPPED : doneBefore.has(id),
+    // The night light turned out not to be needed: skipped, still shown in the list.
+    ...(id === SKIPPED ? { skipped: true, skippedAt: at(-25, '12:00') } : {}),
   }));
   // One of the household's own items, about finding someone the care team does not have yet.
   items.push({ id: 'demo-item-1', list: 'Paperwork', text: 'Find a lactation consultant', done: false, order: 4100, createdAt: at(-20, '12:00'), by: ALEX });

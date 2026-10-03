@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { signInTestUser } from '@huishouden/pwa-kit/e2e';
+import { runPortalTodo, signInTestUser } from '@huishouden/pwa-kit/e2e';
 
 // Signed in as an invented test user on the staging site (pwa-kit STANDARD.md "Staging"): the real
 // staging Firestore and rules, the seeded test household. Other runs share that household, so each
@@ -139,4 +139,38 @@ test.describe('as a helper', () => {
     await page.reload();
     await expect(page.getByRole('button', { name: /^Fell asleep/ })).toBeVisible({ timeout: 20_000 });
   });
+});
+
+// The household to-do list (pwa-kit STANDARD.md "To-dos"): a checklist item Baby publishes is
+// ticked off or skipped on the portal's To-do tab, and Baby shows the change.
+test.describe('on the portal to-do list', () => {
+  for (const action of ['done', 'cancel'] as const) {
+    test(`a checklist item ${action === 'done' ? 'ticked' : 'skipped'} there is ${action === 'done' ? 'done' : 'skipped'} in Baby`, async ({ page }) => {
+      test.setTimeout(120_000);
+      const stamp = `${Date.now().toString(36)}${action === 'done' ? 'd' : 's'}`;
+      const list = `E2E list ${stamp}`;
+      const title = `E2E to-do ${stamp}`;
+      await signInTestUser(page, { email: 'test-a@example.com' });
+      await page.goto('./#checklists');
+      await page.getByRole('button', { name: 'New list' }).click({ timeout: 20_000 });
+      const dialog = page.getByRole('dialog', { name: 'New list' });
+      await dialog.getByLabel('List name').fill(list);
+      await dialog.getByLabel('First item').fill(title);
+      await dialog.getByRole('button', { name: 'Create list' }).click();
+      const section = page.getByRole('region', { name: list });
+      await expect(section.getByRole('checkbox', { name: title })).toBeVisible();
+      try {
+        // Baby publishes 3 s after a checklist change; leaving sooner would cancel that sync.
+        await page.waitForTimeout(6000);
+        await runPortalTodo(page, title, { action });
+        await page.goto('./#checklists');
+        if (action === 'done') await expect(section.getByRole('checkbox', { name: title })).toHaveAttribute('aria-checked', 'true', { timeout: 20_000 });
+        else await expect(section.getByRole('listitem').filter({ hasText: title }).getByText('Skipped', { exact: true })).toBeVisible({ timeout: 20_000 });
+      } finally {
+        await page.goto('./#checklists');
+        await section.getByRole('button', { name: `Delete: ${title}` }).click({ timeout: 20_000 });
+        await expect(section).toHaveCount(0);
+      }
+    });
+  }
 });

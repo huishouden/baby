@@ -31,6 +31,8 @@ export interface BabyActions {
   restoreEvent(event: BabyEvent): void;
   addChecklistItem(list: string, text: string): void;
   setChecklistDone(id: string, done: boolean): void;
+  /** Skip an item that isn't needed after all, or put it back on the list. */
+  setChecklistSkipped(id: string, skipped: boolean): void;
   deleteChecklistItem(id: string): void;
   restoreChecklistItem(item: ChecklistItem): void;
   reorderChecklist(writes: { id: string; order: number }[]): void;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, Check, ListPlus, Phone, Plus, Trash2, UserPlus, UserRound } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ListPlus, Phone, Plus, SkipForward, Trash2, Undo2, UserPlus, UserRound } from 'lucide-react';
 import { telHref } from '@huishouden/pwa-kit/places';
 import { groupChecklist, moveItem } from '../lib/checklist';
 import { LIMITS } from '../lib/model';
@@ -27,22 +27,33 @@ export function Checklists({ store, notify, onAddContact }: {
         </button>
       </div>
       {groups.length === 0 && <p className="text-lg text-stone-600">No checklists yet. Start one with New list.</p>}
-      <div className="grid items-start gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 md:grid-cols-2">
         {groups.map((g) => (
           <section key={g.list} className={`${cardClass} p-5`} aria-label={g.list}>
-            <div className="mb-2 flex items-baseline justify-between gap-3">
+            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
               <h3 className="text-xl font-semibold text-stone-800">{g.list}</h3>
               <p className="text-base text-stone-600 tabular-nums">
-                {g.done} of {g.items.length} done
+                {g.done} of {g.total} done{g.skipped > 0 && `, ${g.skipped} skipped`}
               </p>
             </div>
             <ul>
               {g.items.map((item, i) => {
                 const role = roleForChecklistItem(item.text);
                 const who = role ? contactForRole(store.data.contacts, role) : undefined;
+                const mine = mayChange(store.role, store.me, item);
+                const skipped = item.skipped === true && !item.done;
                 return (
                 <li key={item.id} className="border-b border-stone-200 last:border-b-0">
                   <div className="flex min-h-12 items-center gap-1">
+                  {skipped ? (
+                    <div className="flex min-h-12 min-w-0 flex-1 items-center gap-3 py-1 pr-2">
+                      <span className="inline-flex h-6 w-6 shrink-0 rounded-md border-2 border-dashed border-stone-300" aria-hidden="true" />
+                      <span className="min-w-0 text-base text-stone-600">
+                        {item.text}
+                        <span className="block text-sm font-medium text-stone-600">Skipped</span>
+                      </span>
+                    </div>
+                  ) : (
                   <button
                     type="button"
                     role="checkbox"
@@ -58,10 +69,6 @@ export function Checklists({ store, notify, onAddContact }: {
                     </span>
                     <span className={`text-base ${item.done ? 'text-stone-600 line-through' : 'text-stone-800'}`}>{item.text}</span>
                   </button>
-                  {role && !who && (
-                    <button type="button" className={`${ghostButton} px-2 text-forest-700`} onClick={() => onAddContact(role)} aria-label={`Add contact: ${role}`}>
-                      <UserPlus size={18} /> Add contact
-                    </button>
                   )}
                   <button type="button" className={iconButton} aria-label={`Move up: ${item.text}`} disabled={i === 0} onClick={() => actions.reorderChecklist(moveItem(g.items, item.id, -1))}>
                     <ArrowUp size={18} />
@@ -75,7 +82,26 @@ export function Checklists({ store, notify, onAddContact }: {
                   >
                     <ArrowDown size={18} />
                   </button>
-                  {mayChange(store.role, store.me, item) && (
+                  {mine && skipped && (
+                    <button type="button" className={`${ghostButton} px-2`} aria-label={`Un-skip: ${item.text}`} onClick={() => actions.setChecklistSkipped(item.id, false)}>
+                      <Undo2 size={18} /> <span className="hidden sm:inline">Un-skip</span>
+                    </button>
+                  )}
+                  {mine && !skipped && !item.done && (
+                    <button
+                      type="button"
+                      className={iconButton}
+                      aria-label={`Skip: ${item.text}`}
+                      title="Skip: not needed"
+                      onClick={() => {
+                        actions.setChecklistSkipped(item.id, true);
+                        notify(`Skipped "${item.text}"`, () => actions.setChecklistSkipped(item.id, false));
+                      }}
+                    >
+                      <SkipForward size={18} />
+                    </button>
+                  )}
+                  {mine && (
                     <button
                       type="button"
                       className={iconButton}
@@ -89,6 +115,13 @@ export function Checklists({ store, notify, onAddContact }: {
                     </button>
                   )}
                   </div>
+                  {role && !who && !skipped && (
+                    <div className="-mt-1 pb-1 pl-9">
+                      <button type="button" className={`${linkClass} text-base`} onClick={() => onAddContact(role)} aria-label={`Add contact: ${role}`}>
+                        <UserPlus size={16} aria-hidden="true" /> Add contact
+                      </button>
+                    </div>
+                  )}
                   {who && (
                     <div className="-mt-1 flex flex-wrap items-center gap-x-4 pb-1 pl-9 text-base text-stone-600">
                       <span className="flex items-center gap-1.5">

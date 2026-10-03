@@ -47,3 +47,19 @@ test('sends the security headers and leaves sign-in un-framed', ({ request }) =>
 test('the Sample data banner is one line on a phone', ({ page }) => expectCompactSampleBanner(page, './'));
 
 test('on a phone the sections are a bottom bar', ({ page }) => expectBottomNav(page, { path: './', labels: ['Overview', 'Visits', 'Checklists', 'Contacts'] }));
+
+test('a sample checklist item is skipped and put back, counting neither as done nor as to do', async ({ page }) => {
+  await expectCleanLoad(page, './#checklists');
+  const nursery = page.getByRole('region', { name: 'Nursery' });
+  const skipped = (text: string) => nursery.getByRole('listitem').filter({ hasText: text }).getByText('Skipped', { exact: true });
+  await expect(skipped('Night light')).toBeVisible();
+  await expect(nursery.getByText('3 of 5 done, 1 skipped')).toBeVisible();
+  await nursery.getByRole('button', { name: 'Skip: Changing pad' }).click();
+  await expect(skipped('Changing pad')).toBeVisible();
+  await expect(nursery.getByText('3 of 4 done, 2 skipped')).toBeVisible();
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(nursery.getByRole('checkbox', { name: 'Changing pad' })).toBeVisible();
+  await nursery.getByRole('button', { name: 'Un-skip: Night light' }).click();
+  await expect(nursery.getByRole('checkbox', { name: 'Night light' })).toBeVisible();
+  await expect(nursery.getByText('3 of 6 done')).toBeVisible();
+});
