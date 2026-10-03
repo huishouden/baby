@@ -5,7 +5,7 @@ import places from './fixtures/nominatim.json' with { type: 'json' };
 // Nominatim, stubbed here with invented results.
 
 const openContacts = async (page: Page) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'Contacts', exact: true }).click();
 };
 
@@ -56,7 +56,7 @@ test('Find a business fills the contact from OpenStreetMap, only on Search', asy
 });
 
 test('a checklist item about choosing someone adds the contact and then shows it', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'Checklists', exact: true }).click();
   const paperwork = page.getByRole('region', { name: 'Paperwork' });
   await expect(paperwork.getByRole('link', { name: 'Call Example Pediatrics, (555) 010-0142' })).toBeVisible();
@@ -83,7 +83,7 @@ test('deleting a contact can be undone', async ({ page }) => {
 });
 
 test('an appointment with a contact takes their address and shows their phone', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'Appointments', exact: true }).click();
   await page.getByRole('button', { name: 'Add appointment' }).click();
   const dialog = page.getByRole('dialog', { name: 'New appointment' });
