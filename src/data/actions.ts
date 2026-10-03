@@ -56,6 +56,9 @@ export function createActions(backend: Backend, read: () => BabyData, me: string
     },
     // Ticks and reorders change only their field, so they never write back another device's edit.
     setChecklistDone: (id, done) => backend.write([{ col: 'checklists', id, data: { done }, merge: true }]),
+    // The same write as the portal's Skip (lib/todos), with the moment filled in here.
+    setChecklistSkipped: (id, skipped) =>
+      backend.write([{ col: 'checklists', id, data: skipped ? { skipped: true, skippedAt: clock() } : { skipped: false }, merge: true }]),
     deleteChecklistItem: (id) => del('checklists', id),
     restoreChecklistItem: (item) => put('checklists', item.id, withoutId(item)),
     reorderChecklist: (writes) => backend.write(writes.map((w) => ({ col: 'checklists', id: w.id, data: { order: w.order }, merge: true }))),

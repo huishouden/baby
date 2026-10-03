@@ -35,6 +35,17 @@ describe('grouping and order', () => {
     expect(groups[1].items[1].text).toBe('Install the car seat');
   });
 
+  test('a skipped item stays in its list but counts neither as done nor as to do', () => {
+    const all = items();
+    all[0].done = true;
+    all[1].skipped = true;
+    all[2].done = true;
+    all[2].skipped = true;
+    const bag = groupChecklist(all)[0];
+    expect(bag.items).toHaveLength(6);
+    expect(bag).toMatchObject({ done: 2, skipped: 1, total: 5 });
+  });
+
   test('moving swaps with the neighbour and stops at the ends', () => {
     const bag = groupChecklist(items())[0].items;
     expect(moveItem(bag, bag[1].id, -1)).toEqual([

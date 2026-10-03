@@ -9,7 +9,9 @@ import { defaultChecklistDocs } from '../lib/checklist';
 import { DAY } from '@huishouden/pwa-kit/time';
 import { readError } from '@huishouden/pwa-kit/feedback';
 import { removeAgenda, replaceAgenda, syncAgenda } from '@huishouden/pwa-kit/agenda';
+import { syncTodos } from '@huishouden/pwa-kit/todos';
 import { agendaItems, appointmentAgenda, appointmentRef } from '../lib/agenda';
+import { todoItems } from '../lib/todos';
 import { db } from './firebase';
 import { COLLECTIONS, createActions, type Backend } from './actions';
 import type { BabyData, BabyStore } from './types';
@@ -19,6 +21,11 @@ const HISTORY_DAYS = 14;
 
 /** The household agenda is a copy for the portal: a failed write there never interrupts Baby. */
 const publish = (p: Promise<unknown>) => void p.catch((e) => console.warn("Couldn't update the household agenda", e));
+/** The to-do list is the same kind of copy. */
+const publishTodos = (p: Promise<unknown>) => void p.catch((e) => console.warn("Couldn't update the household to-do list", e));
+
+/** How long after a checklist change the to-do list follows, so a run of ticks is one sync. */
+const TODO_DELAY = 3000;
 
 /**
  * Live household data from Firestore with onSnapshot listeners. Writes are fire-and-forget: the
@@ -41,8 +48,9 @@ export function useLiveStore(householdId: string, me: string, members: string[],
   current.current = data;
   // Whether the profile and appointments have answered from the server, not just the local cache:
   // the agenda is reconciled against them once per household when both have.
-  const [fromServer, setFromServer] = useState({ profile: false, appointments: false });
+  const [fromServer, setFromServer] = useState({ profile: false, appointments: false, checklists: false });
   const syncedFor = useRef<string | null>(null);
+  const todosFor = useRef<string | null>(null);
   const errorRef = useRef(onError);
   errorRef.current = onError;
 
@@ -72,9 +80,11 @@ export function useLiveStore(householdId: string, me: string, members: string[],
       ),
       onSnapshot(
         collection(db, base, 'babyChecklists'),
+        { includeMetadataChanges: true },
         (s) => {
           setChecklists(s.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<ChecklistItem, 'id'>) })));
           setAnswered((a) => ({ ...a, checklists: true }));
+          if (!s.metadata.fromCache) setFromServer((f) => (f.checklists ? f : { ...f, checklists: true }));
           // First visit for this household: start the checklists with sensible defaults. Stable ids
           // make a second device seeding at the same moment harmless.
           const key = `baby-seeded-${householdId}`;
@@ -120,6 +130,16 @@ export function useLiveStore(householdId: string, me: string, members: string[],
     syncedFor.current = householdId;
     publish(syncAgenda(db, householdId, APP, agendaItems({ profile, appointments }), { by: me, restricted }));
   }, [fromServer, householdId, me, profile, appointments, restricted]);
+
+  // The household to-do list follows the checklists: at once on open (once the server has answered,
+  // so a stale cache never clears it), then a few seconds after each change.
+  useEffect(() => {
+    if (!fromServer.checklists) return;
+    const first = todosFor.current !== householdId;
+    todosFor.current = householdId;
+    const timer = setTimeout(() => publishTodos(syncTodos(db, householdId, APP, todoItems(checklists), { by: me, restricted })), first ? 0 : TODO_DELAY);
+    return () => clearTimeout(timer);
+  }, [fromServer.checklists, checklists, householdId, me, restricted]);
 
   const actions = useMemo(() => {
     const report = (p: Promise<unknown>) => void p.catch((e) => errorRef.current(readError(e, "Couldn't save")));

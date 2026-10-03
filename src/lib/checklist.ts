@@ -48,10 +48,17 @@ export function defaultChecklistDocs(now: number, by: string): { id: string; dat
   return out;
 }
 
+/** Still to do: neither ticked nor skipped. */
+export const isOpen = (item: Pick<ChecklistItem, 'done' | 'skipped'>) => !item.done && item.skipped !== true;
+
 export interface ChecklistGroup {
   list: string;
   items: ChecklistItem[];
   done: number;
+  /** Skipped items: shown in the list, counted neither as done nor as left to do. */
+  skipped: number;
+  /** Items that count: all but the skipped ones ("3 of 5 done"). */
+  total: number;
 }
 
 /** Groups by list in the order lists first appear (by their lowest `order`), items by `order`. */
@@ -59,9 +66,11 @@ export function groupChecklist(items: ChecklistItem[]): ChecklistGroup[] {
   const sorted = [...items].sort((a, b) => a.order - b.order || a.createdAt - b.createdAt);
   const groups = new Map<string, ChecklistGroup>();
   for (const item of sorted) {
-    const g = groups.get(item.list) ?? { list: item.list, items: [], done: 0 };
+    const g = groups.get(item.list) ?? { list: item.list, items: [], done: 0, skipped: 0, total: 0 };
     g.items.push(item);
     if (item.done) g.done++;
+    else if (item.skipped) g.skipped++;
+    g.total = g.items.length - g.skipped;
     groups.set(item.list, g);
   }
   return [...groups.values()];

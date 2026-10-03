@@ -49,6 +49,17 @@ describe('checklists', () => {
     expect(h.read().checklists.find((c) => c.id === a.id)).toEqual({ ...a, done: !a.done });
   });
 
+  test('skipping stamps when and writes only the skip fields; un-skipping puts it back on the list', () => {
+    const h = harness();
+    const item = h.read().checklists.find((c) => !c.done && !c.skipped)!;
+    h.actions.setChecklistSkipped(item.id, true);
+    expect(h.writes.at(-1)).toEqual([{ col: 'checklists', id: item.id, data: { skipped: true, skippedAt: DEMO_NOW }, merge: true }]);
+    expect(h.read().checklists.find((c) => c.id === item.id)).toEqual({ ...item, skipped: true, skippedAt: DEMO_NOW });
+    h.actions.setChecklistSkipped(item.id, false);
+    expect(h.writes.at(-1)).toEqual([{ col: 'checklists', id: item.id, data: { skipped: false }, merge: true }]);
+    expect(h.read().checklists.find((c) => c.id === item.id)).toMatchObject({ skipped: false, done: false });
+  });
+
   test('a new item goes last in its list; blank text adds nothing', () => {
     const h = harness();
     const list = h.read().checklists[0].list;

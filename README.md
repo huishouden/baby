@@ -41,8 +41,13 @@ Baby publishes its dates to the household agenda (`households/{householdId}/agen
 `@huishouden/pwa-kit/agenda`) so the portal's calendar and Today view show them: each appointment
 (timed, with its place and the baby's name) and, until the birth, the due date (all day). Saving or
 deleting an appointment or the baby's details updates the agenda at once; opening the app reconciles
-it (`src/lib/agenda.ts`). Checklist items have no dates and are not published. Links open the
-Appointments tab (`#appointments`) or the main screen.
+it (`src/lib/agenda.ts`). Links open the Appointments tab (`#appointments`) or the main screen.
+
+Checklist items still to do go on the household to-do list instead (`households/{householdId}/todos`,
+`@huishouden/pwa-kit/todos`, `src/lib/todos.ts`), so the portal's To-do tab can tick them off (Done,
+anyone) or skip them (Skip, admins and members or whoever added the item). Baby syncs the list on
+open and a few seconds after a checklist changes. A skipped item stays in its checklist as Skipped,
+counted neither as done nor as left to do, and Un-skip puts it back.
 
 Find in my calendar and Import from calendar read Google Calendar (read-only) through
 `@huishouden/pwa-kit/calendar`; Google asks once for permission the first time. Find a business looks
