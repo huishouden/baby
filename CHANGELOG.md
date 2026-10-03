@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/huishouden/baby/compare/v1.8.0...v1.8.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* dialogs keep focus where it was tapped on phones (pwa-kit 0.51.0) ([#34](https://github.com/huishouden/baby/issues/34)) ([365fbce](https://github.com/huishouden/baby/commit/365fbce47f6e41644e8163cf37a2cdf374bba779))
+
 ## [1.8.0](https://github.com/huishouden/baby/compare/v1.7.0...v1.8.0) (2026-10-03)
 
 
