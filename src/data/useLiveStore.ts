@@ -1,25 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
-import { deleteDoc, setDoc, updateDoc, writeBatch } from '@huishouden/pwa-kit/firestore';
-import { addContact, markUnflaggedOpen, removeContactFromApp, restoreContact, updateContact, watchContacts, type Contact } from '@huishouden/pwa-kit/contacts';
+import { commitOps, setDoc, writeBatch } from '@huishouden/pwa-kit/firestore';
+import { householdContacts, markUnflaggedOpen, watchContacts, type Contact } from '@huishouden/pwa-kit/contacts';
 import { can, isRestricted, type Role } from '@huishouden/pwa-kit/roles';
 import type { Appointment, BabyEvent, BabyProfile, ChecklistItem } from '../lib/model';
 import { APP } from '../lib/contacts';
-import { cleanEvent } from '../lib/model';
-import { defaultChecklistDocs, nextOrder } from '../lib/checklist';
+import { defaultChecklistDocs } from '../lib/checklist';
 import { DAY } from '@huishouden/pwa-kit/time';
 import { readError } from '@huishouden/pwa-kit/feedback';
 import { removeAgenda, replaceAgenda, syncAgenda } from '@huishouden/pwa-kit/agenda';
 import { agendaItems, appointmentAgenda, appointmentRef } from '../lib/agenda';
 import { db } from './firebase';
-import { appointmentDoc, eventFields, newEventDoc, profileDoc } from './build';
-import type { BabyActions, BabyStore } from './types';
-import { track } from '@huishouden/pwa-kit/observability';
+import { COLLECTIONS, createActions, type Backend } from './actions';
+import type { BabyData, BabyStore } from './types';
 
 /** How far back the log reads: enough for the day picker, small enough to stay fast. */
 const HISTORY_DAYS = 14;
-
-const withoutId = <T extends { id: string }>({ id: _id, ...rest }: T) => rest;
 
 /** The household agenda is a copy for the portal: a failed write there never interrupts Baby. */
 const publish = (p: Promise<unknown>) => void p.catch((e) => console.warn("Couldn't update the household agenda", e));
@@ -38,15 +34,11 @@ export function useLiveStore(householdId: string, me: string, members: string[],
   const [checklists, setChecklists] = useState<ChecklistItem[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const contactsRef = useRef<Contact[]>([]);
-  contactsRef.current = contacts;
   const [answered, setAnswered] = useState({ profile: false, checklists: false });
-  const checklistRef = useRef<ChecklistItem[]>([]);
-  checklistRef.current = checklists;
-  const appointmentsRef = useRef<Appointment[]>([]);
-  appointmentsRef.current = appointments;
-  const profileRef = useRef<BabyProfile | null>(null);
-  profileRef.current = profile;
+  const data: BabyData = { profile, events, checklists, appointments, contacts };
+  // The data as of the last render, for actions (an edit keeps its author; a new item goes last).
+  const current = useRef(data);
+  current.current = data;
   // Whether the profile and appointments have answered from the server, not just the local cache:
   // the agenda is reconciled against them once per household when both have.
   const [fromServer, setFromServer] = useState({ profile: false, appointments: false });
@@ -129,74 +121,33 @@ export function useLiveStore(householdId: string, me: string, members: string[],
     publish(syncAgenda(db, householdId, APP, agendaItems({ profile, appointments }), { by: me, restricted }));
   }, [fromServer, householdId, me, profile, appointments, restricted]);
 
-  const actions = useMemo<BabyActions>(() => {
+  const actions = useMemo(() => {
     const report = (p: Promise<unknown>) => void p.catch((e) => errorRef.current(readError(e, "Couldn't save")));
-    const col = (name: string) => collection(db, base, name);
     const publishAppointment = (a: Appointment) =>
-      publish(replaceAgenda(db, householdId, APP, appointmentRef(a.id), appointmentAgenda(a, profileRef.current), { by: me, restricted }));
-    return {
-      saveProfile: (p) => {
-        track('save baby profile');
-        const data = profileDoc(p, me, Date.now());
-        report(setDoc(doc(db, base, 'babyProfile', 'main'), data));
+      publish(replaceAgenda(db, householdId, APP, appointmentRef(a.id), appointmentAgenda(a, current.current.profile), { by: me, restricted }));
+    const backend: Backend = {
+      newId: (col) => doc(collection(db, base, COLLECTIONS[col])).id,
+      write: (ops) => {
+        report(commitOps(db, base, ops, (col) => COLLECTIONS[col]));
+        // The household agenda follows each appointment saved, restored or deleted.
+        for (const op of ops) {
+          if (op.col !== 'appointments') continue;
+          if (op.data) publishAppointment({ id: op.id, ...(op.data as Omit<Appointment, 'id'>) });
+          else publish(removeAgenda(db, householdId, APP, appointmentRef(op.id), { restricted }));
+        }
+      },
+      saveProfile: (profile) => {
+        report(setDoc(doc(db, base, 'babyProfile', 'main'), profile));
         // The due date and the baby's name on every appointment may both have changed.
-        publish(syncAgenda(db, householdId, APP, agendaItems({ profile: data, appointments: appointmentsRef.current }), { by: me, restricted }));
+        publish(syncAgenda(db, householdId, APP, agendaItems({ profile, appointments: current.current.appointments }), { by: me, restricted }));
       },
-      logEvent: (f) => {
-        track('log entry', { kind: f.kind });
-        const now = Date.now();
-        const data = newEventDoc({ ...f, at: f.at ?? now }, me, now);
-        const ref = doc(col('babyEvents'));
-        report(setDoc(ref, data));
-        return { id: ref.id, ...data };
-      },
-      updateEvent: (event, f) =>
-        report(setDoc(doc(col('babyEvents'), event.id), cleanEvent({ ...eventFields(f), by: event.by, createdAt: event.createdAt, updatedAt: Date.now() }))),
-      deleteEvent: (id) => report(deleteDoc(doc(col('babyEvents'), id))),
-      restoreEvent: (e) => report(setDoc(doc(col('babyEvents'), e.id), cleanEvent(withoutId(e)))),
-      addChecklistItem: (list, text) => {
-        track('add checklist item');
-        const t = text.trim().slice(0, 200);
-        const l = list.trim().slice(0, 60);
-        if (!t || !l) return;
-        report(setDoc(doc(col('babyChecklists')), { list: l, text: t, done: false, order: nextOrder(checklistRef.current, l), createdAt: Date.now(), by: me }));
-      },
-      setChecklistDone: (id, done) => report(updateDoc(doc(col('babyChecklists'), id), { done })),
-      deleteChecklistItem: (id) => report(deleteDoc(doc(col('babyChecklists'), id))),
-      restoreChecklistItem: (item) => report(setDoc(doc(col('babyChecklists'), item.id), withoutId(item))),
-      reorderChecklist: (writes) => {
-        const batch = writeBatch(db);
-        for (const w of writes) batch.update(doc(col('babyChecklists'), w.id), { order: w.order });
-        report(batch.commit());
-      },
-      saveAppointment: (id, input) => {
-        track('save appointment');
-        const existing = id ? appointmentsRef.current.find((a) => a.id === id) : undefined;
-        const ref = id ? doc(col('babyAppointments'), id) : doc(col('babyAppointments'));
-        const data = appointmentDoc(input, existing?.by ?? me, existing?.createdAt ?? Date.now());
-        report(setDoc(ref, data));
-        publishAppointment({ id: ref.id, ...data });
-      },
-      deleteAppointment: (id) => {
-        report(deleteDoc(doc(col('babyAppointments'), id)));
-        publish(removeAgenda(db, householdId, APP, appointmentRef(id), { restricted }));
-      },
-      restoreAppointment: (a) => {
-        report(setDoc(doc(col('babyAppointments'), a.id), withoutId(a)));
-        publishAppointment(a);
-      },
-      saveContact: (id, input) => report(id ? updateContact(db, householdId, id, input, me) : addContact(db, householdId, input, me)),
-      deleteContact: (id) => {
-        const c = contactsRef.current.find((x) => x.id === id);
-        // A contact other apps also show stays for them; Baby only stops showing it.
-        if (c) report(removeContactFromApp(db, householdId, c, APP, me));
-      },
-      restoreContact: (c) => report(restoreContact(db, householdId, c)),
+      contacts: householdContacts(db, householdId, APP, me, report),
     };
+    return createActions(backend, () => current.current, me, () => Date.now());
   }, [base, householdId, me, restricted]);
 
   return {
-    data: { profile, events, checklists, appointments, contacts },
+    data,
     ready: answered.profile && answered.checklists,
     actions,
     members,
