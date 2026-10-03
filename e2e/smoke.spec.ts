@@ -16,7 +16,7 @@ test('loads without runtime errors and shows the sample countdown', async ({ pag
 });
 
 test('the sample log answers a one-tap feed with an undo', async ({ page }) => {
-  await expectCleanLoad(page, '/?demo=after');
+  await expectCleanLoad(page, './?demo=after');
   await expect(page.getByText('Last fed')).toBeVisible();
   await page.getByRole('button', { name: 'Log breast feed, right' }).click();
   await expect(page.getByText(/Logged feed, right/)).toBeVisible();
@@ -34,7 +34,7 @@ test('Google sign-in popup reaches Google with an allowed redirect URI', ({ page
   }));
 
 test('agenda links open their tab', async ({ page }) => {
-  await expectCleanLoad(page, '/#appointments');
+  await expectCleanLoad(page, './#appointments');
   await expect(page.getByRole('heading', { name: 'Appointments', exact: true })).toBeVisible();
   await page.evaluate(() => (location.hash = '#checklists'));
   await expect(page.getByRole('heading', { name: 'Checklists', exact: true })).toBeVisible();
