@@ -160,7 +160,8 @@ test.describe('on the portal to-do list', () => {
       const section = page.getByRole('region', { name: list });
       await expect(section.getByRole('checkbox', { name: title })).toBeVisible();
       try {
-        // Published a few seconds after the change; runPortalTodo waits for it.
+        // Baby publishes 3 s after a checklist change; leaving sooner would cancel that sync.
+        await page.waitForTimeout(6000);
         await runPortalTodo(page, title, { action });
         await page.goto('./#checklists');
         if (action === 'done') await expect(section.getByRole('checkbox', { name: title })).toHaveAttribute('aria-checked', 'true', { timeout: 20_000 });
