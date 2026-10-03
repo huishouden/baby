@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   expectCleanLoad,
+  expectBottomNav,
   expectCompactSampleBanner,
   expectGoogleSignInPopup,
   expectHuishoudenFrame,
@@ -44,3 +45,5 @@ test('agenda links open their tab', async ({ page }) => {
 test('sends the security headers and leaves sign-in un-framed', ({ request }) => expectSecurityHeaders(request, './', { camera: true }));
 
 test('the Sample data banner is one line on a phone', ({ page }) => expectCompactSampleBanner(page, './'));
+
+test('on a phone the sections are a bottom bar', ({ page }) => expectBottomNav(page, { path: './', labels: ['Overview', 'Visits', 'Checklists', 'Contacts'] }));
