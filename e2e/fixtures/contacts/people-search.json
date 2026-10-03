@@ -1,0 +1,14 @@
+{
+  "results": [
+    {
+      "person": {
+        "resourceName": "people/c1001",
+        "names": [{ "metadata": { "primary": true }, "displayName": "Casey Example" }],
+        "phoneNumbers": [{ "metadata": { "primary": true }, "value": "(555) 010-0131", "type": "mobile", "formattedType": "Mobile" }],
+        "emailAddresses": [{ "metadata": { "primary": true }, "value": "casey@example.com" }],
+        "addresses": [{ "metadata": { "primary": true }, "formattedValue": "8 Example Lane\nSpringfield, IL 62704" }],
+        "organizations": [{ "metadata": { "primary": true }, "name": "Example Doula Services", "title": "Doula" }]
+      }
+    }
+  ]
+}
