@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.1](https://github.com/huishouden/baby/compare/v1.12.0...v1.12.1) (2026-10-04)
+
+
+### Bug Fixes
+
+* **contacts:** store care-team roles in English, show them in the reader's language ([#44](https://github.com/huishouden/baby/issues/44)) ([825cb85](https://github.com/huishouden/baby/commit/825cb8576f6644937e26fc2ae716aaed740017c4))
+
 ## [1.12.0](https://github.com/huishouden/baby/compare/v1.11.0...v1.12.0) (2026-10-04)
 
 
