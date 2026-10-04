@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/huishouden/baby/compare/v1.13.2...v1.14.0) (2026-10-04)
+
+
+### Features
+
+* **contacts:** the care team's distance from home on appointments and checklists; kit 0.84.0 ([#59](https://github.com/huishouden/baby/issues/59)) ([ae89c39](https://github.com/huishouden/baby/commit/ae89c395d967c8f23e11d78e67620c395b00c2ec))
+
 ## [1.13.2](https://github.com/huishouden/baby/compare/v1.13.1...v1.13.2) (2026-10-04)
 
 
