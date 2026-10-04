@@ -2,6 +2,7 @@ import type { TodoInput } from '@huishouden/pwa-kit/todos';
 import type { ChecklistItem } from './model';
 import { tabUrl } from './agenda';
 import { isOpen } from './checklist';
+import { t } from '../i18n';
 
 // What Baby puts on the household to-do list (households/{id}/todos), so the portal's To-do tab
 // shows it: every checklist item not yet done or skipped. Appointments always have a time, so they
@@ -12,7 +13,10 @@ const ORIGIN = globalThis.location?.origin ?? 'https://huishouden-piekstra.web.a
 export const checklistRef = (id: string) => `check:${id}`;
 
 
-/** One to-do per open checklist item, with Done (a tick anyone may make) and Skip (staff or whoever added it). */
+/**
+ * One to-do per open checklist item, with Done (a tick anyone may make) and Skip (staff or whoever
+ * added it), in the page's language: wrap in `localizeTodos` for every language.
+ */
 export function todoItems(checklists: readonly ChecklistItem[], origin = ORIGIN): TodoInput[] {
   return checklists
     .filter((item) => isOpen(item) && item.text.trim())
@@ -24,9 +28,9 @@ export function todoItems(checklists: readonly ChecklistItem[], origin = ORIGIN)
       url: tabUrl(origin, 'checklists'),
       private: false,
       owner: item.by,
-      done: { label: 'Done', ops: [{ col: 'babyChecklists', id: item.id, data: { done: true }, merge: true }], roles: ['admin', 'member', 'helper', 'kid'] },
+      done: { label: t('common.done'), ops: [{ col: 'babyChecklists', id: item.id, data: { done: true }, merge: true }], roles: ['admin', 'member', 'helper', 'kid'] },
       cancel: {
-        label: 'Skip',
+        label: t('todo.skip'),
         ops: [{ col: 'babyChecklists', id: item.id, data: { skipped: true, skippedAt: '$now' }, merge: true }],
         roles: ['admin', 'member'],
         owner: true,

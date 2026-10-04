@@ -2,6 +2,7 @@ import type { Contact } from '@huishouden/pwa-kit/contacts';
 import type { Appointment, BabyEvent, BabyProfile, ChecklistItem } from './model';
 import { defaultChecklistDocs } from './checklist';
 import { toYmd } from '@huishouden/pwa-kit/time';
+import { t } from '../i18n';
 
 // Invented sample data for the signed-out app: README screenshots and first impressions. Everything
 // is relative to one fixed day in 2031 so nothing resembles a real family's dates.
@@ -174,8 +175,9 @@ function checklists(after: boolean): ChecklistItem[] {
     // The night light turned out not to be needed: skipped, still shown in the list.
     ...(id === SKIPPED ? { skipped: true, skippedAt: at(-25, '12:00') } : {}),
   }));
-  // One of the household's own items, about finding someone the care team does not have yet.
-  items.push({ id: 'demo-item-1', list: 'Paperwork', text: 'Find a lactation consultant', done: false, order: 4100, createdAt: at(-20, '12:00'), by: ALEX });
+  // One of the household's own items, about finding someone the care team does not have yet (in the
+  // page's language, like the starter lists it sits with).
+  items.push({ id: 'demo-item-1', list: t('template.paperwork'), text: t('sample.lactationItem'), done: false, order: 4100, createdAt: at(-20, '12:00'), by: ALEX });
   return items;
 }
 

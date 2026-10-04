@@ -7,6 +7,7 @@ import { useClock } from '@huishouden/pwa-kit/react/clock';
 import type { BabyStore } from '../data/types';
 import { cardClass, ghostButton, iconButton, overline, primaryButton } from '@huishouden/pwa-kit/react/ui';
 import { RoleNote } from '@huishouden/pwa-kit/react/roles';
+import { useT } from '../i18n';
 
 interface Props {
   store: BabyStore;
@@ -20,6 +21,7 @@ interface Props {
 
 /** Before the birth: the countdown, the next appointment, and how far each checklist has come. */
 export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, onEditAppointment, onOpen }: Props) {
+  const t = useT();
   const { now } = useClock();
   const { profile, appointments, checklists } = store.data;
   const due = profile?.dueDate ? countdown(profile.dueDate, now) : null;
@@ -30,11 +32,11 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="flex min-h-0 flex-col gap-6">
-        <section className={`${cardClass} px-8 py-6`} aria-label="Countdown">
+        <section className={`${cardClass} px-8 py-6`} aria-label={t('overview.countdown')}>
           <div className="flex items-start justify-between gap-4">
-            <p className={overline}>{profile?.name ? `Waiting for ${profile.name}` : 'Countdown'}</p>
+            <p className={overline}>{profile?.name ? t('overview.waitingFor', { name: profile.name }) : t('overview.countdown')}</p>
             {due && onSetDueDate && (
-              <button type="button" className={iconButton} aria-label="Edit due date and name" onClick={onSetDueDate}>
+              <button type="button" className={iconButton} aria-label={t('overview.editDue')} onClick={onSetDueDate}>
                 <Pencil size={18} />
               </button>
             )}
@@ -46,14 +48,15 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
                 {due.suffix && <span className="ml-3 text-3xl font-medium text-muted">{due.suffix}</span>}
               </p>
               <p className="mt-3 text-xl text-muted">
-                Due {formatDateLong(parseYmd(profile!.dueDate)!)}
-                {due.week ? ` · week ${due.week} of 40` : ''}
+                {due.week
+                  ? t('overview.dueOnWeek', { date: formatDateLong(parseYmd(profile!.dueDate)!), week: due.week })
+                  : t('overview.dueOn', { date: formatDateLong(parseYmd(profile!.dueDate)!) })}
               </p>
             </>
           ) : (
             <>
-              <p className="mt-2 text-3xl font-semibold text-ink">When is the baby due?</p>
-              <p className="mt-2 text-lg text-muted">Add the due date to start the countdown.</p>
+              <p className="mt-2 text-3xl font-semibold text-ink">{t('overview.whenDue')}</p>
+              <p className="mt-2 text-lg text-muted">{t('overview.addDueHint')}</p>
             </>
           )}
           {!onSetDueDate && <RoleNote action="change-settings" className="mt-4" />}
@@ -61,25 +64,25 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
           <div className="mt-5 flex flex-wrap gap-3">
             {!due && (
               <button type="button" className={primaryButton} onClick={onSetDueDate}>
-                Add the due date
+                {t('overview.addDue')}
               </button>
             )}
             <button type="button" className={due ? primaryButton : ghostButton} onClick={onBabyIsHere}>
-              <Baby size={20} /> Baby is here
+              <Baby size={20} /> {t('overview.babyIsHere')}
             </button>
           </div>
           )}
         </section>
 
-        <section className={`${cardClass} flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-5`} aria-label="Next appointment">
+        <section className={`${cardClass} flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-5`} aria-label={t('overview.nextAppointment')}>
           <div className="flex items-center justify-between gap-4">
-            <p className={overline}>Next appointment</p>
+            <p className={overline}>{t('overview.nextAppointment')}</p>
             <div className="flex gap-1">
               <button type="button" className={ghostButton} onClick={onAddAppointment}>
-                <CalendarPlus size={18} /> Add
+                <CalendarPlus size={18} /> {t('common.add')}
               </button>
               <button type="button" className={ghostButton} onClick={() => onOpen('appointments')}>
-                All <ChevronRight size={18} />
+                {t('overview.all')} <ChevronRight size={18} />
               </button>
             </div>
           </div>
@@ -112,19 +115,19 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
               )}
             </>
           ) : (
-            <p className="mt-2 text-lg text-muted">No appointments coming up.</p>
+            <p className="mt-2 text-lg text-muted">{t('appointments.none')}</p>
           )}
         </section>
       </div>
 
-      <section className={`${cardClass} flex min-h-0 flex-col p-6`} aria-label="Checklists">
+      <section className={`${cardClass} flex min-h-0 flex-col p-6`} aria-label={t('checklists.title')}>
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-ink">Checklists</h2>
+          <h2 className="text-xl font-semibold text-ink">{t('checklists.title')}</h2>
           <button type="button" className={ghostButton} onClick={() => onOpen('checklists')}>
-            Open <ChevronRight size={18} />
+            {t('overview.open')} <ChevronRight size={18} />
           </button>
         </div>
-        {groups.length === 0 && <p className="text-base text-muted">No checklists yet.</p>}
+        {groups.length === 0 && <p className="text-base text-muted">{t('overview.noChecklists')}</p>}
         <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto">
           {groups.map((g) => {
             const nextItem = g.items.find(isOpen);
@@ -134,10 +137,10 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="text-lg font-semibold text-ink">{g.list}</p>
                   <p className="text-base text-muted tabular-nums">
-                    {g.done} of {g.total}
+                    {t('overview.progress', { done: g.done, total: g.total })}
                   </p>
                 </div>
-                <div className="mt-2 h-2 rounded-full bg-sunken" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${g.list} progress`}>
+                <div className="mt-2 h-2 rounded-full bg-sunken" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t('overview.progressLabel', { list: g.list })}>
                   <div className="h-2 rounded-full bg-forest-600 dark:bg-forest-300" style={{ width: `${pct}%` }} />
                 </div>
                 {nextItem ? (
@@ -145,14 +148,14 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
                     type="button"
                     onClick={() => store.actions.setChecklistDone(nextItem.id, true)}
                     className="mt-2 -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 text-left hover:bg-sunken"
-                    aria-label={`Mark done: ${nextItem.text}`}
+                    aria-label={t('overview.markDone', { item: nextItem.text })}
                   >
                     <span className="h-6 w-6 shrink-0 rounded-md border-2 border-stone-400" aria-hidden="true" />
                     <span className="min-w-0 flex-1 truncate text-base text-ink">{nextItem.text}</span>
                   </button>
                 ) : (
                   <p className="mt-2 flex min-h-11 items-center gap-2 text-base text-link">
-                    <Check size={18} aria-hidden="true" /> All done
+                    <Check size={18} aria-hidden="true" /> {t('overview.allDone')}
                   </p>
                 )}
               </li>

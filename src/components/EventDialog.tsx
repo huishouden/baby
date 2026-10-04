@@ -4,8 +4,11 @@ import type { BabyEvent, DiaperKind, EventFields, FeedMethod, Side } from '../li
 import { LIMITS } from '../lib/model';
 import { fromLocalInput, toLocalInput } from '@huishouden/pwa-kit/time';
 import { Chip, Dialog, Field, ghostButton, inputClass, primaryButton } from '@huishouden/pwa-kit/react/ui';
+import { capitalize } from '@huishouden/pwa-kit/i18n';
+import { diaperWords, sideWords } from '../lib/summary';
+import { useT } from '../i18n';
 
-const KIND_TITLE = { feed: 'Feed', sleep: 'Sleep', diaper: 'Diaper', pump: 'Pump' } as const;
+const TITLE_KEYS = { feed: 'eventDialog.feed', sleep: 'eventDialog.sleep', diaper: 'eventDialog.diaper', pump: 'eventDialog.pump' } as const;
 
 /** Edit any entry: its time (and end, for sleep), the details for its kind, and a note. */
 export function EventDialog({ event, onSave, onDelete, onClose }: {
@@ -14,6 +17,7 @@ export function EventDialog({ event, onSave, onDelete, onClose }: {
   onDelete: () => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const [at, setAt] = useState(toLocalInput(event.at));
   const [endAt, setEndAt] = useState(event.endAt != null ? toLocalInput(event.endAt) : '');
   const [running, setRunning] = useState(event.kind === 'sleep' && event.endAt == null);
@@ -46,7 +50,7 @@ export function EventDialog({ event, onSave, onDelete, onClose }: {
 
   return (
     <Dialog
-      title={`Edit ${KIND_TITLE[event.kind].toLowerCase()}`}
+      title={t(TITLE_KEYS[event.kind])}
       onClose={onClose}
       footer={
         <>
@@ -58,13 +62,13 @@ export function EventDialog({ event, onSave, onDelete, onClose }: {
               onClose();
             }}
           >
-            <Trash2 size={18} /> Delete
+            <Trash2 size={18} /> {t('common.delete')}
           </button>
           <button type="button" className={ghostButton} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={primaryButton} disabled={!valid} onClick={save}>
-            Save
+            {t('common.save')}
           </button>
         </>
       }
@@ -76,7 +80,7 @@ export function EventDialog({ event, onSave, onDelete, onClose }: {
           save();
         }}
       >
-        <Field label={event.kind === 'sleep' ? 'Fell asleep' : 'Time'}>
+        <Field label={event.kind === 'sleep' ? t('log.fellAsleep') : t('common.time')}>
           <input className={inputClass} type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} />
         </Field>
 
@@ -84,10 +88,10 @@ export function EventDialog({ event, onSave, onDelete, onClose }: {
           <>
             <label className="flex min-h-11 items-center gap-3 text-base text-ink">
               <input type="checkbox" className="h-5 w-5 accent-forest-700 dark:accent-forest-300" checked={running} onChange={(e) => setRunning(e.target.checked)} />
-              Still asleep
+              {t('eventDialog.stillAsleep')}
             </label>
             {!running && (
-              <Field label="Woke up" hint={endInvalid ? 'Pick a time after falling asleep.' : undefined}>
+              <Field label={t('log.wokeUp')} hint={endInvalid ? t('eventDialog.endInvalid') : undefined}>
                 <input className={inputClass} type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} />
               </Field>
             )}
@@ -96,20 +100,20 @@ export function EventDialog({ event, onSave, onDelete, onClose }: {
 
         {event.kind === 'feed' && (
           <div className="space-y-3">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Feeding method">
-              <Chip active={method === 'breast'} onClick={() => setMethod('breast')}>Breast</Chip>
-              <Chip active={method === 'bottle'} onClick={() => setMethod('bottle')}>Bottle</Chip>
+            <div className="flex flex-wrap gap-2" role="group" aria-label={t('eventDialog.method')}>
+              <Chip active={method === 'breast'} onClick={() => setMethod('breast')}>{t('eventDialog.breast')}</Chip>
+              <Chip active={method === 'bottle'} onClick={() => setMethod('bottle')}>{t('log.bottle')}</Chip>
             </div>
             {method === 'breast' ? (
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Side">
+              <div className="flex flex-wrap gap-2" role="group" aria-label={t('eventDialog.side')}>
                 {(['left', 'right', 'both'] as const).map((s) => (
                   <Chip key={s} active={side === s} onClick={() => setSide(s)}>
-                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                    {capitalize(sideWords(s))}
                   </Chip>
                 ))}
               </div>
             ) : (
-              <Field label="Amount in ml">
+              <Field label={t('amount.label')}>
                 <input className={inputClass} type="number" inputMode="numeric" min={1} max={1000} value={ml} onChange={(e) => setMl(e.target.value)} />
               </Field>
             )}
@@ -117,22 +121,22 @@ export function EventDialog({ event, onSave, onDelete, onClose }: {
         )}
 
         {event.kind === 'diaper' && (
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Diaper">
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t('log.diaper')}>
             {(['wet', 'dirty', 'both'] as const).map((d) => (
               <Chip key={d} active={diaper === d} onClick={() => setDiaper(d)}>
-                {d.charAt(0).toUpperCase() + d.slice(1)}
+                {capitalize(diaperWords(d))}
               </Chip>
             ))}
           </div>
         )}
 
         {event.kind === 'pump' && (
-          <Field label="Amount in ml">
+          <Field label={t('amount.label')}>
             <input className={inputClass} type="number" inputMode="numeric" min={1} max={1000} value={ml} onChange={(e) => setMl(e.target.value)} />
           </Field>
         )}
 
-        <Field label="Note (optional)">
+        <Field label={t('eventDialog.note')}>
           <textarea className={`${inputClass} min-h-20`} maxLength={LIMITS.note} value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
         <button type="submit" hidden />

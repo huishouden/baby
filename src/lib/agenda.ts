@@ -3,6 +3,7 @@ import { appUrl } from '@huishouden/pwa-kit/site';
 import { parseYmd } from '@huishouden/pwa-kit/time';
 import type { Appointment, BabyProfile } from './model';
 import type { BabyData } from './demo';
+import { t } from '../i18n';
 
 // What Baby puts on the household agenda (households/{id}/agenda), so the portal's calendar and
 // Today view show it. Checklist items have no dates, so they are not published.
@@ -46,10 +47,13 @@ export function appointmentAgenda(a: Appointment, profile: BabyProfile | null, o
 export function dueDateAgenda(profile: BabyProfile | null, origin = ORIGIN): Omit<AgendaInput, 'ref'>[] {
   if (!profile?.dueDate || profile.birthDate || parseYmd(profile.dueDate) === null) return [];
   const who = babyName(profile);
-  return [{ kind: 'other', title: 'Due date', start: allDayStart(profile.dueDate), allDay: true, url: tabUrl(origin), ...(who ? { who } : {}) }];
+  return [{ kind: 'other', title: t('profile.dueDate'), start: allDayStart(profile.dueDate), allDay: true, url: tabUrl(origin), ...(who ? { who } : {}) }];
 }
 
-/** Everything Baby publishes, for reconciling on open. The kit leaves out what falls outside its window. */
+/**
+ * Everything Baby publishes, for reconciling on open, in the page's language (wrap in
+ * `localizeAgenda` for every language). The kit leaves out what falls outside its window.
+ */
 export function agendaItems(data: Pick<BabyData, 'profile' | 'appointments'>, origin = ORIGIN): AgendaInput[] {
   return [
     ...dueDateAgenda(data.profile, origin).map((i) => ({ ...i, ref: DUE_DATE_REF })),

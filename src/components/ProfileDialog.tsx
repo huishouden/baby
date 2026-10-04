@@ -4,10 +4,11 @@ import { LIMITS } from '../lib/model';
 import { toYmd } from '@huishouden/pwa-kit/time';
 import type { ProfileInput } from '../data/types';
 import { Dialog, Field, ghostButton, inputClass, primaryButton } from '@huishouden/pwa-kit/react/ui';
+import { useT } from '../i18n';
 
 export type ProfileMode = 'due' | 'born' | 'edit';
 
-const TITLES: Record<ProfileMode, string> = { due: 'Due date', born: 'Baby is here', edit: 'Baby details' };
+const TITLE_KEYS = { due: 'profile.dueDate', born: 'overview.babyIsHere', edit: 'profile.details' } as const satisfies Record<ProfileMode, string>;
 
 /** Due date and name before the birth; name and birth date for "Baby is here"; everything to edit. */
 export function ProfileDialog({ mode, profile, now, onSave, onClose }: {
@@ -17,6 +18,7 @@ export function ProfileDialog({ mode, profile, now, onSave, onClose }: {
   onSave: (p: ProfileInput) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const [name, setName] = useState(profile?.name ?? '');
   const [dueDate, setDueDate] = useState(profile?.dueDate ?? '');
   const [birthDate, setBirthDate] = useState(profile?.birthDate ?? (mode === 'born' ? toYmd(now) : ''));
@@ -29,15 +31,15 @@ export function ProfileDialog({ mode, profile, now, onSave, onClose }: {
 
   return (
     <Dialog
-      title={TITLES[mode]}
+      title={t(TITLE_KEYS[mode])}
       onClose={onClose}
       footer={
         <>
           <button type="button" className={ghostButton} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={primaryButton} disabled={!valid} onClick={save}>
-            {mode === 'born' ? 'Start the log' : 'Save'}
+            {mode === 'born' ? t('profile.startLog') : t('common.save')}
           </button>
         </>
       }
@@ -49,17 +51,17 @@ export function ProfileDialog({ mode, profile, now, onSave, onClose }: {
           if (valid) save();
         }}
       >
-        {mode === 'born' && <p className="text-base text-muted">The main screen becomes the feeding, sleep and diaper log. You can change these later.</p>}
-        <Field label={mode === 'due' ? 'Name (optional)' : 'Name'}>
+        {mode === 'born' && <p className="text-base text-muted">{t('profile.bornIntro')}</p>}
+        <Field label={mode === 'due' ? t('profile.nameOptional') : t('common.name')}>
           <input className={inputClass} value={name} maxLength={LIMITS.name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
         </Field>
         {mode !== 'born' && (
-          <Field label="Due date">
+          <Field label={t('profile.dueDate')}>
             <input className={inputClass} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required={mode === 'due'} />
           </Field>
         )}
         {mode !== 'due' && (
-          <Field label="Birth date" hint={mode === 'edit' ? 'Clear it to go back to the countdown.' : undefined}>
+          <Field label={t('profile.birthDate')} hint={mode === 'edit' ? t('profile.birthDateHint') : undefined}>
             <input className={inputClass} type="date" value={birthDate} max={toYmd(now)} onChange={(e) => setBirthDate(e.target.value)} required={mode === 'born'} />
           </Field>
         )}

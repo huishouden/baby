@@ -13,6 +13,7 @@ import { BabyApp } from './BabyApp';
 import { Header } from './components/Header';
 import { PORTAL_URL } from './lib/portal';
 import { Chip, SampleBanner, cardClass, primaryButton, useToast } from '@huishouden/pwa-kit/react/ui';
+import { t, useLang, useT } from './i18n';
 
 export default function App() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
@@ -33,7 +34,7 @@ export default function App() {
       await signInWithGoogle();
     } catch (e) {
       const code = (e as { code?: string }).code;
-      if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') setSignInError("Couldn't sign in. Try again.");
+      if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') setSignInError(t('signIn.failed'));
     } finally {
       setSigningIn(false);
     }
@@ -54,6 +55,7 @@ interface FrameProps {
 }
 
 function SignedIn({ user, ...frame }: FrameProps & { user: User }) {
+  const t = useT();
   const email = (user.email ?? '').toLowerCase();
   const [state, setState] = useState<HouseholdState>({ status: 'loading' });
   useEffect(() => (email ? watchHousehold(db, email, setState) : undefined), [email]);
@@ -68,22 +70,19 @@ function SignedIn({ user, ...frame }: FrameProps & { user: User }) {
   }, [householdId, user]);
 
   if (state.status === 'ready') return <LiveApp household={state.household} user={user} {...frame} />;
-  if (state.status === 'loading') return <Plain user={user} {...frame}>Finding your household.</Plain>;
+  if (state.status === 'loading') return <Plain user={user} {...frame}>{t('household.finding')}</Plain>;
   if (state.status === 'error')
     return (
       <Plain user={user} {...frame}>
-        Couldn't reach the household. Check the connection; the app retries on its own.
+        {t('household.unreachable')}
       </Plain>
     );
   return (
     <Plain user={user} {...frame}>
-      <h2 className="text-2xl font-semibold text-ink">Not in a household yet</h2>
-      <p className="mt-2">
-        {user.email} isn't a member of a Huishouden household. Ask someone in your household to invite this address from the Huishouden home screen, then open
-        Baby again. If you use another Google account for the household, sign out and sign in with that one.
-      </p>
+      <h2 className="text-2xl font-semibold text-ink">{t('household.noneTitle')}</h2>
+      <p className="mt-2">{t('household.noneBody', { email: user.email ?? '' })}</p>
       <a className={`${primaryButton} mt-5`} href={PORTAL_URL}>
-        Open Huishouden
+        {t('household.openPortal')}
       </a>
     </Plain>
   );
@@ -125,9 +124,11 @@ function DemoApp({ signInError, ...frame }: FrameProps & { signInError: string |
     else url.searchParams.delete('demo');
     history.replaceState(null, '', url);
   };
+  // The sample's checklists start in the page's language, so a new language starts them again.
+  const { lang } = useLang();
   return (
     <ClockProvider read={read}>
-      <DemoInner key={scenario} scenario={scenario} read={read} {...frame} onScenario={choose} signInError={signInError} />
+      <DemoInner key={`${scenario}-${lang}`} scenario={scenario} read={read} {...frame} onScenario={choose} signInError={signInError} />
     </ClockProvider>
   );
 }
@@ -138,16 +139,17 @@ function DemoInner({ scenario, read, onScenario, signInError, ...frame }: FrameP
   onScenario: (s: DemoScenario) => void;
   signInError: string | null;
 }) {
+  const t = useT();
   const { toast, notify, clear } = useToast();
   const store = useDemoStore(scenario, read, demoRole());
   const banner = (
-    <SampleBanner text="An invented family. Nothing is saved. Sign in to use your household’s own." notice={signInError ?? undefined}>
-      <div className="flex gap-2" role="group" aria-label="Sample">
+    <SampleBanner text={t('sample.banner')} notice={signInError ?? undefined}>
+      <div className="flex gap-2" role="group" aria-label={t('sample.group')}>
         <Chip active={scenario === 'before'} onClick={() => onScenario('before')}>
-          Before birth
+          {t('sample.before')}
         </Chip>
         <Chip active={scenario === 'after'} onClick={() => onScenario('after')}>
-          After birth
+          {t('sample.after')}
         </Chip>
       </div>
     </SampleBanner>

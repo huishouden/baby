@@ -6,6 +6,7 @@ import { CalendarHint, CalendarImportDialog, useCalendarSearch } from '@huishoud
 import { useClock } from '@huishouden/pwa-kit/react/clock';
 import { cardClass, ghostButton, iconButton, linkClass, primaryButton, secondaryButton } from '@huishouden/pwa-kit/react/ui';
 import { formatDayLong, formatTime, monthShort, relativeDay } from '@huishouden/pwa-kit/time';
+import { formatNumber } from '@huishouden/pwa-kit/i18n';
 import type { Appointment } from '../lib/model';
 import { BABY_CALENDAR_QUERIES } from '../lib/calendarImport';
 import type { CalendarMatch } from '@huishouden/pwa-kit/calendar';
@@ -13,6 +14,7 @@ import type { BabyStore } from '../data/types';
 import { auth } from '../data/firebase';
 import { PrivateMark } from '@huishouden/pwa-kit/react/contacts';
 import { mayChange } from '../lib/roles';
+import { useT } from '../i18n';
 
 export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport }: {
   store: BabyStore;
@@ -22,6 +24,7 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
   /** Adds calendar events as appointments, with a toast. */
   onImport: (list: CalendarMatch[]) => void;
 }) {
+  const t = useT();
   const { now } = useClock();
   const [showPast, setShowPast] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -36,7 +39,7 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
     <div className="mx-auto max-w-3xl space-y-6 lg:h-full lg:overflow-y-auto">
       <div>
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-          <h2 className="text-2xl font-semibold text-ink">Appointments</h2>
+          <h2 className="text-2xl font-semibold text-ink">{t('tab.appointments')}</h2>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -48,20 +51,20 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
                 runScan();
               }}
             >
-              <CalendarArrowDown size={20} /> Import from calendar
+              <CalendarArrowDown size={20} /> {t('appointments.import')}
             </button>
             <button type="button" className={primaryButton} onClick={onAdd}>
-              <CalendarPlus size={20} /> Add appointment
+              <CalendarPlus size={20} /> {t('appointments.add')}
             </button>
           </div>
         </div>
         <div className="mt-1 flex justify-end text-right">
-          <CalendarHint app="Baby" available={calendarAvailable} />
+          <CalendarHint app="Baby" name={t('app.name')} available={calendarAvailable} />
         </div>
       </div>
 
-      <section className={cardClass} aria-label="Upcoming appointments">
-        {upcoming.length === 0 && <p className="p-6 text-lg text-muted">No appointments coming up.</p>}
+      <section className={cardClass} aria-label={t('appointments.upcoming')}>
+        {upcoming.length === 0 && <p className="p-6 text-lg text-muted">{t('appointments.none')}</p>}
         <ul>
           {upcoming.map((a, i) => (
             <Row key={a.id} a={a} now={now} contacts={contacts} first={i === 0} onEdit={mayChange(store.role, store.me, a) ? () => onEdit(a) : undefined} />
@@ -70,9 +73,9 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
       </section>
 
       {past.length > 0 && (
-        <section aria-label="Past appointments">
+        <section aria-label={t('appointments.past')}>
           <button type="button" className={ghostButton} onClick={() => setShowPast((s) => !s)} aria-expanded={showPast}>
-            {showPast ? <ChevronUp size={18} /> : <ChevronDown size={18} />} Past ({past.length})
+            {showPast ? <ChevronUp size={18} /> : <ChevronDown size={18} />} {t('appointments.pastCount', { n: past.length })}
           </button>
           {showPast && (
             <ul className={`${cardClass} mt-2`}>
@@ -88,9 +91,9 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
         <CalendarImportDialog
           state={scan.state}
           records={all}
-          intro="Prenatal, midwife, ultrasound, pediatric and other baby events from last week to a year ahead."
-          noneFound="No baby events found in your calendars."
-          allImported="Every baby event in your calendar is already in Baby."
+          intro={t('import.intro')}
+          noneFound={t('import.none')}
+          allImported={t('import.allImported')}
           onRetry={runScan}
           onAdd={onImport}
           onClose={() => {
@@ -104,13 +107,14 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
 }
 
 function Row({ a, now, contacts, first, onEdit }: { a: Appointment; now: number; contacts: Contact[]; first?: boolean; onEdit?: () => void }) {
+  const t = useT();
   const d = new Date(a.at);
   const who = a.contactId ? contacts.find((c) => c.id === a.contactId) : undefined;
   return (
     <li className="flex items-start gap-5 border-b border-line p-5 last:border-b-0">
       <div className={`flex w-16 shrink-0 flex-col items-center rounded-xl py-2 ${first ? 'bg-primary text-on-primary' : 'bg-tint text-link'}`}>
         <span className="text-sm font-medium">{monthShort(a.at)}</span>
-        <span className="text-2xl font-semibold tabular-nums">{d.getDate()}</span>
+        <span className="text-2xl font-semibold tabular-nums">{formatNumber(d.getDate())}</span>
       </div>
       <div className="min-w-0 flex-1">
         <p className={`${first ? 'text-2xl' : 'text-xl'} font-semibold text-ink`}>{a.title}</p>
@@ -123,7 +127,7 @@ function Row({ a, now, contacts, first, onEdit }: { a: Appointment; now: number;
               <UserRound size={16} aria-hidden="true" /> {who.name}
             </span>
             {who.phone && (
-              <a className={`${linkClass} tabular-nums`} href={telHref(who.phone)} aria-label={`Call ${who.name}, ${who.phone}`}>
+              <a className={`${linkClass} tabular-nums`} href={telHref(who.phone)} aria-label={t('contacts.call', { name: who.name, phone: who.phone })}>
                 <Phone size={16} aria-hidden="true" /> {who.phone}
               </a>
             )}
@@ -137,13 +141,13 @@ function Row({ a, now, contacts, first, onEdit }: { a: Appointment; now: number;
         {a.notes && <p className="mt-1 text-base whitespace-pre-line text-muted">{a.notes}</p>}
         {a.calendarLink && (
           <a className={linkClass} href={a.calendarLink} target="_blank" rel="noopener noreferrer">
-            <ExternalLink size={16} aria-hidden="true" /> Open in Calendar
+            <ExternalLink size={16} aria-hidden="true" /> {t('calendar.openInCalendar')}
           </a>
         )}
       </div>
       {a.private && <PrivateMark />}
       {onEdit && (
-        <button type="button" className={iconButton} onClick={onEdit} aria-label={`Edit ${a.title}`}>
+        <button type="button" className={iconButton} onClick={onEdit} aria-label={t('appointments.editName', { name: a.title })}>
           <Pencil size={18} />
         </button>
       )}
