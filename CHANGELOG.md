@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.2](https://github.com/huishouden/baby/compare/v1.12.1...v1.12.2) (2026-10-04)
+
+
+### Bug Fixes
+
+* **i18n:** contact role words as the portal's apps.json names them ([#46](https://github.com/huishouden/baby/issues/46)) ([257c728](https://github.com/huishouden/baby/commit/257c7285c9e1ce8f57dcccfe56b3049803445787))
+
 ## [1.12.1](https://github.com/huishouden/baby/compare/v1.12.0...v1.12.1) (2026-10-04)
 
 
