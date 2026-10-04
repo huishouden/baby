@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0](https://github.com/huishouden/baby/compare/v1.12.2...v1.13.0) (2026-10-04)
+
+
+### Features
+
+* **calendar:** appointments come back from Google Calendar; Add to calendar on every appointment and the due date (kit v0.67.0) ([#48](https://github.com/huishouden/baby/issues/48)) ([26e44e8](https://github.com/huishouden/baby/commit/26e44e801725f29b8595aed642e69bcd83090f59))
+
 ## [1.12.2](https://github.com/huishouden/baby/compare/v1.12.1...v1.12.2) (2026-10-04)
 
 
