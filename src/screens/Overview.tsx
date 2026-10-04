@@ -7,6 +7,8 @@ import { useClock } from '@huishouden/pwa-kit/react/clock';
 import type { BabyStore } from '../data/types';
 import { cardClass, ghostButton, iconButton, overline, primaryButton } from '@huishouden/pwa-kit/react/ui';
 import { RoleNote } from '@huishouden/pwa-kit/react/roles';
+import { AddToCalendar } from '@huishouden/pwa-kit/react/calendar';
+import { dueDateEntry } from '../lib/agenda';
 import { useT } from '../i18n';
 
 interface Props {
@@ -52,6 +54,7 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
                   ? t('overview.dueOnWeek', { date: formatDateLong(parseYmd(profile!.dueDate)!), week: due.week })
                   : t('overview.dueOn', { date: formatDateLong(parseYmd(profile!.dueDate)!) })}
               </p>
+              {dueDateEntry(profile) && <AddToCalendar entry={dueDateEntry(profile)!} className="mt-3" />}
             </>
           ) : (
             <>

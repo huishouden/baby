@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { CalendarArrowDown, CalendarPlus, ChevronDown, ChevronUp, ExternalLink, MapPin, Pencil, Phone, UserRound } from 'lucide-react';
 import type { Contact } from '@huishouden/pwa-kit/contacts';
 import { telHref } from '@huishouden/pwa-kit/places';
-import { CalendarHint, CalendarImportDialog, useCalendarSearch } from '@huishouden/pwa-kit/react/calendar';
+import { AddToCalendar, CalendarHint, CalendarImportDialog, useCalendarSearch } from '@huishouden/pwa-kit/react/calendar';
+import { appointmentEntry } from '../lib/agenda';
 import { useClock } from '@huishouden/pwa-kit/react/clock';
 import { cardClass, ghostButton, iconButton, linkClass, primaryButton, secondaryButton } from '@huishouden/pwa-kit/react/ui';
 import { formatDayLong, formatTime, monthShort, relativeDay } from '@huishouden/pwa-kit/time';
 import { formatNumber } from '@huishouden/pwa-kit/i18n';
-import type { Appointment } from '../lib/model';
+import type { Appointment, BabyProfile } from '../lib/model';
 import { BABY_CALENDAR_QUERIES } from '../lib/calendarImport';
 import type { CalendarMatch } from '@huishouden/pwa-kit/calendar';
 import type { BabyStore } from '../data/types';
@@ -67,7 +68,7 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
         {upcoming.length === 0 && <p className="p-6 text-lg text-muted">{t('appointments.none')}</p>}
         <ul>
           {upcoming.map((a, i) => (
-            <Row key={a.id} a={a} now={now} contacts={contacts} first={i === 0} onEdit={mayChange(store.role, store.me, a) ? () => onEdit(a) : undefined} />
+            <Row key={a.id} a={a} now={now} contacts={contacts} profile={store.data.profile} first={i === 0} onEdit={mayChange(store.role, store.me, a) ? () => onEdit(a) : undefined} />
           ))}
         </ul>
       </section>
@@ -80,7 +81,7 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
           {showPast && (
             <ul className={`${cardClass} mt-2`}>
               {past.map((a) => (
-                <Row key={a.id} a={a} now={now} contacts={contacts} onEdit={mayChange(store.role, store.me, a) ? () => onEdit(a) : undefined} />
+                <Row key={a.id} a={a} now={now} contacts={contacts} profile={store.data.profile} onEdit={mayChange(store.role, store.me, a) ? () => onEdit(a) : undefined} />
               ))}
             </ul>
           )}
@@ -106,8 +107,9 @@ export function Appointments({ store, calendarAvailable, onAdd, onEdit, onImport
   );
 }
 
-function Row({ a, now, contacts, first, onEdit }: { a: Appointment; now: number; contacts: Contact[]; first?: boolean; onEdit?: () => void }) {
+function Row({ a, now, contacts, profile, first, onEdit }: { a: Appointment; now: number; contacts: Contact[]; profile: BabyProfile | null; first?: boolean; onEdit?: () => void }) {
   const t = useT();
+  const entry = appointmentEntry(a, profile);
   const d = new Date(a.at);
   const who = a.contactId ? contacts.find((c) => c.id === a.contactId) : undefined;
   return (
@@ -146,6 +148,7 @@ function Row({ a, now, contacts, first, onEdit }: { a: Appointment; now: number;
         )}
       </div>
       {a.private && <PrivateMark />}
+      {entry && <AddToCalendar entry={entry} compact />}
       {onEdit && (
         <button type="button" className={iconButton} onClick={onEdit} aria-label={t('appointments.editName', { name: a.title })}>
           <Pencil size={18} />

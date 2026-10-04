@@ -1,4 +1,5 @@
-import { allDayStart, type AgendaInput } from '@huishouden/pwa-kit/agenda';
+import { allDayStart, type AgendaEdit, type AgendaInput } from '@huishouden/pwa-kit/agenda';
+import type { CalendarEntry } from '@huishouden/pwa-kit/calendar-export';
 import { appUrl } from '@huishouden/pwa-kit/site';
 import { parseYmd } from '@huishouden/pwa-kit/time';
 import type { Appointment, BabyProfile } from './model';
@@ -23,6 +24,22 @@ export const tabUrl = (origin: string, tab?: string) => appUrl(BASE, tab ? `#${t
 
 const babyName = (profile: BabyProfile | null) => profile?.name?.trim() || undefined;
 
+/**
+ * How a change made in someone's own calendar (huishouden/calendar's Google sync) comes back to the
+ * appointment: moved, renamed, new notes, or deleted. The same people the rules let change it:
+ * admins and members, and whoever added it.
+ */
+export function appointmentEdit(a: Pick<Appointment, 'id' | 'by'>): AgendaEdit {
+  const who = { roles: ['admin' as const, 'member' as const], emails: [a.by] };
+  const merge = (data: object) => ({ ops: [{ col: 'babyAppointments', id: a.id, data, merge: true }], ...who });
+  return {
+    reschedule: merge({ at: '$start', updatedAt: '$now' }),
+    rename: merge({ title: '$title', updatedAt: '$now' }),
+    notes: merge({ notes: '$notes', updatedAt: '$now' }),
+    cancel: { ops: [{ col: 'babyAppointments', id: a.id, data: null }], ...who },
+  };
+}
+
 /** One timed item for an appointment, at its place, for the baby when the baby has a name. */
 export function appointmentAgenda(a: Appointment, profile: BabyProfile | null, origin = ORIGIN): Omit<AgendaInput, 'ref'>[] {
   if (!a.title.trim() || !Number.isFinite(a.at)) return [];
@@ -39,8 +56,23 @@ export function appointmentAgenda(a: Appointment, profile: BabyProfile | null, o
       ...(who ? { who } : {}),
       // A private appointment stays private on the household calendar too.
       private: a.private === true,
+      edit: appointmentEdit(a),
     },
   ];
+}
+
+/** An appointment for "Add to calendar": what the agenda shows, at its place. */
+export function appointmentEntry(a: Appointment, profile: BabyProfile | null): CalendarEntry | null {
+  const [item] = appointmentAgenda(a, profile);
+  if (!item) return null;
+  const location = a.location?.trim();
+  return { title: item.title, start: item.start, allDay: false, kind: 'appointment', url: item.url, ...(a.notes?.trim() ? { detail: a.notes.trim() } : {}), ...(location ? { location } : {}) };
+}
+
+/** The due date for "Add to calendar". */
+export function dueDateEntry(profile: BabyProfile | null): CalendarEntry | null {
+  const [item] = dueDateAgenda(profile);
+  return item ? { title: item.title, start: item.start, allDay: true, kind: 'other', url: item.url } : null;
 }
 
 /** The due date as an all-day item, until the baby is born. */

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import type { CalendarMatch } from '@huishouden/pwa-kit/calendar';
 import type { Contact } from '@huishouden/pwa-kit/contacts';
-import { CalendarFind, LinkedEvent } from '@huishouden/pwa-kit/react/calendar';
+import { AddToCalendar, CalendarFind, LinkedEvent } from '@huishouden/pwa-kit/react/calendar';
+import { appointmentEntry } from '../lib/agenda';
 import { PrivateCheckbox } from '@huishouden/pwa-kit/react/contacts';
 import { Dialog, Field, deleteButton, ghostButton, inputClass, primaryButton } from '@huishouden/pwa-kit/react/ui';
 import { addDays, fromLocalInput, toLocalInput } from '@huishouden/pwa-kit/time';
@@ -68,6 +69,7 @@ export function AppointmentDialog({ appointment, now, contacts, calendarAvailabl
       onClose={onClose}
       footer={
         <>
+          {appointment && appointmentEntry(appointment, null) && <AddToCalendar entry={appointmentEntry(appointment, null)!} />}
           {onDelete && (
             <button
               type="button"

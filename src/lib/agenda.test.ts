@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { agendaDoc, allDayStart, inAgendaWindow } from '@huishouden/pwa-kit/agenda';
 import fixture from './__fixtures__/agenda-household.json';
-import { APP_URL, DUE_DATE_REF, agendaItems, appointmentAgenda, appointmentRef, dueDateAgenda } from './agenda';
+import { APP_URL, DUE_DATE_REF, agendaItems, appointmentAgenda, appointmentEdit, appointmentEntry, appointmentRef, dueDateAgenda, dueDateEntry } from './agenda';
+import { agendaOpsAllowed, canEdit, fillEditOps } from '@huishouden/pwa-kit/agenda';
 import { DEMO_NOW } from './demo';
 import type { Appointment, BabyProfile } from './model';
 
@@ -25,6 +26,7 @@ describe('an appointment on the agenda', () => {
         url: 'https://huishouden-piekstra.web.app/baby/#appointments',
         who: 'Robin',
         private: false,
+        edit: appointmentEdit(visit),
       },
     ]);
   });
@@ -35,7 +37,7 @@ describe('an appointment on the agenda', () => {
 
   test('has no status, no detail without a place and no who without a name', () => {
     const [item] = appointmentAgenda(tour, { ...profile, name: '  ' });
-    expect(item).toEqual({ kind: 'appointment', title: 'Hospital tour', start: tour.at, allDay: false, url: `${APP_URL}#appointments`, private: false });
+    expect(item).toEqual({ kind: 'appointment', title: 'Hospital tour', start: tour.at, allDay: false, url: `${APP_URL}#appointments`, private: false, edit: appointmentEdit(tour) });
   });
 
   test('notes stay in the app', () => {
@@ -91,5 +93,30 @@ describe('everything Baby publishes', () => {
 
   test('a household with nothing dated publishes nothing', () => {
     expect(agendaItems({ profile: null, appointments: [] })).toEqual([]);
+  });
+});
+
+describe('changes made in a calendar come back to the appointment', () => {
+  const edit = appointmentEdit(visit);
+
+  test('moved, renamed, re-noted on the appointment itself; deleted removes it', () => {
+    expect(fillEditOps(edit.reschedule!.ops, { start: visit.at + 3_600_000 })).toEqual([{ col: 'babyAppointments', id: visit.id, data: { at: visit.at + 3_600_000, updatedAt: '$now' }, merge: true }]);
+    expect(fillEditOps(edit.rename!.ops, { title: 'Checkup' })[0].data).toEqual({ title: 'Checkup', updatedAt: '$now' });
+    expect(fillEditOps(edit.notes!.ops, { notes: 'Bring the card' })[0].data).toEqual({ notes: 'Bring the card', updatedAt: '$now' });
+    expect(edit.cancel!.ops).toEqual([{ col: 'babyAppointments', id: visit.id, data: null }]);
+    for (const a of Object.values(edit)) expect(agendaOpsAllowed('baby', a!.ops)).toBe(true);
+  });
+
+  test('by whoever the rules let change it: admins, members and whoever added it', () => {
+    const item = agendaDoc('baby', { ...appointmentAgenda(visit, profile)[0]!, ref: appointmentRef(visit.id) }, visit.by);
+    expect(canEdit(item, 'reschedule', 'member', 'm@example.com')).toBe(true);
+    expect(canEdit(item, 'reschedule', 'helper', 'h@example.com')).toBe(false);
+    expect(canEdit(item, 'cancel', 'helper', visit.by)).toBe(true);
+  });
+
+  test('"Add to calendar" gets the time, the place and the notes', () => {
+    expect(appointmentEntry(visit, profile)).toMatchObject({ title: 'Prenatal visit', start: visit.at, allDay: false, location: visit.location });
+    expect(dueDateEntry(profile)).toMatchObject({ allDay: true, start: allDayStart(profile.dueDate!) });
+    expect(dueDateEntry({ ...profile, birthDate: '2031-01-01' })).toBeNull();
   });
 });
