@@ -14,7 +14,7 @@ import type { BabyStore } from './data/types';
 import { Header, type Tab } from './components/Header';
 import { ProfileDialog, type ProfileMode } from './components/ProfileDialog';
 import { AppointmentDialog } from './components/AppointmentDialog';
-import { APP, roleLabel, roleLabels } from './lib/contacts';
+import { APP, ROLE_NAMES, STORED_ROLES, shownRole } from './lib/contacts';
 import { BABY_CALENDAR_QUERIES, fromCalendar, importMessage } from './lib/calendarImport';
 import { auth } from './data/firebase';
 import { LogScreen } from './screens/LogScreen';
@@ -95,7 +95,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   if (!store.ready) content = <p className="p-2 text-lg text-muted">{t('app.loading')}</p>;
   else if (tab === 'appointments')
     content = <Appointments store={store} calendarAvailable={calendar} onAdd={() => setAppointment('new')} onEdit={openAppointment} onImport={importEvents} />;
-  else if (tab === 'checklists') content = <Checklists store={store} notify={notify} onAddContact={(role) => setContact({ contact: null, role: roleLabel(role) })} />;
+  else if (tab === 'checklists') content = <Checklists store={store} notify={notify} onAddContact={(role) => setContact({ contact: null, role: ROLE_NAMES[role] })} />;
   else if (tab === 'contacts')
     content = <Contacts store={store} notify={notify} onAdd={() => setContact({ contact: null })} onEdit={(c) => setContact({ contact: c })} />;
   else if (born) content = <LogScreen store={store} notify={notify} onEditProfile={canSettings ? () => setProfileMode('edit') : undefined} />;
@@ -162,7 +162,8 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
         <ContactDialog
           contact={contact.contact}
           app={APP}
-          roles={roleLabels()}
+          roles={STORED_ROLES}
+          roleLabel={shownRole}
           role={contact.role}
           searchPlaceholder={t('contactDialog.searchPlaceholder')}
           namePlaceholder={t('contactDialog.namePlaceholder')}

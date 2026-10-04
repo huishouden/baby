@@ -19,14 +19,32 @@ const ROLE_KEYS = {
   doula: 'role.doula',
 } as const satisfies Record<KnownRole, string>;
 
+/**
+ * The one-tap roles as a contact stores them: in English, whoever picks them, so the household's
+ * shared contacts group the same in every app and language (pwa-kit docs/i18n.md step 7).
+ */
+export const ROLE_NAMES = {
+  pediatrician: 'Pediatrician',
+  midwife: 'OB / midwife',
+  hospital: 'Hospital',
+  lactation: 'Lactation consultant',
+  doula: 'Doula',
+} as const satisfies Record<KnownRole, string>;
+
+/** The stored names in the Contacts tab's order: `ContactDialog`'s and `groupContacts`' roles. */
+export const STORED_ROLES: string[] = ROLES.map((r) => ROLE_NAMES[r]);
+
 /** A known role's name in the page's language ("Pediatrician", "Pediatra", "Kinderarts"). */
 export const roleLabel = (role: KnownRole): string => t(ROLE_KEYS[role]);
 
-/** The one-tap roles in the page's language, for the contact dialog and grouping. */
-export const roleLabels = (): string[] => ROLES.map(roleLabel);
+/** A stored role as shown: a one-tap role in the page's language, anything typed as typed. The kit's `roleLabel`. */
+export function shownRole(stored: string): string {
+  const role = ROLES.find((r) => ROLE_NAMES[r].toLowerCase() === stored.trim().toLowerCase());
+  return role ? roleLabel(role) : stored;
+}
 
-// A role is stored as it was chosen or typed, in whichever language that was. These recognise it in
-// English, Spanish and Dutch, so a contact saved on a Dutch phone groups under "Pediatra" on a Spanish one.
+// A typed role may be in any language. These recognise one in English, Spanish and Dutch ("Our
+// midwife", "Kinderarts") for the checklist's "who is it" line.
 const KEYWORDS: [KnownRole, RegExp][] = [
   ['pediatrician', /\b(p(a)?ediatric(ian)?s?|pediatras?|pediatría|kinderarts(en)?|consultatiebureau)\b/iu],
   ['lactation', /\b(lactation|lactancia|lactatie(kundige)?)/iu],
@@ -66,13 +84,21 @@ export function contactForRole(contacts: Contact[], role: KnownRole): Contact | 
 export function namedRole(text: string | undefined): KnownRole | null {
   const typed = text?.trim().toLowerCase();
   if (!typed) return null;
-  return ROLES.find((r) => LANGS.some((l) => withLang(l, () => roleLabel(r)).toLowerCase() === typed)) ?? null;
+  return ROLES.find((r) => ROLE_NAMES[r].toLowerCase() === typed || LANGS.some((l) => withLang(l, () => roleLabel(r)).toLowerCase() === typed)) ?? null;
 }
 
-/** Contacts whose role is a one-tap role, shown under that role's name in the page's language. */
-export function withShownRoles(contacts: Contact[]): Contact[] {
+/**
+ * Contacts with a one-tap role saved under its name in another language (Baby 1.12.0 stored the
+ * shown name) read as the stored English role, so they group with the rest.
+ */
+export function withStoredRoles(contacts: Contact[]): Contact[] {
   return contacts.map((c) => {
     const role = namedRole(c.role);
-    return role ? { ...c, role: roleLabel(role) } : c;
+    return role && c.role !== ROLE_NAMES[role] ? { ...c, role: ROLE_NAMES[role] } : c;
   });
+}
+
+/** Contacts with their role as shown, for lists that print it ("Example Pediatrics (Pediatra)"). */
+export function withShownRoles(contacts: Contact[]): Contact[] {
+  return withStoredRoles(contacts).map((c) => (c.role ? { ...c, role: shownRole(c.role) } : c));
 }
