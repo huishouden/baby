@@ -1,12 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
-import { runPortalTodo, signInTestUser } from '@huishouden/pwa-kit/e2e';
+import { runPortalTodo, useTestHousehold } from '@huishouden/pwa-kit/e2e';
 
-// Signed in as an invented test user on the staging site (pwa-kit STANDARD.md "Staging"): the real
-// staging Firestore and rules, the seeded test household. Other runs share that household, so each
-// test writes a value unique to its run and looks for exactly that.
-test.skip(!process.env.HH_STAGING_SA, 'signed-in tests run against staging, in CI');
+// Signed in as the invented people of a household of this run's own (pwa-kit STANDARD.md
+// "Staging"), against the real rules: on the emulators (`bun run e2e:emulator`), and on
+// staging for what needs the suite's site (@staging) or a kit bump (@smoke).
+const hh = useTestHousehold(test);
 
-/** The log is the main screen once the baby is born; a fresh household starts at the countdown. */
+/** The log is the main screen once the baby is born; the household starts at the countdown. */
 async function openLog(page: Page) {
   await expect(page.getByRole('button', { name: /Log breast feed, left|Baby is here/ }).first()).toBeVisible({ timeout: 20_000 });
   if (await page.getByRole('button', { name: 'Baby is here' }).isVisible()) {
@@ -18,41 +18,36 @@ async function openLog(page: Page) {
   await expect(page.getByRole('button', { name: 'Log bottle feed' })).toBeVisible();
 }
 
-test('a bottle feed one member logs shows for the other', async ({ page, browser }) => {
-  await signInTestUser(page, { email: 'test-a@example.com' });
-  await openLog(page);
-  // 201 to 999 ml: outside the presets and unlikely to match another run's feed.
-  const ml = 201 + (Date.now() % 799);
-  const feed = (p: Page) => p.getByText(new RegExp(`\\b${ml} ml\\b`)).first();
+/** Logs a bottle feed of `ml` (201 to 999: outside the presets, so each test's own amount). */
+async function logBottle(page: Page, ml: number) {
   await page.getByRole('button', { name: 'Log bottle feed' }).click();
   const dialog = page.getByRole('dialog', { name: 'Bottle feed' });
   await dialog.getByLabel('Amount in ml').fill(String(ml));
   await dialog.getByRole('button', { name: 'Log bottle' }).click();
+}
+
+test('a bottle feed one member logs shows for the other', { tag: '@smoke' }, async ({ browser }) => {
+  const page = await hh.open(browser, 'admin');
+  await openLog(page);
+  const ml = 210;
+  const feed = (p: Page) => p.getByText(new RegExp(`\\b${ml} ml\\b`)).first();
+  await logBottle(page, ml);
   await expect(page.getByText(new RegExp(`^Logged bottle, ${ml} ml at `))).toBeVisible();
   await expect(feed(page)).toBeVisible();
 
   // Saved in the household, not just on this screen: the other member's own browser shows it.
-  const other = await browser.newContext({ baseURL: test.info().project.use.baseURL });
-  try {
-    const theirs = await other.newPage();
-    await signInTestUser(theirs, { email: 'test-b@example.com' });
-    await expect(feed(theirs)).toBeVisible({ timeout: 20_000 });
-  } finally {
-    await other.close();
-  }
+  const theirs = await hh.open(browser, 'member');
+  await expect(feed(theirs)).toBeVisible({ timeout: 20_000 });
 });
 
 // People on the shared tablet tap and close the app at once. Firestore takes a few milliseconds to
 // put a write in its offline cache, so a reload inside that gap used to lose the entry.
 for (const leave of ['reload', 'close'] as const) {
   test(`a feed logged just before the app ${leave === 'reload' ? 'reloads' : 'is closed'} is kept`, async ({ page, context }) => {
-    await signInTestUser(page, { email: 'test-a@example.com' });
+    await hh.signIn(page, 'admin');
     await openLog(page);
-    const ml = 201 + ((Date.now() + (leave === 'close' ? 400 : 0)) % 799);
-    await page.getByRole('button', { name: 'Log bottle feed' }).click();
-    const dialog = page.getByRole('dialog', { name: 'Bottle feed' });
-    await dialog.getByLabel('Amount in ml').fill(String(ml));
-    await dialog.getByRole('button', { name: 'Log bottle' }).click();
+    const ml = leave === 'reload' ? 220 : 230;
+    await logBottle(page, ml);
     if (leave === 'reload') await page.reload();
     else {
       await page.close();
@@ -66,34 +61,20 @@ for (const leave of ['reload', 'close'] as const) {
   });
 }
 
-// Roles (pwa-kit STANDARD.md "Roles"): test-helper is the household's helper. They log their own
-// feeds and change those, but not what someone else logged, and are told who can.
+// Roles (pwa-kit STANDARD.md "Roles"): the household's helper logs their own feeds and changes
+// those, but not what someone else logged, and is told who can.
 // A row's text runs on into the logger's initial ("320 mlT"), so the amount is matched without a
 // trailing word boundary.
 test.describe('as a helper', () => {
-  test.beforeAll(async () => {
-    // Other apps' runs may reseed the household with an older kit that has no helper: put it back.
-    const { seedTestHousehold } = await import('@huishouden/pwa-kit/staging');
-    await seedTestHousehold({ accessToken: process.env.HH_STAGING_ACCESS_TOKEN! });
-  });
+  test("a helper logs and changes their own feed but can't change a member's", async ({ browser }) => {
+    // A member's feed, logged first (which also starts the log if no test has yet).
+    const ml = 240;
+    const admin = await hh.open(browser, 'admin');
+    await openLog(admin);
+    await logBottle(admin, ml);
+    await expect(admin.getByText(new RegExp(`^Logged bottle, ${ml} ml at `))).toBeVisible();
 
-  test("a helper logs and changes their own feed but can't change a member's", async ({ page, browser }) => {
-    // A member's feed, logged first (which also starts the log in a fresh household).
-    const ml = 201 + (Date.now() % 799);
-    const admin = await browser.newContext({ baseURL: test.info().project.use.baseURL });
-    try {
-      const theirs = await admin.newPage();
-      await signInTestUser(theirs, { email: 'test-a@example.com' });
-      await openLog(theirs);
-      await theirs.getByRole('button', { name: 'Log bottle feed' }).click();
-      await theirs.getByRole('dialog', { name: 'Bottle feed' }).getByLabel('Amount in ml').fill(String(ml));
-      await theirs.getByRole('dialog', { name: 'Bottle feed' }).getByRole('button', { name: 'Log bottle' }).click();
-      await expect(theirs.getByText(new RegExp(`^Logged bottle, ${ml} ml at `))).toBeVisible();
-    } finally {
-      await admin.close();
-    }
-
-    await signInTestUser(page, { email: 'test-helper@example.com' });
+    const page = await hh.open(browser, 'helper');
     await expect(page.getByRole('button', { name: 'Log bottle feed' })).toBeVisible({ timeout: 20_000 });
     const timeline = page.getByRole('list', { name: 'Timeline' });
     const members = timeline.getByRole('listitem').filter({ hasText: new RegExp(`\\b${ml} ml`) });
@@ -104,34 +85,22 @@ test.describe('as a helper', () => {
     await expect(page.getByRole('button', { name: 'Edit baby details' })).toHaveCount(0);
 
     // Permitted: their own feed, which they can open and delete.
-    const mine = ml === 999 ? 998 : ml + 1;
-    await page.getByRole('button', { name: 'Log bottle feed' }).click();
-    await page.getByRole('dialog', { name: 'Bottle feed' }).getByLabel('Amount in ml').fill(String(mine));
-    await page.getByRole('dialog', { name: 'Bottle feed' }).getByRole('button', { name: 'Log bottle' }).click();
+    const mine = 250;
+    await logBottle(page, mine);
     const own = timeline.getByRole('listitem').filter({ hasText: new RegExp(`\\b${mine} ml`) }).first();
     await expect(own).toBeVisible();
     await own.getByRole('button', { name: /^Edit / }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
     await expect(timeline.getByText(new RegExp(`\\b${mine} ml\\b`))).toHaveCount(0, { timeout: 20_000 });
   });
-  test("a helper ends a sleep a member started", async ({ page, browser }) => {
-    const admin = await browser.newContext({ baseURL: test.info().project.use.baseURL });
-    try {
-      const theirs = await admin.newPage();
-      await signInTestUser(theirs, { email: 'test-a@example.com' });
-      await openLog(theirs);
-      // Start from awake, so the sleep is the member's own.
-      if (await theirs.getByRole('button', { name: /^Woke up/ }).isVisible()) {
-        await theirs.getByRole('button', { name: /^Woke up/ }).click();
-        await expect(theirs.getByRole('button', { name: /^Fell asleep/ })).toBeVisible();
-      }
-      await theirs.getByRole('button', { name: /^Fell asleep/ }).click();
-      await expect(theirs.getByRole('button', { name: /^Woke up/ })).toBeVisible();
-    } finally {
-      await admin.close();
-    }
 
-    await signInTestUser(page, { email: 'test-helper@example.com' });
+  test('a helper ends a sleep a member started', async ({ browser }) => {
+    const admin = await hh.open(browser, 'admin');
+    await openLog(admin);
+    await admin.getByRole('button', { name: /^Fell asleep/ }).click();
+    await expect(admin.getByRole('button', { name: /^Woke up/ })).toBeVisible();
+
+    const page = await hh.open(browser, 'helper');
     await page.getByRole('button', { name: /^Woke up/ }).click({ timeout: 20_000 });
     await expect(page.getByText(/^Woke up after /)).toBeVisible();
     // Kept by the server (a refused write would put the sleep back after a reload).
@@ -143,15 +112,14 @@ test.describe('as a helper', () => {
 
 // The household to-do list (pwa-kit STANDARD.md "To-dos"): a checklist item Baby publishes is
 // ticked off or skipped on the portal's To-do tab, and Baby shows the change.
+// @staging: the portal's To-do list is another app on the suite's site.
 test.describe('on the portal to-do list', () => {
   for (const action of ['done', 'cancel'] as const) {
-    test(`a checklist item ${action === 'done' ? 'ticked' : 'skipped'} there is ${action === 'done' ? 'done' : 'skipped'} in Baby`, async ({ page }) => {
+    test(`a checklist item ${action === 'done' ? 'ticked' : 'skipped'} there is ${action === 'done' ? 'done' : 'skipped'} in Baby`, { tag: '@staging' }, async ({ page }) => {
       test.setTimeout(120_000);
-      const stamp = `${Date.now().toString(36)}${action === 'done' ? 'd' : 's'}`;
-      const list = `E2E list ${stamp}`;
-      const title = `E2E to-do ${stamp}`;
-      await signInTestUser(page, { email: 'test-a@example.com' });
-      await page.goto('./#checklists');
+      const list = `E2E list ${action}`;
+      const title = `E2E to-do ${action}`;
+      await hh.signIn(page, 'admin', './#checklists');
       await page.getByRole('button', { name: 'New list' }).click({ timeout: 20_000 });
       const dialog = page.getByRole('dialog', { name: 'New list' });
       await dialog.getByLabel('List name').fill(list);
@@ -159,18 +127,12 @@ test.describe('on the portal to-do list', () => {
       await dialog.getByRole('button', { name: 'Create list' }).click();
       const section = page.getByRole('region', { name: list });
       await expect(section.getByRole('checkbox', { name: title })).toBeVisible();
-      try {
-        // Baby publishes 3 s after a checklist change; leaving sooner would cancel that sync.
-        await page.waitForTimeout(6000);
-        await runPortalTodo(page, title, { action });
-        await page.goto('./#checklists');
-        if (action === 'done') await expect(section.getByRole('checkbox', { name: title })).toHaveAttribute('aria-checked', 'true', { timeout: 20_000 });
-        else await expect(section.getByRole('listitem').filter({ hasText: title }).getByText('Skipped', { exact: true })).toBeVisible({ timeout: 20_000 });
-      } finally {
-        await page.goto('./#checklists');
-        await section.getByRole('button', { name: `Delete: ${title}` }).click({ timeout: 20_000 });
-        await expect(section).toHaveCount(0);
-      }
+      // Baby publishes 3 s after a checklist change; leaving sooner would cancel that sync.
+      await page.waitForTimeout(6000);
+      await runPortalTodo(page, title, { action });
+      await page.goto('./#checklists');
+      if (action === 'done') await expect(section.getByRole('checkbox', { name: title })).toHaveAttribute('aria-checked', 'true', { timeout: 20_000 });
+      else await expect(section.getByRole('listitem').filter({ hasText: title }).getByText('Skipped', { exact: true })).toBeVisible({ timeout: 20_000 });
     });
   }
 });
