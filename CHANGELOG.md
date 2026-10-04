@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.2](https://github.com/huishouden/baby/compare/v1.13.1...v1.13.2) (2026-10-04)
+
+
+### Bug Fixes
+
+* kit v0.74.0 to 0.82.1, contacts' pay details for admins and members only ([#57](https://github.com/huishouden/baby/issues/57)) ([dda66d3](https://github.com/huishouden/baby/commit/dda66d3d93cde98c9e202bf904253752b3ed6dbc))
+
 ## [1.13.1](https://github.com/huishouden/baby/compare/v1.13.0...v1.13.1) (2026-10-04)
 
 
