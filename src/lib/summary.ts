@@ -1,6 +1,7 @@
-import type { BabyEvent, DiaperKind } from './model';
+import type { BabyEvent, DiaperKind, Side } from './model';
 import { latest, newestFirst, onDay, spans, timeWithin } from '@huishouden/pwa-kit/log';
 import { addDays, formatDuration } from '@huishouden/pwa-kit/time';
+import { t } from '../i18n';
 
 // What the log screen shows at a glance, derived from the event list. Pure: `now` is passed in.
 // The log maths (last entry, sleep spans, a day's entries) are @huishouden/pwa-kit/log; the
@@ -12,10 +13,21 @@ export const ofKind =
   (e: BabyEvent): boolean =>
     e.kind === kind;
 
+const SIDE_KEYS = { left: 'side.left', right: 'side.right', both: 'side.both' } as const satisfies Record<Side, string>;
+const DIAPER_KEYS = { wet: 'diaper.wet', dirty: 'diaper.dirty', both: 'diaper.both' } as const satisfies Record<DiaperKind, string>;
+
+const COUNT_KEYS = { wet: 'diaper.countWet', dirty: 'diaper.countDirty', both: 'diaper.countBoth' } as const satisfies Record<DiaperKind, string>;
+
+/** A breast feed's side in words ("left"), or "breast" when no side was noted. */
+export const sideWords = (side: Side | undefined): string => (side ? t(SIDE_KEYS[side]) : t('side.breast'));
+
+/** A diaper's kind in words ("wet"), or "changed" when none was noted. */
+export const diaperWords = (kind: DiaperKind | undefined): string => (kind ? t(DIAPER_KEYS[kind]) : t('diaper.changed'));
+
 /** "left", "bottle, 90 ml", "both". */
 export function feedDetail(e: BabyEvent): string {
-  if (e.method === 'bottle') return e.amountMl ? `bottle, ${e.amountMl} ml` : 'bottle';
-  return e.side ?? 'breast';
+  if (e.method === 'bottle') return e.amountMl ? t('feed.bottleMl', { ml: e.amountMl }) : t('feed.bottle');
+  return sideWords(e.side);
 }
 
 export type SleepState =
@@ -72,8 +84,8 @@ export function dayTotals(events: BabyEvent[], dayStart: number, now: number): D
 
 /** "3 wet, 1 dirty, 2 both"; types with none are left out. */
 export function diaperBreakdown(d: Record<DiaperKind, number>): string {
-  const parts = (['wet', 'dirty', 'both'] as const).filter((k) => d[k] > 0).map((k) => `${d[k]} ${k}`);
-  return parts.length ? parts.join(', ') : 'none yet';
+  const parts = (['wet', 'dirty', 'both'] as const).filter((k) => d[k] > 0).map((k) => t(COUNT_KEYS[k], { n: d[k] }));
+  return parts.length ? parts.join(', ') : t('totals.noneYet');
 }
 
 /** Events shown on a day's timeline: anything starting that day, plus sleep overlapping it. Newest first. */
@@ -87,13 +99,14 @@ export function dayTimeline(events: BabyEvent[], dayStart: number, now: number):
 export function describeEvent(e: BabyEvent, now: number): string {
   switch (e.kind) {
     case 'feed':
-      return e.method === 'bottle' ? `Bottle${e.amountMl ? `, ${e.amountMl} ml` : ''}` : `Feed, ${e.side ?? 'breast'}`;
+      if (e.method === 'bottle') return e.amountMl ? t('event.bottleMl', { ml: e.amountMl }) : t('event.bottle');
+      return t('event.feed', { side: sideWords(e.side) });
     case 'sleep':
-      return e.endAt == null ? `Sleeping, ${formatDuration(now - e.at)}` : `Sleep, ${formatDuration(e.endAt - e.at)}`;
+      return e.endAt == null ? t('event.sleeping', { span: formatDuration(now - e.at) }) : t('event.sleep', { span: formatDuration(e.endAt - e.at) });
     case 'diaper':
-      return `Diaper, ${e.diaper ?? 'changed'}`;
+      return t('event.diaper', { kind: diaperWords(e.diaper) });
     case 'pump':
-      return `Pump${e.amountMl ? `, ${e.amountMl} ml` : ''}`;
+      return e.amountMl ? t('event.pumpMl', { ml: e.amountMl }) : t('event.pump');
   }
 }
 

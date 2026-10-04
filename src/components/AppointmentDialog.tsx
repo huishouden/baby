@@ -11,6 +11,8 @@ import { LIMITS } from '../lib/model';
 import { fromCalendar } from '../lib/calendarImport';
 import type { AppointmentInput } from '../data/types';
 import { auth } from '../data/firebase';
+import { withShownRoles } from '../lib/contacts';
+import { useT } from '../i18n';
 
 export function AppointmentDialog({ appointment, now, contacts, calendarAvailable, canMarkPrivate = true, onSave, onDelete, onClose }: {
   appointment: Appointment | null;
@@ -23,6 +25,7 @@ export function AppointmentDialog({ appointment, now, contacts, calendarAvailabl
   onDelete?: () => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const initial = toLocalInput(appointment?.at ?? addDays(now, 1) + 9 * 3_600_000);
   const [title, setTitle] = useState(appointment?.title ?? '');
   const [date, setDate] = useState(initial.slice(0, 10));
@@ -61,7 +64,7 @@ export function AppointmentDialog({ appointment, now, contacts, calendarAvailabl
 
   return (
     <Dialog
-      title={appointment ? 'Edit appointment' : 'New appointment'}
+      title={appointment ? t('appointmentDialog.edit') : t('appointmentDialog.new')}
       onClose={onClose}
       footer={
         <>
@@ -74,14 +77,14 @@ export function AppointmentDialog({ appointment, now, contacts, calendarAvailabl
                 onClose();
               }}
             >
-              <Trash2 size={18} /> Delete
+              <Trash2 size={18} /> {t('common.delete')}
             </button>
           )}
           <button type="button" className={ghostButton} onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="button" className={primaryButton} disabled={!valid} onClick={save}>
-            Save
+            {t('common.save')}
           </button>
         </>
       }
@@ -93,37 +96,37 @@ export function AppointmentDialog({ appointment, now, contacts, calendarAvailabl
           save();
         }}
       >
-        <Field label="What">
-          <input className={inputClass} value={title} maxLength={LIMITS.title} onChange={(e) => setTitle(e.target.value)} placeholder="Midwife check-up" />
+        <Field label={t('appointmentDialog.what')}>
+          <input className={inputClass} value={title} maxLength={LIMITS.title} onChange={(e) => setTitle(e.target.value)} placeholder={t('appointmentDialog.whatPlaceholder')} />
         </Field>
 
-        <CalendarFind auth={auth} app="Baby" query={title} available={calendarAvailable} onPick={pickMatch} />
+        <CalendarFind auth={auth} app="Baby" name={t('app.name')} query={title} available={calendarAvailable} onPick={pickMatch} />
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Date">
+          <Field label={t('common.date')}>
             <input className={inputClass} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
-          <Field label="Time">
+          <Field label={t('common.time')}>
             <input className={inputClass} type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </Field>
         </div>
         {(contacts.length > 0 || contactId) && (
-          <Field label="Who (optional)">
+          <Field label={t('appointmentDialog.who')}>
             <select className={inputClass} value={contactId} onChange={(e) => pickContact(e.target.value)}>
-              <option value="">No one in particular</option>
-              {contacts.map((c) => (
+              <option value="">{t('appointmentDialog.noOne')}</option>
+              {withShownRoles(contacts).map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.role ? `${c.name} (${c.role})` : c.name}
+                  {c.role ? t('appointmentDialog.contactWithRole', { name: c.name, role: c.role }) : c.name}
                 </option>
               ))}
-              {known && <option value={contactId}>A removed contact</option>}
+              {known && <option value={contactId}>{t('appointmentDialog.removedContact')}</option>}
             </select>
           </Field>
         )}
-        <Field label="Where (optional)">
+        <Field label={t('appointmentDialog.where')}>
           <input className={inputClass} value={location} maxLength={LIMITS.location} onChange={(e) => setLocation(e.target.value)} />
         </Field>
-        <Field label="Notes (optional)">
+        <Field label={t('appointmentDialog.notes')}>
           <textarea className={`${inputClass} min-h-20`} maxLength={LIMITS.notes} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>
         {event && <LinkedEvent link={event.link} onUnlink={() => setEvent(null)} />}

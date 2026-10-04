@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { DEFAULT_CHECKLISTS, defaultChecklistDocs, groupChecklist, moveItem, nextOrder } from './checklist';
+import { setLangForTests } from '@huishouden/pwa-kit/i18n';
+import { defaultChecklists, defaultChecklistDocs, groupChecklist, moveItem, nextOrder } from './checklist';
 import type { ChecklistItem } from './model';
 
 const BY = 'pat@example.com';
@@ -7,10 +8,27 @@ const items = (): ChecklistItem[] => defaultChecklistDocs(1, BY).map(({ id, data
 
 describe('defaults', () => {
   test('cover the hospital bag, car seat, nursery and paperwork', () => {
-    expect(DEFAULT_CHECKLISTS.map((l) => l.list)).toEqual(['Hospital bag', 'Car seat', 'Nursery', 'Paperwork']);
-    const carSeat = DEFAULT_CHECKLISTS.find((l) => l.list === 'Car seat')!.items;
+    expect(defaultChecklists().map((l) => l.list)).toEqual(['Hospital bag', 'Car seat', 'Nursery', 'Paperwork']);
+    const carSeat = defaultChecklists().find((l) => l.list === 'Car seat')!.items;
     expect(carSeat).toContain('Install the car seat');
     expect(carSeat).toContain('Get the installation inspected');
+  });
+
+  test.each([
+    ['es', 'Maleta para el hospital', 'Instalar la silla de auto'],
+    ['nl', 'Vluchtkoffer', 'Het autostoeltje installeren'],
+  ] as const)('start in the language of the device that seeds them (%s), with the same ids', async (lang, bag, install) => {
+    const english = defaultChecklistDocs(1, BY);
+    await setLangForTests(lang);
+    try {
+      const docs = defaultChecklistDocs(1, BY);
+      expect(docs.map((d) => d.id)).toEqual(english.map((d) => d.id));
+      expect(docs[0].data.list).toBe(bag);
+      expect(docs.map((d) => d.data.text)).toContain(install);
+      expect(docs.every((d) => d.data.text.length <= 200 && d.data.list.length <= 60)).toBe(true);
+    } finally {
+      await setLangForTests('en');
+    }
   });
 
   test('stable ids and valid documents', () => {

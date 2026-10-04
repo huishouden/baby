@@ -14,7 +14,7 @@ import type { BabyStore } from './data/types';
 import { Header, type Tab } from './components/Header';
 import { ProfileDialog, type ProfileMode } from './components/ProfileDialog';
 import { AppointmentDialog } from './components/AppointmentDialog';
-import { APP, ROLES } from './lib/contacts';
+import { APP, roleLabel, roleLabels } from './lib/contacts';
 import { BABY_CALENDAR_QUERIES, fromCalendar, importMessage } from './lib/calendarImport';
 import { auth } from './data/firebase';
 import { LogScreen } from './screens/LogScreen';
@@ -22,6 +22,7 @@ import { Overview } from './screens/Overview';
 import { Appointments } from './screens/Appointments';
 import { Checklists } from './screens/Checklists';
 import { Contacts } from './screens/Contacts';
+import { useT } from './i18n';
 
 type TabId = 'home' | 'appointments' | 'checklists' | 'contacts';
 const TAB_IDS: readonly TabId[] = ['home', 'appointments', 'checklists', 'contacts'];
@@ -45,6 +46,7 @@ interface Props {
 
 /** Everything inside the frame once there is data to show (live or sample). */
 export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, notify, clearToast, banner, initialTab }: Props) {
+  const t = useT();
   const { now } = useClock();
   const [tab, setTab] = useState<TabId>(() => initialTab ?? tabFromHash() ?? 'home');
   const [profileMode, setProfileMode] = useState<ProfileMode | null>(null);
@@ -68,9 +70,10 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
     notify(importMessage(list));
   };
 
+  const title = t('app.title');
   useEffect(() => {
-    document.title = 'Huishouden Baby';
-  }, []);
+    document.title = title;
+  }, [title]);
 
   useEffect(() => {
     const follow = () => {
@@ -82,17 +85,17 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   }, []);
 
   const tabs: Tab[] = [
-    { id: 'home', label: born ? 'Log' : 'Overview', icon: born ? NotebookPen : BabyIcon },
-    { id: 'appointments', label: 'Appointments', short: 'Visits', icon: CalendarDays },
-    { id: 'checklists', label: 'Checklists', icon: ListChecks },
-    { id: 'contacts', label: 'Contacts', icon: ContactIcon },
+    { id: 'home', label: born ? t('tab.log') : t('tab.overview'), icon: born ? NotebookPen : BabyIcon },
+    { id: 'appointments', label: t('tab.appointments'), short: t('tab.appointmentsShort'), icon: CalendarDays },
+    { id: 'checklists', label: t('tab.checklists'), icon: ListChecks },
+    { id: 'contacts', label: t('tab.contacts'), icon: ContactIcon },
   ];
 
   let content: ReactNode;
-  if (!store.ready) content = <p className="p-2 text-lg text-muted">Loading the baby's details</p>;
+  if (!store.ready) content = <p className="p-2 text-lg text-muted">{t('app.loading')}</p>;
   else if (tab === 'appointments')
     content = <Appointments store={store} calendarAvailable={calendar} onAdd={() => setAppointment('new')} onEdit={openAppointment} onImport={importEvents} />;
-  else if (tab === 'checklists') content = <Checklists store={store} notify={notify} onAddContact={(role) => setContact({ contact: null, role })} />;
+  else if (tab === 'checklists') content = <Checklists store={store} notify={notify} onAddContact={(role) => setContact({ contact: null, role: roleLabel(role) })} />;
   else if (tab === 'contacts')
     content = <Contacts store={store} notify={notify} onAdd={() => setContact({ contact: null })} onEdit={(c) => setContact({ contact: c })} />;
   else if (born) content = <LogScreen store={store} notify={notify} onEditProfile={canSettings ? () => setProfileMode('edit') : undefined} />;
@@ -130,7 +133,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
             store.actions.saveProfile(p);
             if (profileMode === 'born') {
               setTab('home');
-              notify(p.name?.trim() ? `Welcome, ${p.name.trim()}. The log is ready.` : 'The log is ready.', before ? () => store.actions.saveProfile(before) : undefined);
+              notify(p.name?.trim() ? t('toast.welcome', { name: p.name.trim() }) : t('toast.logReady'), before ? () => store.actions.saveProfile(before) : undefined);
             }
           }}
         />
@@ -150,7 +153,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
               : () => {
                   const gone = appointment;
                   store.actions.deleteAppointment(gone.id);
-                  notify(`Deleted ${gone.title}`, () => store.actions.restoreAppointment(gone));
+                  notify(t('common.deleted', { name: gone.title }), () => store.actions.restoreAppointment(gone));
                 }
           }
         />
@@ -159,23 +162,23 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
         <ContactDialog
           contact={contact.contact}
           app={APP}
-          roles={ROLES}
+          roles={roleLabels()}
           role={contact.role}
-          searchPlaceholder="Practice name and town"
-          namePlaceholder="Example Pediatrics"
+          searchPlaceholder={t('contactDialog.searchPlaceholder')}
+          namePlaceholder={t('contactDialog.namePlaceholder')}
           auth={auth}
           canMarkPrivate={canPrivate}
           onClose={() => setContact(null)}
           onSave={(input) => {
             store.actions.saveContact(contact.contact?.id ?? null, input);
-            if (!contact.contact) notify(`Added ${input.name}`);
+            if (!contact.contact) notify(t('common.added', { name: input.name }));
           }}
           onDelete={
             contact.contact
               ? () => {
                   const gone = contact.contact!;
                   store.actions.deleteContact(gone.id);
-                  notify(`Deleted ${gone.name}`, () => store.actions.restoreContact(gone));
+                  notify(t('common.deleted', { name: gone.name }), () => store.actions.restoreContact(gone));
                 }
               : undefined
           }

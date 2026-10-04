@@ -1,5 +1,6 @@
 import { plainText, type CalendarMatch } from '@huishouden/pwa-kit/calendar';
 import { LIMITS } from './model';
+import { t } from '../i18n';
 
 /** What Import from calendar looks for: the words baby-related events tend to carry. */
 export const BABY_CALENDAR_QUERIES = [
@@ -33,5 +34,5 @@ export function fromCalendar(m: CalendarMatch): { title: string; at: number; loc
 
 /** The toast after importing calendar events: "Added Prenatal visit", "Added 3 appointments". */
 export function importMessage(list: Pick<CalendarMatch, 'title'>[]): string {
-  return list.length === 1 ? `Added ${list[0].title}` : `Added ${list.length} appointments`;
+  return list.length === 1 ? t('common.added', { name: list[0].title }) : t('import.addedMany', { n: list.length });
 }

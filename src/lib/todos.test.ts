@@ -1,11 +1,13 @@
 import { describe, expect, test } from 'bun:test';
-import { resolveOps, todoDoc, todoOpsAllowed } from '@huishouden/pwa-kit/todos';
+import { localizeTodos, resolveOps, todoDoc, todoOpsAllowed } from '@huishouden/pwa-kit/todos';
 import { applyOps, memoryStore } from '@huishouden/pwa-kit/store';
 import { createActions, type Backend } from '../data/actions';
 import { DEMO_NOW, demoData, type BabyData } from './demo';
 import type { ChecklistItem } from './model';
 import { isOpen } from './checklist';
 import { checklistRef, todoItems } from './todos';
+import { localizeAgenda } from '@huishouden/pwa-kit/agenda';
+import { agendaItems } from './agenda';
 
 const ORIGIN = 'https://huishouden-piekstra.web.app';
 const SAM = 'sam@example.com';
@@ -81,4 +83,16 @@ describe("the portal's actions do what Baby's own do", () => {
       expect(todoItems(viaPortal.checklists, ORIGIN).some((t) => t.ref === todo.ref)).toBe(false);
     });
   }
+});
+
+test('to-dos and the due date carry their words in every language; the household\'s own text stays as entered', async () => {
+  const data = demoData('before');
+  const todos = await localizeTodos(() => todoItems(data.checklists, ORIGIN));
+  const first = todos[0];
+  expect(first.texts.en).toMatchObject({ done: 'Done', cancel: 'Skip' });
+  expect(first.texts.es).toMatchObject({ title: first.title, done: 'Listo', cancel: 'Omitir' });
+  expect(first.texts.nl).toMatchObject({ title: first.title, done: 'Klaar', cancel: 'Overslaan' });
+  const agenda = await localizeAgenda(() => agendaItems(data, ORIGIN));
+  const due = agenda.find((i) => i.ref === 'profile:dueDate')!;
+  expect([due.texts.en?.title, due.texts.es?.title, due.texts.nl?.title]).toEqual(['Due date', 'Fecha prevista de parto', 'Uitgerekende datum']);
 });
