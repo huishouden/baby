@@ -3,12 +3,13 @@ import type { ChecklistItem } from './model';
 import { tabUrl } from './agenda';
 import { isOpen } from './checklist';
 import { t } from '../i18n';
+import { SUITE_ORIGIN } from '@huishouden/pwa-kit/site';
 
 // What Baby puts on the household to-do list (households/{id}/todos), so the portal's To-do tab
 // shows it: every checklist item not yet done or skipped. Appointments always have a time, so they
 // are on the household calendar instead (./agenda).
 
-const ORIGIN = globalThis.location?.origin ?? 'https://huishouden-piekstra.web.app';
+const ORIGIN = globalThis.location?.origin ?? SUITE_ORIGIN;
 
 export const checklistRef = (id: string) => `check:${id}`;
 

@@ -5,13 +5,14 @@ import { APP_URL, DUE_DATE_REF, agendaItems, appointmentAgenda, appointmentEdit,
 import { agendaOpsAllowed, canEdit, fillEditOps } from '@huishouden/pwa-kit/agenda';
 import { DEMO_NOW } from './demo';
 import type { Appointment, BabyProfile } from './model';
+import { SUITE_ORIGIN } from '@huishouden/pwa-kit/site';
 
 const profile = fixture.profile as BabyProfile;
 const appointments = fixture.appointments as Appointment[];
 const [visit, tour] = appointments;
 
 test('the app lives at /baby/ on the suite\'s one site', () => {
-  expect(APP_URL).toBe('https://huishouden-piekstra.web.app/baby/');
+  expect(APP_URL).toBe(`${SUITE_ORIGIN}/baby/`);
 });
 
 describe('an appointment on the agenda', () => {
@@ -23,7 +24,7 @@ describe('an appointment on the agenda', () => {
         start: visit.at,
         allDay: false,
         detail: 'Riverside Family Clinic, 40 River Road, Springfield',
-        url: 'https://huishouden-piekstra.web.app/baby/#appointments',
+        url: `${SUITE_ORIGIN}/baby/#appointments`,
         who: 'Robin',
         private: false,
         edit: appointmentEdit(visit),

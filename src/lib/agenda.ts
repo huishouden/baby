@@ -1,6 +1,6 @@
 import { allDayStart, type AgendaEdit, type AgendaInput } from '@huishouden/pwa-kit/agenda';
 import type { CalendarEntry } from '@huishouden/pwa-kit/calendar-export';
-import { appUrl } from '@huishouden/pwa-kit/site';
+import { appUrl, SUITE_ORIGIN } from '@huishouden/pwa-kit/site';
 import { parseYmd } from '@huishouden/pwa-kit/time';
 import type { Appointment, BabyProfile } from './model';
 import type { BabyData } from './demo';
@@ -11,7 +11,7 @@ import { t } from '../i18n';
 
 const BASE = import.meta.env.BASE_URL ?? '/baby/';
 /** Where links point outside a page (tests); in the browser the page's origin, so staging links to staging. */
-const ORIGIN = globalThis.location?.origin ?? 'https://huishouden-piekstra.web.app';
+const ORIGIN = globalThis.location?.origin ?? SUITE_ORIGIN;
 
 /** The app's address on the suite's one site; agenda links point into it. */
 export const APP_URL = appUrl(BASE, '', ORIGIN);
