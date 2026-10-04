@@ -33,7 +33,6 @@ jobs:
       pull-requests: write # before/after comment on PRs
     with:
       base: /baby/
-      site-url: https://huishouden-piekstra.web.app/baby/
       staging-ref: ${{ inputs.staging-ref }}
 
   release:

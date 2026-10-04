@@ -23,7 +23,6 @@ export default defineConfig({
       name: 'Huishouden Baby',
       shortName: 'Baby',
       description: "Looking after the little one, together",
-      url: 'https://huishouden-piekstra.web.app/baby/',
       themeColor: '#1b4332',
       backgroundColor: '#faf9f5',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],

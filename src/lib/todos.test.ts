@@ -8,8 +8,9 @@ import { isOpen } from './checklist';
 import { checklistRef, todoItems } from './todos';
 import { localizeAgenda } from '@huishouden/pwa-kit/agenda';
 import { agendaItems } from './agenda';
+import { SUITE_ORIGIN } from '@huishouden/pwa-kit/site';
 
-const ORIGIN = 'https://huishouden-piekstra.web.app';
+const ORIGIN = SUITE_ORIGIN;
 const SAM = 'sam@example.com';
 
 const item = (over: Partial<ChecklistItem> = {}): ChecklistItem => ({
@@ -31,7 +32,7 @@ describe('checklist items on the to-do list', () => {
       title: 'Phone charger with a long cable',
       detail: 'Hospital bag',
       createdAt: 1_900_000_000_000,
-      url: 'https://huishouden-piekstra.web.app/baby/#checklists',
+      url: `${SUITE_ORIGIN}/baby/#checklists`,
       private: false,
       owner: 'alex@example.com',
       done: { label: 'Done', ops: [{ col: 'babyChecklists', id: 'c1', data: { done: true }, merge: true }], roles: ['admin', 'member', 'helper', 'kid'] },
