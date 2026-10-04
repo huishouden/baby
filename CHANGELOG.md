@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1](https://github.com/huishouden/baby/compare/v1.13.0...v1.13.1) (2026-10-04)
+
+
+### Bug Fixes
+
+* kit 0.70.0, dark tiles and toasts, Sign in that fits one row ([#51](https://github.com/huishouden/baby/issues/51)) ([ee6e02b](https://github.com/huishouden/baby/commit/ee6e02b6b1caa5c6551b7e064372c3dccf31628f))
+
 ## [1.13.0](https://github.com/huishouden/baby/compare/v1.12.2...v1.13.0) (2026-10-04)
 
 
