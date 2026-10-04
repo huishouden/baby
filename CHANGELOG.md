@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/huishouden/baby/compare/v1.11.0...v1.12.0) (2026-10-04)
+
+
+### Features
+
+* Baby in Spanish and Dutch ([#42](https://github.com/huishouden/baby/issues/42)) ([44381f5](https://github.com/huishouden/baby/commit/44381f517fc1d466fb29c3f0cd1a06d1aa7b7886))
+
 ## [1.11.0](https://github.com/huishouden/baby/compare/v1.10.0...v1.11.0) (2026-10-03)
 
 
