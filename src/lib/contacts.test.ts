@@ -3,7 +3,7 @@ import { setLangForTests } from '@huishouden/pwa-kit/i18n';
 import type { Contact } from '@huishouden/pwa-kit/contacts';
 import { defaultChecklists } from './checklist';
 import { groupContacts } from '@huishouden/pwa-kit/contacts';
-import { contactForRole, knownRole, namedRole, roleForChecklistItem, roleLabels, withShownRoles } from './contacts';
+import { STORED_ROLES, contactForRole, knownRole, namedRole, roleForChecklistItem, shownRole, withShownRoles, withStoredRoles } from './contacts';
 
 // Back to English the way the app would switch (resetI18nForTests would forget the app's catalogue).
 afterEach(() => setLangForTests('en'));
@@ -76,18 +76,21 @@ test('groups put known roles first, free-text roles next, no role last as Other'
       contact('C Peds', 'Pediatrician'),
       contact('Aunt', 'Backup driver'),
     ],
-    roleLabels(),
+    STORED_ROLES,
   );
   expect(groups.map((g) => g.role)).toEqual(['Pediatrician', 'Hospital', 'Backup driver', 'Night nanny', 'Other']);
   expect(groups[0].contacts.map((c) => c.name)).toEqual(['A Peds', 'C Peds']);
 });
 
-test('a one-tap role saved in one language groups under its name in the page language', async () => {
+test('a one-tap role is stored in English and shown in the page language, also when saved under another language’s name', async () => {
   await setLangForTests('es');
   const list = [contact('A Peds', 'Pediatrician'), contact('B Peds', 'Kinderarts'), contact('C Peds', 'Pediatric dentist'), contact('Hosp', 'Ziekenhuis')];
   expect(namedRole('kinderarts')).toBe('pediatrician');
   expect(namedRole('Pediatric dentist')).toBeNull();
-  const groups = groupContacts(withShownRoles(list), roleLabels());
-  expect(groups.map((g) => g.role)).toEqual(['Pediatra', 'Hospital', 'Pediatric dentist']);
+  const groups = groupContacts(withStoredRoles(list), STORED_ROLES, shownRole);
+  // Grouped by the stored English role, shown in the page's language.
+  expect(groups.map((g) => g.role)).toEqual(['Pediatrician', 'Hospital', 'Pediatric dentist']);
+  expect(groups.map((g) => shownRole(g.role))).toEqual(['Pediatra', 'Hospital', 'Pediatric dentist']);
+  expect(withShownRoles([contact('X', 'Kinderarts')])[0].role).toBe('Pediatra');
   expect(groups[0].contacts.map((c) => c.name)).toEqual(['A Peds', 'B Peds']);
 });
