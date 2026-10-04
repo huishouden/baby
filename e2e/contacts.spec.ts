@@ -1,8 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
+import { stubOpenStreetMap } from '@huishouden/pwa-kit/e2e';
 import places from './fixtures/nominatim.json' with { type: 'json' };
 
 // The sample family's care team (signed out, nothing saved). Place search goes to OpenStreetMap's
-// Nominatim, stubbed here with invented results.
+// Nominatim, stubbed here with invented results; nothing else reaches it (a contact saved with a
+// typed address is looked up once, now that the sample family has a home).
+
+test.beforeEach(async ({ page }) => {
+  await stubOpenStreetMap(page);
+});
 
 const openContacts = async (page: Page) => {
   await page.goto('./');
@@ -95,4 +101,32 @@ test('an appointment with a contact takes their address and shows their phone', 
   const row = page.locator('main li', { hasText: 'Newborn visit' });
   await expect(row).toContainText('Example Pediatrics');
   await expect(row.getByRole('link', { name: 'Call Example Pediatrics, (555) 010-0142' })).toHaveAttribute('href', 'tel:5550100142');
+});
+
+// The sample home is 12 Example Lane (39.7817, -89.6501); Example Pediatrics is 2.3 miles east.
+test('the care team, their appointments and the map search say how far from home', async ({ page }) => {
+  await stubOpenStreetMap(page, {
+    search: [{ osm_type: 'node', osm_id: 1000031, lat: '39.7817', lon: '-89.6066', name: 'Example Lactation Clinic', display_name: 'Example Lactation Clinic, 14 Example Street, Springfield, 00000, United States', extratags: {} }],
+  });
+  await page.goto('./');
+  // The next appointment, at the midwife's clinic: its place and, quietly, how far.
+  await expect(page.getByRole('region', { name: 'Next appointment' })).toContainText('Riverside Family Clinic, room 4 · 1.7 mi from home');
+
+  await page.getByRole('button', { name: 'Appointments', exact: true }).click();
+  const row = (title: string) => page.locator('main li').filter({ has: page.getByText(title, { exact: true }) });
+  await expect(row('Hospital tour')).toContainText('City Hospital, main entrance · 1.2 mi from home');
+  // Not at a contact's place: no distance.
+  await expect(row('Birth class, part 2')).not.toContainText('from home');
+
+  await page.getByRole('button', { name: 'Checklists', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Paperwork' })).toContainText('2.3 mi from home');
+
+  await page.getByRole('button', { name: 'Contacts', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Example Pediatrics' })).toContainText('2.3 mi from home');
+  await page.getByRole('button', { name: 'Add contact' }).click();
+  const dialog = page.getByRole('dialog', { name: 'New contact' });
+  await dialog.getByLabel('Find a business').fill('lactation clinic');
+  await dialog.getByRole('button', { name: 'Search', exact: true }).click();
+  await expect(dialog.getByRole('list', { name: 'Places' })).toContainText('Example Lactation Clinic');
+  await expect(dialog.getByRole('list', { name: 'Places' })).toContainText('2.3 mi from home');
 });

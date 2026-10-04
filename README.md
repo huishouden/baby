@@ -32,7 +32,11 @@ Signed-in members of a Huishouden household read and write under `households/{ho
 `babyProfile/main` (name, due date, birth date), `babyEvents` (feed, sleep, diaper, pump),
 `babyChecklists` and `babyAppointments` (an appointment may point at a contact and at the calendar
 event it came from). Contacts live in the household-wide `contacts` collection shared by every app
-(`@huishouden/pwa-kit/contacts`); Baby shows those whose `apps` include `baby`. The Firestore rules
+(`@huishouden/pwa-kit/contacts`); Baby shows those whose `apps` include `baby`.
+Once the household has set its home in the portal (`households/{id}.home`, kit `./home`), each
+contact's card, a checklist item's contact and an appointment at a contact's place say how far it
+is from home ("2.3 mi from home"), from the position the contact's map search found; the search
+prefers places near home. The Firestore rules
 live in the repo that owns the project's rules file. Signing in uses Google with no extra scopes; the
 household comes from the shared `households` document, so one invite from the portal opens every
 Huishouden app.

@@ -1,4 +1,5 @@
 import type { Contact } from '@huishouden/pwa-kit/contacts';
+import type { HouseholdHome } from '@huishouden/pwa-kit/home';
 import type { Appointment, BabyEvent, BabyProfile, ChecklistItem } from './model';
 import { defaultChecklistDocs } from './checklist';
 import { toYmd } from '@huishouden/pwa-kit/time';
@@ -98,6 +99,9 @@ const PEDIATRICS = 'demo-contact-1';
 const CLINIC = 'demo-contact-2';
 const HOSPITAL = 'demo-contact-3';
 
+/** The sample family's home, so the care team's cards and appointments say how far they are. */
+export const DEMO_HOME: HouseholdHome = { address: '12 Example Lane, Springfield, Illinois 62701', lat: 39.7817, lng: -89.6501, setBy: SAM, updatedAt: at(-60, '12:00') };
+
 /** Invented practices on an invented street; 555-01xx numbers are reserved for fiction. */
 function contacts(): Contact[] {
   const base = { apps: ['baby'], createdAt: at(-60, '12:00'), by: SAM };
@@ -109,6 +113,8 @@ function contacts(): Contact[] {
       phone: '(555) 010-0142',
       website: 'https://pediatrics.example.com',
       address: '12 Example Street, Springfield',
+      lat: 39.7817,
+      lng: -89.6066,
       notes: 'Taking new patients. Newborn visit within 3 days of coming home.',
       ...base,
     },
@@ -120,6 +126,8 @@ function contacts(): Contact[] {
       email: 'frontdesk@clinic.example.com',
       website: 'https://clinic.example.com',
       address: '40 River Road, Springfield',
+      lat: 39.7690,
+      lng: -89.6230,
       ...base,
     },
     {
@@ -128,6 +136,8 @@ function contacts(): Contact[] {
       role: 'Hospital',
       phone: '(555) 010-0100',
       address: '1 Hospital Way, Springfield',
+      lat: 39.7990,
+      lng: -89.6440,
       notes: 'Labor and delivery is on level 3. Park in garage B.',
       ...base,
     },

@@ -3,7 +3,8 @@ import { setLangForTests } from '@huishouden/pwa-kit/i18n';
 import type { Contact } from '@huishouden/pwa-kit/contacts';
 import { defaultChecklists } from './checklist';
 import { groupContacts } from '@huishouden/pwa-kit/contacts';
-import { STORED_ROLES, contactForRole, knownRole, namedRole, roleForChecklistItem, shownRole, withShownRoles, withStoredRoles } from './contacts';
+import { DEMO_HOME, demoData } from './demo';
+import { STORED_ROLES, appointmentFromHome, appointmentPoint, contactForRole, knownRole, namedRole, roleForChecklistItem, shownRole, withShownRoles, withStoredRoles } from './contacts';
 
 // Back to English the way the app would switch (resetI18nForTests would forget the app's catalogue).
 afterEach(() => setLangForTests('en'));
@@ -93,4 +94,32 @@ test('a one-tap role is stored in English and shown in the page language, also w
   expect(groups.map((g) => shownRole(g.role))).toEqual(['Pediatra', 'Hospital', 'Pediatric dentist']);
   expect(withShownRoles([contact('X', 'Kinderarts')])[0].role).toBe('Pediatra');
   expect(groups[0].contacts.map((c) => c.name)).toEqual(['A Peds', 'B Peds']);
+});
+
+describe('how far an appointment is from home', () => {
+  const home = DEMO_HOME;
+  const { contacts } = demoData('before');
+  const peds = contacts.find((x) => x.role === 'Pediatrician')!;
+  const hospital = contacts.find((x) => x.role === 'Hospital')!;
+  const noPosition: Contact = { ...peds, lat: undefined, lng: undefined };
+
+  test('at the contact, by its address, its name, a part of it, or no location at all', () => {
+    expect(appointmentFromHome('12 Example Street, Springfield', peds, { home, locale: 'en-US' })).toBe('2.3 mi from home');
+    expect(appointmentFromHome('12 example street', peds, { home, locale: 'en-US' })).toBe('2.3 mi from home');
+    expect(appointmentFromHome('Example Pediatrics', peds, { home, locale: 'en-US' })).toBe('2.3 mi from home');
+    expect(appointmentFromHome('City Hospital, level 2', hospital, { home, locale: 'en-US' })).toBe('1.2 mi from home');
+    expect(appointmentFromHome(undefined, peds, { home, locale: 'nl-NL' })).toBe('3,7 km from home');
+  });
+
+  test('nothing when it is somewhere else, the contact has no position, or there is no home', () => {
+    expect(appointmentFromHome('Community centre, room B', peds, { home })).toBeUndefined();
+    expect(appointmentFromHome('City Hospitality Suites', hospital, { home })).toBeUndefined();
+    expect(appointmentFromHome(undefined, noPosition, { home })).toBeUndefined();
+    expect(appointmentFromHome(undefined, undefined, { home })).toBeUndefined();
+    expect(appointmentFromHome(undefined, peds, { home: undefined })).toBeUndefined();
+  });
+
+  test('the point is the contact’s own position', () => {
+    expect(appointmentPoint(undefined, peds)).toEqual({ lat: 39.7817, lng: -89.6066 });
+  });
 });

@@ -4,6 +4,8 @@ import { groupChecklist, isOpen } from '../lib/checklist';
 import { formatDateLong, formatDayLong, formatTime, parseYmd, relativeDay } from '@huishouden/pwa-kit/time';
 import { countdown } from '../lib/time';
 import { useClock } from '@huishouden/pwa-kit/react/clock';
+import { useHome } from '@huishouden/pwa-kit/react/home';
+import { appointmentFromHome } from '../lib/contacts';
 import type { BabyStore } from '../data/types';
 import { cardClass, ghostButton, iconButton, overline, primaryButton } from '@huishouden/pwa-kit/react/ui';
 import { RoleNote } from '@huishouden/pwa-kit/react/roles';
@@ -29,6 +31,8 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
   const due = profile?.dueDate ? countdown(profile.dueDate, now) : null;
   const upcoming = appointments.filter((a) => a.at >= now - 3_600_000).sort((a, b) => a.at - b.at);
   const [next, ...later] = upcoming;
+  const home = useHome();
+  const nextAway = next ? appointmentFromHome(next.location, store.data.contacts.find((c) => c.id === next.contactId), { home }) : undefined;
   const groups = groupChecklist(checklists);
 
   return (
@@ -96,9 +100,13 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
                 <p className="mt-1 text-xl text-ink-soft">
                   <span className="font-semibold text-link">{relativeDay(next.at, now)}</span> · {formatDayLong(next.at)}, {formatTime(next.at)}
                 </p>
-                {next.location && (
-                  <p className="mt-1 flex items-center gap-1.5 text-lg text-muted">
-                    <MapPin size={18} aria-hidden="true" /> {next.location}
+                {(next.location || nextAway) && (
+                  <p className="mt-1 flex items-start gap-1.5 text-lg text-muted">
+                    <MapPin size={18} className="mt-1 shrink-0" aria-hidden="true" />
+                    <span className="min-w-0">
+                      {next.location}
+                      {nextAway && <span className="text-base whitespace-nowrap">{next.location ? ` · ${nextAway}` : nextAway}</span>}
+                    </span>
                   </p>
                 )}
                 {next.notes && <p className="mt-1 text-base text-muted">{next.notes}</p>}

@@ -4,6 +4,9 @@ import { telHref } from '@huishouden/pwa-kit/places';
 import { groupChecklist, moveItem } from '../lib/checklist';
 import { LIMITS } from '../lib/model';
 import { contactForRole, roleForChecklistItem, roleLabel, type KnownRole } from '../lib/contacts';
+import { coordinates } from '@huishouden/pwa-kit/contact-core';
+import { formatFromHome } from '@huishouden/pwa-kit/home';
+import { useHome } from '@huishouden/pwa-kit/react/home';
 import type { BabyStore } from '../data/types';
 import { mayChange } from '../lib/roles';
 import { Dialog, Field, cardClass, ghostButton, iconButton, inputClass, linkClass, primaryButton } from '@huishouden/pwa-kit/react/ui';
@@ -16,6 +19,7 @@ export function Checklists({ store, notify, onAddContact }: {
   onAddContact: (role: KnownRole) => void;
 }) {
   const t = useT();
+  const home = useHome();
   const { actions } = store;
   const groups = groupChecklist(store.data.checklists);
   const [newList, setNewList] = useState(false);
@@ -42,6 +46,7 @@ export function Checklists({ store, notify, onAddContact }: {
               {g.items.map((item, i) => {
                 const role = roleForChecklistItem(item.text);
                 const who = role ? contactForRole(store.data.contacts, role) : undefined;
+                const away = formatFromHome(coordinates(who), { home });
                 const mine = mayChange(store.role, store.me, item);
                 const skipped = item.skipped === true && !item.done;
                 return (
@@ -134,6 +139,7 @@ export function Checklists({ store, notify, onAddContact }: {
                           <Phone size={16} aria-hidden="true" /> {who.phone}
                         </a>
                       )}
+                      {away && <span className="text-sm">{away}</span>}
                     </div>
                   )}
                 </li>
