@@ -115,7 +115,7 @@ export function useLiveStore(householdId: string, me: string, members: string[],
         },
         fail(() => t('error.loadAppointments')),
       ),
-      watchContacts(db, householdId, setContacts, { app: APP, restricted, onError: fail(() => t('error.loadContacts')) }),
+      watchContacts(db, householdId, setContacts, { app: APP, restricted, backfillPositions: true, onError: fail(() => t('error.loadContacts')) }),
     ];
     return () => unsubs.forEach((u) => u());
   }, [base, householdId, me, restricted]);
