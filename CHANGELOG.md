@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.1](https://github.com/huishouden/baby/compare/v1.14.0...v1.14.1) (2026-10-05)
+
+
+### Bug Fixes
+
+* **checklists:** done and not done read differently, done after open (kit 0.86.0) ([#61](https://github.com/huishouden/baby/issues/61)) ([cc4cbad](https://github.com/huishouden/baby/commit/cc4cbad5ddcb3fd76d15ae421ae62fa034861218))
+
 ## [1.14.0](https://github.com/huishouden/baby/compare/v1.13.2...v1.14.0) (2026-10-04)
 
 
