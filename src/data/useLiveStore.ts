@@ -31,8 +31,8 @@ const TODO_DELAY = 3000;
 /**
  * Live household data from Firestore with onSnapshot listeners. Writes are fire-and-forget: the
  * persistent cache applies them locally at once (also offline) and syncs later. They come from the
- * kit, which also notes each one in localStorage until Firestore has it, so a feed logged as the
- * app is closed is not lost. The kit's contact and agenda helpers write the same way.
+ * kit, which also notes each one in localStorage until the server has it, so a feed logged as the
+ * app is closed or reloaded, online or off, is not lost. The kit's contact and agenda helpers write the same way.
  */
 export function useLiveStore(householdId: string, me: string, members: string[], role: Role | null, onError: (message: string) => void): BabyStore {
   // Helpers and kids read only appointments and contacts not marked private, and must ask for just those.
