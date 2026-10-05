@@ -65,4 +65,29 @@ test('a sample checklist item is skipped and put back, counting neither as done 
   await expect(nursery.getByText('3 of 6 done')).toBeVisible();
 });
 
+test('done and not done read differently: an outlined Mark done, then a done row; checklists sort done after open', async ({ page }) => {
+  await expectCleanLoad(page, './');
+  const card = page.getByRole('region', { name: 'Checklists' });
+  const nursery = card.getByRole('listitem').filter({ hasText: 'Nursery' });
+  await expect(nursery).toHaveAttribute('data-completion', 'open');
+  await nursery.getByRole('button', { name: 'Mark Changing pad done' }).click();
+  await nursery.getByRole('button', { name: 'Mark Swaddles and sleep sacks done' }).click();
+  await expect(nursery).toHaveAttribute('data-completion', 'done');
+  await expect(nursery.getByRole('button')).toHaveCount(0);
+  await expect(nursery.getByText('5 of 5 done, 1 skipped')).toBeVisible();
+  await expect(card.getByRole('listitem').last()).toContainText('Nursery');
+  await expect(page.locator('[aria-pressed]').filter({ hasText: /done/i })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(nursery.getByRole('button', { name: 'Mark Swaddles and sleep sacks done' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Checklists', exact: true }).first().click();
+  const list = page.getByRole('region', { name: 'Nursery' });
+  await expect(list.getByRole('checkbox', { name: 'Changing pad', checked: true })).toBeVisible();
+  await expect(list.getByRole('checkbox', { name: 'Swaddles and sleep sacks', checked: false })).toBeVisible();
+  const order = await list.getByRole('listitem').allInnerTexts();
+  expect(order[0]).toContain('Swaddles and sleep sacks');
+  expect(order.at(-1)).toContain('Night light');
+  await expect(list.getByRole('button', { name: 'Move up: Changing pad' })).toHaveCount(0);
+});
+
 test('follows the suite theme: dark on a dark device, readable', ({ page }) => expectThemeConsistent(page, { path: './' }));

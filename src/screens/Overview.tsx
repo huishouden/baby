@@ -1,4 +1,4 @@
-import { Baby, CalendarPlus, Check, ChevronRight, MapPin, Pencil } from 'lucide-react';
+import { Baby, CalendarPlus, ChevronRight, MapPin, Pencil } from 'lucide-react';
 import type { Appointment } from '../lib/model';
 import { groupChecklist, isOpen } from '../lib/checklist';
 import { formatDateLong, formatDayLong, formatTime, parseYmd, relativeDay } from '@huishouden/pwa-kit/time';
@@ -7,7 +7,7 @@ import { useClock } from '@huishouden/pwa-kit/react/clock';
 import { useHome } from '@huishouden/pwa-kit/react/home';
 import { appointmentFromHome } from '../lib/contacts';
 import type { BabyStore } from '../data/types';
-import { cardClass, ghostButton, iconButton, overline, primaryButton } from '@huishouden/pwa-kit/react/ui';
+import { CompleteButton, CompletionList, CompletionRow, cardClass, ghostButton, iconButton, overline, primaryButton } from '@huishouden/pwa-kit/react/ui';
 import { RoleNote } from '@huishouden/pwa-kit/react/roles';
 import { AddToCalendar } from '@huishouden/pwa-kit/react/calendar';
 import { dueDateEntry } from '../lib/agenda';
@@ -21,10 +21,11 @@ interface Props {
   onAddAppointment: () => void;
   onEditAppointment: (a: Appointment) => void;
   onOpen: (tab: 'appointments' | 'checklists') => void;
+  notify: (message: string, undo?: () => void) => void;
 }
 
 /** Before the birth: the countdown, the next appointment, and how far each checklist has come. */
-export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, onEditAppointment, onOpen }: Props) {
+export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, onEditAppointment, onOpen, notify }: Props) {
   const t = useT();
   const { now } = useClock();
   const { profile, appointments, checklists } = store.data;
@@ -139,12 +140,24 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
           </button>
         </div>
         {groups.length === 0 && <p className="text-base text-muted">{t('overview.noChecklists')}</p>}
-        <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto">
-          {groups.map((g) => {
+        <CompletionList
+          items={groups}
+          isDone={(g) => !g.items.some(isOpen)}
+          label={t('checklists.title')}
+          allDone={t('overview.allChecklistsDone')}
+          className="min-h-0 flex-1 overflow-y-auto"
+        >
+          {(g) => {
             const nextItem = g.items.find(isOpen);
+            const progress = g.skipped > 0 ? t('checklists.progressSkipped', { done: g.done, total: g.total, skipped: g.skipped }) : t('checklists.progress', { done: g.done, total: g.total });
+            if (!nextItem) return <CompletionRow key={g.list} name={g.list} title={g.list} done status={progress} onDone={() => {}} />;
             const pct = g.total ? Math.round((g.done / g.total) * 100) : 0;
+            const markDone = () => {
+              store.actions.setChecklistDone(nextItem.id, true);
+              notify(t('toast.doneItem', { item: nextItem.text }), () => store.actions.setChecklistDone(nextItem.id, false));
+            };
             return (
-              <li key={g.list} className="border-b border-line py-3 last:border-b-0">
+              <li key={g.list} data-completion="open" className="py-3">
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="text-lg font-semibold text-ink">{g.list}</p>
                   <p className="text-base text-muted tabular-nums">
@@ -154,25 +167,17 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
                 <div className="mt-2 h-2 rounded-full bg-sunken" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t('overview.progressLabel', { list: g.list })}>
                   <div className="h-2 rounded-full bg-forest-600 dark:bg-forest-300" style={{ width: `${pct}%` }} />
                 </div>
-                {nextItem ? (
-                  <button
-                    type="button"
-                    onClick={() => store.actions.setChecklistDone(nextItem.id, true)}
-                    className="mt-2 -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 text-left hover:bg-sunken"
-                    aria-label={t('overview.markDone', { item: nextItem.text })}
-                  >
-                    <span className="h-6 w-6 shrink-0 rounded-md border-2 border-stone-400" aria-hidden="true" />
-                    <span className="min-w-0 flex-1 truncate text-base text-ink">{nextItem.text}</span>
-                  </button>
-                ) : (
-                  <p className="mt-2 flex min-h-11 items-center gap-2 text-base text-link">
-                    <Check size={18} aria-hidden="true" /> {t('overview.allDone')}
+                <div className="mt-2 flex items-center gap-3">
+                  <p className="min-w-0 flex-1 text-base text-ink [overflow-wrap:anywhere]">
+                    <span className="sr-only">{t('overview.next')} </span>
+                    {nextItem.text}
                   </p>
-                )}
+                  <CompleteButton done={false} name={nextItem.text} onDone={markDone} />
+                </div>
               </li>
             );
-          })}
-        </ul>
+          }}
+        </CompletionList>
       </section>
     </div>
   );
