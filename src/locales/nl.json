@@ -27,6 +27,7 @@
   "toast.doneItem": "\"{item}\" afgevinkt",
   "toast.deletedItem": "\"{item}\" verwijderd",
   "todo.skip": "Overslaan",
+  "todo.markDone": "Afvinken",
   "error.loadProfile": "De gegevens van de baby konden niet worden geladen",
   "error.loadLog": "Het logboek kon niet worden geladen",
   "error.loadChecklists": "De lijstjes konden niet worden geladen",
