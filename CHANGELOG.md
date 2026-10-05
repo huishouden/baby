@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.16.3](https://github.com/huishouden/baby/compare/v1.16.2...v1.16.3) (2026-10-05)
+
+### Bug Fixes
+
+* Rebuild against the re-tagged kit ([c1a577b](https://github.com/huishouden/baby/commit/c1a577b2ef7327d2b0724ca401217a350496fec4))
+
 ## [1.16.2](https://github.com/huishouden/baby/compare/v1.16.1...v1.16.2) (2026-10-05)
 
 ### Changes
