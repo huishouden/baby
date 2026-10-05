@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.16.0](https://github.com/huishouden/baby/compare/v1.15.3...v1.16.0) (2026-10-05)
+
+### Features
+
+* hashed assets from the suite's asset CDN (pwa-kit 0.100.0) ([77e6391](https://github.com/huishouden/baby/commit/77e6391277f19c15bd56f81df084c1ae13e91abc))
+
 ## [1.15.3](https://github.com/huishouden/baby/compare/v1.15.2...v1.15.3) (2026-10-05)
 
 ### Bug Fixes
