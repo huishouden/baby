@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.15.2](https://github.com/huishouden/baby/compare/v1.15.1...v1.15.2) (2026-10-05)
+
+### Tests
+
+* signed-in tests on a household of the run's own, on the emulators (`bun run e2e:emulator`) ([#53](https://github.com/huishouden/baby/issues/53))
+
 ## [1.15.1](https://github.com/huishouden/baby/compare/v1.15.0...v1.15.1) (2026-10-05)
 
 ### Other
