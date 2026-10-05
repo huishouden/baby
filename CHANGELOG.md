@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.15.0](https://github.com/huishouden/baby/compare/v1.14.1...v1.15.0) (2026-10-05)
+
+
+### Features
+
+* **contacts:** contacts saved before positions get one in the background (kit 0.88.0) ([#63](https://github.com/huishouden/baby/issues/63)) ([80cd57f](https://github.com/huishouden/baby/commit/80cd57f517f39c0c1ecd8cbf36c52816aa8fec9b))
+
+
+### Bug Fixes
+
+* **todos:** the portal's to-do button says what it does, "Mark done" not "Done" ([#65](https://github.com/huishouden/baby/issues/65)) ([20aace9](https://github.com/huishouden/baby/commit/20aace99b5ddee2ecaccdbe9e153e61624970b1d))
+
 ## [1.14.1](https://github.com/huishouden/baby/compare/v1.14.0...v1.14.1) (2026-10-05)
 
 
