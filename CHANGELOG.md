@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.15.1](https://github.com/huishouden/baby/compare/v1.15.0...v1.15.1) (2026-10-05)
+
+### Other
+
+* Maintenance
+
 ## [1.15.0](https://github.com/huishouden/baby/compare/v1.14.1...v1.15.0) (2026-10-05)
 
 
