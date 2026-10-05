@@ -108,6 +108,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
         onAddAppointment={() => setAppointment('new')}
         onEditAppointment={openAppointment}
         onOpen={setTab}
+        notify={notify}
       />
     );
 

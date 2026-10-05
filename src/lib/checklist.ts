@@ -78,6 +78,11 @@ export function groupChecklist(items: ChecklistItem[]): ChecklistGroup[] {
   return [...groups.values()];
 }
 
+/** A list as shown: open items in their order, then done ones, then skipped ones (DESIGN.md "Completion"). */
+export function shownOrder(items: ChecklistItem[]): ChecklistItem[] {
+  return [...items.filter(isOpen), ...items.filter((x) => x.done), ...items.filter((x) => !x.done && x.skipped === true)];
+}
+
 /**
  * Moving an item up or down a list swaps its `order` with its neighbour's. Returns the two writes,
  * or [] at the ends. Equal orders are separated so the swap is visible.

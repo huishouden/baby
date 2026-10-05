@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowDown, ArrowUp, Check, ListPlus, Phone, Plus, SkipForward, Trash2, Undo2, UserPlus, UserRound } from 'lucide-react';
 import { telHref } from '@huishouden/pwa-kit/places';
-import { groupChecklist, moveItem } from '../lib/checklist';
+import { groupChecklist, isOpen, moveItem, shownOrder } from '../lib/checklist';
 import { LIMITS } from '../lib/model';
 import { contactForRole, roleForChecklistItem, roleLabel, type KnownRole } from '../lib/contacts';
 import { coordinates } from '@huishouden/pwa-kit/contact-core';
@@ -34,7 +34,10 @@ export function Checklists({ store, notify, onAddContact }: {
       </div>
       {groups.length === 0 && <p className="text-lg text-muted">{t('checklists.empty')}</p>}
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 md:grid-cols-2">
-        {groups.map((g) => (
+        {groups.map((g) => {
+          // Done and skipped items sort after the open ones; only open items move up and down.
+          const open = g.items.filter(isOpen);
+          return (
           <section key={g.list} className={`${cardClass} p-5`} aria-label={g.list}>
             <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
               <h3 className="text-xl font-semibold text-ink">{g.list}</h3>
@@ -43,7 +46,8 @@ export function Checklists({ store, notify, onAddContact }: {
               </p>
             </div>
             <ul>
-              {g.items.map((item, i) => {
+              {shownOrder(g.items).map((item) => {
+                const i = open.findIndex((x) => x.id === item.id);
                 const role = roleForChecklistItem(item.text);
                 const who = role ? contactForRole(store.data.contacts, role) : undefined;
                 const away = formatFromHome(coordinates(who), { home });
@@ -77,18 +81,22 @@ export function Checklists({ store, notify, onAddContact }: {
                     <span className={`text-base ${item.done ? 'text-muted line-through' : 'text-ink'}`}>{item.text}</span>
                   </button>
                   )}
-                  <button type="button" className={iconButton} aria-label={t('checklists.moveUp', { item: item.text })} disabled={i === 0} onClick={() => actions.reorderChecklist(moveItem(g.items, item.id, -1))}>
-                    <ArrowUp size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    className={iconButton}
-                    aria-label={t('checklists.moveDown', { item: item.text })}
-                    disabled={i === g.items.length - 1}
-                    onClick={() => actions.reorderChecklist(moveItem(g.items, item.id, 1))}
-                  >
-                    <ArrowDown size={18} />
-                  </button>
+                  {i >= 0 && (
+                    <>
+                      <button type="button" className={iconButton} aria-label={t('checklists.moveUp', { item: item.text })} disabled={i === 0} onClick={() => actions.reorderChecklist(moveItem(open, item.id, -1))}>
+                        <ArrowUp size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        className={iconButton}
+                        aria-label={t('checklists.moveDown', { item: item.text })}
+                        disabled={i === open.length - 1}
+                        onClick={() => actions.reorderChecklist(moveItem(open, item.id, 1))}
+                      >
+                        <ArrowDown size={18} />
+                      </button>
+                    </>
+                  )}
                   {mine && skipped && (
                     <button type="button" className={`${ghostButton} px-2`} aria-label={t('checklists.unskipItem', { item: item.text })} onClick={() => actions.setChecklistSkipped(item.id, false)}>
                       <Undo2 size={18} /> <span className="hidden sm:inline">{t('checklists.unskip')}</span>
@@ -148,7 +156,8 @@ export function Checklists({ store, notify, onAddContact }: {
             </ul>
             <AddItem list={g.list} onAdd={(text) => actions.addChecklistItem(g.list, text)} />
           </section>
-        ))}
+          );
+        })}
       </div>
       {newList && (
         <NewListDialog

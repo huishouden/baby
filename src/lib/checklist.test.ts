@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { setLangForTests } from '@huishouden/pwa-kit/i18n';
-import { defaultChecklists, defaultChecklistDocs, groupChecklist, moveItem, nextOrder } from './checklist';
+import { defaultChecklists, defaultChecklistDocs, groupChecklist, moveItem, nextOrder, shownOrder } from './checklist';
 import type { ChecklistItem } from './model';
 
 const BY = 'pat@example.com';
@@ -62,6 +62,15 @@ describe('grouping and order', () => {
     const bag = groupChecklist(all)[0];
     expect(bag.items).toHaveLength(6);
     expect(bag).toMatchObject({ done: 2, skipped: 1, total: 5 });
+  });
+
+  test('shown: open items first in their order, then done, then skipped', () => {
+    const all = items();
+    all[0].done = true;
+    all[1].skipped = true;
+    all[3].done = true;
+    const bag = groupChecklist(all)[0].items;
+    expect(shownOrder(bag).map((x) => x.id)).toEqual([bag[2], bag[4], bag[5], bag[0], bag[3], bag[1]].map((x) => x.id));
   });
 
   test('moving swaps with the neighbour and stops at the ends', () => {
