@@ -27,6 +27,7 @@
   "toast.doneItem": "Ticked off \"{item}\"",
   "toast.deletedItem": "Deleted \"{item}\"",
   "todo.skip": "Skip",
+  "todo.markDone": "Mark done",
   "error.loadProfile": "Couldn't load the baby details",
   "error.loadLog": "Couldn't load the log",
   "error.loadChecklists": "Couldn't load the checklists",

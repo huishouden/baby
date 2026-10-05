@@ -27,6 +27,7 @@
   "toast.doneItem": "Se marcó \"{item}\"",
   "toast.deletedItem": "Se eliminó \"{item}\"",
   "todo.skip": "Omitir",
+  "todo.markDone": "Marcar como hecho",
   "error.loadProfile": "No se pudieron cargar los datos del bebé",
   "error.loadLog": "No se pudo cargar el registro",
   "error.loadChecklists": "No se pudieron cargar las listas",

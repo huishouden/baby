@@ -29,7 +29,7 @@ export function todoItems(checklists: readonly ChecklistItem[], origin = ORIGIN)
       url: tabUrl(origin, 'checklists'),
       private: false,
       owner: item.by,
-      done: { label: t('common.done'), ops: [{ col: 'babyChecklists', id: item.id, data: { done: true }, merge: true }], roles: ['admin', 'member', 'helper', 'kid'] },
+      done: { label: t('todo.markDone'), ops: [{ col: 'babyChecklists', id: item.id, data: { done: true }, merge: true }], roles: ['admin', 'member', 'helper', 'kid'] },
       cancel: {
         label: t('todo.skip'),
         ops: [{ col: 'babyChecklists', id: item.id, data: { skipped: true, skippedAt: '$now' }, merge: true }],

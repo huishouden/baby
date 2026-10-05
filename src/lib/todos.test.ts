@@ -35,7 +35,7 @@ describe('checklist items on the to-do list', () => {
       url: `${SUITE_ORIGIN}/baby/#checklists`,
       private: false,
       owner: 'alex@example.com',
-      done: { label: 'Done', ops: [{ col: 'babyChecklists', id: 'c1', data: { done: true }, merge: true }], roles: ['admin', 'member', 'helper', 'kid'] },
+      done: { label: 'Mark done', ops: [{ col: 'babyChecklists', id: 'c1', data: { done: true }, merge: true }], roles: ['admin', 'member', 'helper', 'kid'] },
       cancel: {
         label: 'Skip',
         ops: [{ col: 'babyChecklists', id: 'c1', data: { skipped: true, skippedAt: '$now' }, merge: true }],
@@ -90,9 +90,9 @@ test('to-dos and the due date carry their words in every language; the household
   const data = demoData('before');
   const todos = await localizeTodos(() => todoItems(data.checklists, ORIGIN));
   const first = todos[0];
-  expect(first.texts.en).toMatchObject({ done: 'Done', cancel: 'Skip' });
-  expect(first.texts.es).toMatchObject({ title: first.title, done: 'Listo', cancel: 'Omitir' });
-  expect(first.texts.nl).toMatchObject({ title: first.title, done: 'Klaar', cancel: 'Overslaan' });
+  expect(first.texts.en).toMatchObject({ done: 'Mark done', cancel: 'Skip' });
+  expect(first.texts.es).toMatchObject({ title: first.title, done: 'Marcar como hecho', cancel: 'Omitir' });
+  expect(first.texts.nl).toMatchObject({ title: first.title, done: 'Afvinken', cancel: 'Overslaan' });
   const agenda = await localizeAgenda(() => agendaItems(data, ORIGIN));
   const due = agenda.find((i) => i.ref === 'profile:dueDate')!;
   expect([due.texts.en?.title, due.texts.es?.title, due.texts.nl?.title]).toEqual(['Due date', 'Fecha prevista de parto', 'Uitgerekende datum']);
