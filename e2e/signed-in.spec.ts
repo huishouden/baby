@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { devices, expect, test, type Page } from '@playwright/test';
 import { runPortalTodo, useTestHousehold } from '@huishouden/pwa-kit/e2e';
 
 // Signed in as the invented people of a household of this run's own (pwa-kit STANDARD.md
@@ -60,6 +60,44 @@ for (const leave of ['reload', 'close'] as const) {
     await expect.poll(() => page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('hh-outbox:')).length)).toBe(0);
   });
 }
+
+// The same on a phone, where the feed is often logged with no signal: logged offline, the app
+// reloaded still offline, then the network back. And once more with IndexedDB refused (storage
+// full, a private window), where Firestore keeps its cache in memory only and the kit's outbox note
+// is all that outlives the page: the note now stays until the server has the write.
+test.describe('on a phone', () => {
+  const { viewport, userAgent, deviceScaleFactor, isMobile, hasTouch } = devices['Pixel 7'];
+  test.use({ viewport, userAgent, deviceScaleFactor, isMobile, hasTouch });
+
+  for (const cache of ['persistent', 'memory'] as const) {
+    test(`a feed logged offline, reloaded, then back online is saved (${cache} cache)`, async ({ page, context, browser }) => {
+      if (cache === 'memory')
+        await context.addInitScript(() => {
+          const open = indexedDB.open.bind(indexedDB);
+          indexedDB.open = (name: string, version?: number) => {
+            if (name.startsWith('firestore/')) throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+            return open(name, version);
+          };
+        });
+      await hh.signIn(page, 'admin');
+      await openLog(page);
+      const ml = cache === 'persistent' ? 270 : 280;
+      await context.setOffline(true);
+      await logBottle(page, ml);
+      await expect(page.getByText(new RegExp(`^Logged bottle, ${ml} ml at `))).toBeVisible();
+      await page.reload();
+      // With a memory cache the app has nothing to show offline: the network comes back as it loads.
+      if (cache === 'persistent') await openLog(page);
+      await context.setOffline(false);
+      await openLog(page);
+      await expect(page.getByText(new RegExp(`\\b${ml} ml\\b`)).first()).toBeVisible({ timeout: 20_000 });
+      await expect.poll(() => page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('hh-outbox:')).length), { timeout: 20_000 }).toBe(0);
+      // On the server, not only on this phone.
+      const theirs = await hh.open(browser, 'member');
+      await expect(theirs.getByText(new RegExp(`\\b${ml} ml\\b`)).first()).toBeVisible({ timeout: 20_000 });
+    });
+  }
+});
 
 // Roles (pwa-kit STANDARD.md "Roles"): the household's helper logs their own feeds and changes
 // those, but not what someone else logged, and is told who can.
