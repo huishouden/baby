@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.15.3](https://github.com/huishouden/baby/compare/v1.15.2...v1.15.3) (2026-10-05)
+
+### Bug Fixes
+
+* a feed logged offline or just before a reload is kept (pwa-kit 0.98.0) ([0a84bc1](https://github.com/huishouden/baby/commit/0a84bc1636cd1afb21dd4fea41860937cd8da59a))
+
 ## [1.15.2](https://github.com/huishouden/baby/compare/v1.15.1...v1.15.2) (2026-10-05)
 
 ### Tests
