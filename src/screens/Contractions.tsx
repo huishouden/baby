@@ -72,9 +72,10 @@ export function Contractions({ store, notify }: Props) {
   const last = [...contractions].sort((a, b) => b.start - a.start).find((c) => c.id !== currentId);
 
   const toggle = () => {
-    // Stops every open one: two phones tapping Start at once leave a stray that would never end.
-    if (current) for (const c of contractions) if (c.end == null) store.actions.stopContraction(c.id);
-    else store.actions.startContraction();
+    if (current) {
+      // Stops every open one: two phones tapping Start at once leave a stray that would never end.
+      for (const c of contractions) if (c.end == null) store.actions.stopContraction(c.id);
+    } else store.actions.startContraction();
   };
   const remove = (c: Contraction) => {
     store.actions.deleteContraction(c.id);
