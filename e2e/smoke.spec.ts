@@ -47,7 +47,7 @@ test('sends the security headers and leaves sign-in un-framed', ({ request }) =>
 
 test('the Sample data banner is one line on a phone', ({ page }) => expectCompactSampleBanner(page, './'));
 
-test('on a phone the sections are a bottom bar', ({ page }) => expectBottomNav(page, { path: './', labels: ['Overview', 'Timer', 'Visits', 'Checklists', 'More'] }));
+test('on a phone the sections are a bottom bar', ({ page }) => expectBottomNav(page, { path: './', labels: ['Overview', 'Timer', 'Kicks', 'Visits', 'More'] }));
 
 test('a sample checklist item is skipped and put back, counting neither as done nor as to do', async ({ page }) => {
   await expectCleanLoad(page, './#checklists');
@@ -138,7 +138,7 @@ test('the kick counter counts to the target, undoes a tap, and keeps the guidanc
   // A note on the new count.
   await page.getByTestId('kick-row').first().getByRole('button', { name: /^Edit the note/ }).click();
   await page.getByRole('textbox', { name: 'Note' }).fill('After dinner');
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.getByRole('region', { name: 'Kick count history' }).getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByTestId('kick-note').first()).toHaveText('After dinner');
 });
 
