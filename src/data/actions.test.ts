@@ -14,6 +14,7 @@ function harness(me = 'sam@example.com') {
       store.backend.write(ops);
     },
     saveProfile: (profile) => store.patch((d) => ({ ...d, profile })),
+    saveSettings: (contractionSettings) => store.patch((d) => ({ ...d, contractionSettings })),
     contacts: { save: () => {}, remove: () => {}, restore: () => {} },
   };
   return { actions: createActions(backend, store.read, me, () => DEMO_NOW), read: store.read, writes };
@@ -98,4 +99,12 @@ describe('the contraction timer', () => {
     h.actions.restoreContraction(c);
     expect(h.read().contractions.find((x) => x.id === id)).toEqual(c);
   });
+});
+
+test('the contraction instructions are trimmed, capped and signed', () => {
+  const h = harness();
+  h.actions.saveContractionNote('  Call if 6 in an hour ');
+  expect(h.read().contractionSettings).toEqual({ note: 'Call if 6 in an hour', updatedAt: DEMO_NOW, updatedBy: 'sam@example.com' });
+  h.actions.saveContractionNote('x'.repeat(400));
+  expect(h.read().contractionSettings?.note).toHaveLength(300);
 });

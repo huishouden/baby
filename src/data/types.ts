@@ -9,7 +9,6 @@ export interface ProfileInput {
   name?: string;
   dueDate?: string;
   birthDate?: string;
-  contractionNote?: string;
 }
 
 export interface AppointmentInput {

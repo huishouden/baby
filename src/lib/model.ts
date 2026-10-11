@@ -11,8 +11,6 @@ export interface BabyProfile {
   name?: string;
   dueDate?: string;
   birthDate?: string;
-  /** The provider's instructions for the contraction timer ("call if 6 in an hour"). */
-  contractionNote?: string;
   updatedAt: number;
   updatedBy: string;
 }
@@ -71,6 +69,13 @@ export interface AppointmentData {
 }
 export interface Appointment extends AppointmentData {
   id: string;
+}
+
+/** babyContractionSettings/main: the provider's instructions for the timer. */
+export interface ContractionSettings {
+  note: string;
+  updatedAt: number;
+  updatedBy: string;
 }
 
 /** babyContractions/{id}: one contraction; `end` is absent while it is still going. */

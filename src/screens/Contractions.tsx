@@ -57,11 +57,11 @@ export function Contractions({ store, notify }: Props) {
   }, [currentId, read]);
   const now = Math.max(slow, tick ?? 0);
 
-  const { profile } = store.data;
+  const { profile, contractionSettings } = store.data;
   const due = profile?.dueDate ? countdown(profile.dueDate, now) : null;
   const weeks = due ? gestation(due.days) : null;
   const preterm = weeks != null && weeks.weeks < 37;
-  const note = profile?.contractionNote;
+  const note = contractionSettings?.note;
   const summary = summarize(contractions, now, { preterm, ...parseNote(note) });
   const callNow = summary.status === 'call' || summary.status === 'preCall' || summary.status === 'match';
   const [editing, setEditing] = useState(false);

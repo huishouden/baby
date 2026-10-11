@@ -3,7 +3,7 @@ import { track } from '@huishouden/pwa-kit/observability';
 import { withoutId, type Backend as KitBackend, type Op as KitOp } from '@huishouden/pwa-kit/store';
 import { nextOrder } from '../lib/checklist';
 import type { BabyData } from '../lib/demo';
-import { cleanEvent, type BabyProfile } from '../lib/model';
+import { LIMITS, cleanEvent, type BabyProfile, type ContractionSettings } from '../lib/model';
 import { appointmentDoc, eventFields, newEventDoc, profileDoc } from './build';
 import type { BabyActions } from './types';
 
@@ -25,6 +25,8 @@ export type Op = KitOp<DataKey>;
 export interface Backend extends KitBackend<DataKey> {
   /** babyProfile/main, one document rather than a list. */
   saveProfile(profile: BabyProfile): void;
+  /** babyContractionSettings/main, one document. */
+  saveSettings(settings: ContractionSettings): void;
   contacts: ContactWrites;
 }
 
@@ -35,13 +37,11 @@ export function createActions(backend: Backend, read: () => BabyData, me: string
   return {
     saveProfile: (p) => {
       track('save baby profile');
-      // Editing the baby's details keeps the instructions note.
-      backend.saveProfile(profileDoc({ ...p, contractionNote: p.contractionNote ?? read().profile?.contractionNote }, me, clock()));
+      backend.saveProfile(profileDoc(p, me, clock()));
     },
     saveContractionNote: (note) => {
       track('save contraction note');
-      const { name, dueDate, birthDate } = read().profile ?? {};
-      backend.saveProfile(profileDoc({ name, dueDate, birthDate, contractionNote: note }, me, clock()));
+      backend.saveSettings({ note: note.trim().slice(0, LIMITS.contractionNote), updatedAt: Math.round(clock()), updatedBy: me });
     },
     logEvent: (f) => {
       track('log entry', { kind: f.kind });

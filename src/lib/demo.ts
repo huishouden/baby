@@ -1,6 +1,6 @@
 import type { Contact } from '@huishouden/pwa-kit/contacts';
 import type { HouseholdHome } from '@huishouden/pwa-kit/home';
-import type { Appointment, BabyEvent, BabyProfile, ChecklistItem, Contraction } from './model';
+import type { Appointment, BabyEvent, BabyProfile, ChecklistItem, Contraction, ContractionSettings } from './model';
 import { defaultChecklistDocs } from './checklist';
 import { toYmd } from '@huishouden/pwa-kit/time';
 import { t } from '../i18n';
@@ -23,6 +23,8 @@ export interface BabyData {
   appointments: Appointment[];
   /** The contraction timer's entries; empty for a kid, who has no access. */
   contractions: Contraction[];
+  /** The provider's instructions for the timer; null for a kid, who reads none. */
+  contractionSettings: ContractionSettings | null;
   /** The household's contacts shown in Baby. */
   contacts: Contact[];
 }
@@ -216,6 +218,7 @@ export function demoData(scenario: DemoScenario): BabyData {
     checklists: checklists(after),
     appointments: appointments(after),
     contractions: after ? [] : sampleContractions(),
+    contractionSettings: null,
     contacts: contacts(),
   };
 }

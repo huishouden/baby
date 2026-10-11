@@ -3,7 +3,7 @@ import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
 import { commitOps, setDoc, writeBatch } from '@huishouden/pwa-kit/firestore';
 import { householdContacts, markUnflaggedOpen, watchContacts, type Contact } from '@huishouden/pwa-kit/contacts';
 import { can, isRestricted, type Role } from '@huishouden/pwa-kit/roles';
-import type { Appointment, BabyEvent, BabyProfile, ChecklistItem, Contraction } from '../lib/model';
+import type { Appointment, BabyEvent, BabyProfile, ChecklistItem, Contraction, ContractionSettings } from '../lib/model';
 import { APP } from '../lib/contacts';
 import { defaultChecklistDocs } from '../lib/checklist';
 import { DAY } from '@huishouden/pwa-kit/time';
@@ -47,9 +47,10 @@ export function useLiveStore(householdId: string, me: string, members: string[],
   const [checklists, setChecklists] = useState<ChecklistItem[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [contractions, setContractions] = useState<Contraction[]>([]);
+  const [contractionSettings, setContractionSettings] = useState<ContractionSettings | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [answered, setAnswered] = useState({ profile: false, checklists: false });
-  const data: BabyData = { profile, events, checklists, appointments, contractions, contacts };
+  const data: BabyData = { profile, events, checklists, appointments, contractions, contractionSettings, contacts };
   // The data as of the last render, for actions (an edit keeps its author; a new item goes last).
   const current = useRef(data);
   current.current = data;
@@ -128,6 +129,11 @@ export function useLiveStore(householdId: string, me: string, members: string[],
             onSnapshot(
               query(collection(db, base, 'babyContractions'), where('start', '>=', Date.now() - CONTRACTION_DAYS * DAY)),
               (s) => setContractions(s.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Contraction, 'id'>) }))),
+              fail(() => t('error.loadContractions')),
+            ),
+            onSnapshot(
+              doc(db, base, 'babyContractionSettings', 'main'),
+              (s) => setContractionSettings(s.exists() ? (s.data() as ContractionSettings) : null),
               fail(() => t('error.loadContractions')),
             ),
           ]),
@@ -222,6 +228,7 @@ export function useLiveStore(householdId: string, me: string, members: string[],
           else publish(removeAgenda(db, householdId, APP, appointmentRef(op.id), { restricted }));
         }
       },
+      saveSettings: (settings) => report(setDoc(doc(db, base, 'babyContractionSettings', 'main'), settings)),
       saveProfile: (profile) => {
         report(setDoc(doc(db, base, 'babyProfile', 'main'), profile));
         // The due date and the baby's name on every appointment may both have changed.
