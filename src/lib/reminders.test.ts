@@ -60,11 +60,11 @@ describe('appointment reminders', () => {
 
   test('carry every language, each device is notified in its own', async () => {
     const list = await localizeReminders(() => appointmentReminders([visit], profile, DEMO_NOW, URL));
-    expect(list[0]?.texts.nl?.title).toBe('Morgen: Prenatal visit');
-    expect(list[0]?.texts.es?.title).toBe('Mañana: Prenatal visit');
-    expect(list[1]?.texts.nl?.title).toBe('Over 2 uur: Prenatal visit');
-    expect(list[1]?.texts.es?.body).toContain('Riverside Family Clinic');
-    expect(list[1]?.texts.en?.body).toContain('Robin');
+    expect(list[0]?.texts?.nl?.title).toBe('Morgen: Prenatal visit');
+    expect(list[0]?.texts?.es?.title).toBe('Mañana: Prenatal visit');
+    expect(list[1]?.texts?.nl?.title).toBe('Over 2 uur: Prenatal visit');
+    expect(list[1]?.texts?.es?.body).toContain('Riverside Family Clinic');
+    expect(list[1]?.body).toContain('Robin');
   });
 });
 
@@ -85,8 +85,8 @@ describe('kick count reminders', () => {
     expect(kickReminders({ remindAt: '19:30' }, DEMO_NOW, URL, false).every((r) => r.source === undefined)).toBe(true);
   });
 
-  test('worded in every language for the device that gets it', async () => {
+  test("worded in the writer's language, with the others while the household's languages are unknown", async () => {
     const all = await localizeReminders(() => kickReminders({ remindAt: '19:30' }, DEMO_NOW, URL));
-    expect(Object.keys(all[0].texts ?? {}).sort()).toEqual(['en', 'es', 'nl']);
+    expect(Object.keys(all[0].texts ?? {}).sort()).toEqual(['es', 'nl']);
   });
 });
