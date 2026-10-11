@@ -112,6 +112,47 @@ test('the contraction timer starts, stops and removes a mistaken tap', async ({ 
   await expect(page.getByRole('button', { name: /^Delete the contraction/ })).toHaveCount(before + 1);
 });
 
+// Sets the sample's due date through the Overview dialog. The sample lives on 14 May 2031.
+async function setDue(page: import('@playwright/test').Page, ymd: string) {
+  await page.getByRole('button', { name: 'Edit due date and name' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Due date').fill(ymd);
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await expect(dialog).toHaveCount(0);
+}
+
+test('labor or practice: before 37 weeks the call note is out, the comparison folds', async ({ page }) => {
+  await expectCleanLoad(page);
+  await page.getByRole('button', { name: /Contractions/ }).first().click();
+  const card = page.getByTestId('labor-or-practice');
+  await expect(card.getByTestId('preterm-note')).toContainText("Before 37 weeks: call L&D now. Don't wait to tell them apart.");
+  await expect(card.getByTestId('preterm-note').getByRole('link', { name: /^Call / })).toHaveAttribute('href', /^tel:/);
+  const toggle = card.getByRole('button', { name: /Labor or practice contractions\?/ });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(card.getByTestId('red-flags')).toBeHidden();
+  const box = await toggle.boundingBox();
+  expect(box!.height).toBeGreaterThanOrEqual(44);
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(card.getByTestId('red-flags')).toContainText('Your water breaks or fluid leaks');
+  await expect(card.getByRole('columnheader', { name: 'Practice (Braxton Hicks)' })).toBeVisible();
+  await expect(card.getByRole('columnheader', { name: 'Labor', exact: true })).toBeVisible();
+  await expect(card.getByText('Empty your bladder.')).toBeVisible();
+  await expect(card.getByText('Sources: ACOG, Cleveland Clinic, MedlinePlus')).toBeVisible();
+  await expect(card.getByText(/Not medical advice\. Your provider's instructions come first\./)).toBeVisible();
+});
+
+test('labor or practice: from 37 weeks there is no preterm note, the red flags stay', async ({ page }) => {
+  await expectCleanLoad(page);
+  await setDue(page, '2031-05-24');
+  await page.getByRole('button', { name: /Contractions/ }).first().click();
+  await expect(page.getByText('38 weeks 4 days pregnant')).toBeVisible();
+  const card = page.getByTestId('labor-or-practice');
+  await card.getByRole('button', { name: /Labor or practice contractions\?/ }).click();
+  await expect(card.getByTestId('red-flags')).toBeVisible();
+  await expect(card.getByText(/^Before 37 weeks/)).toHaveCount(0);
+});
+
 test('a kid has no kick counter', async ({ page }) => {
   await expectCleanLoad(page, './?as=kid');
   await expect(page.getByRole('button', { name: /Kick counter|Kicks/ })).toHaveCount(0);
