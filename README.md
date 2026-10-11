@@ -1,7 +1,7 @@
 # Huishouden Baby
 
 A wall-tablet app for a household expecting a baby. Before the birth it shows the due-date countdown,
-upcoming appointments (with reminders the day before and 2 hours before), checklists (hospital bag, car seat, nursery, paperwork) and the care team's
+upcoming appointments (with reminders the day before and 2 hours before), checklists (hospital bag, car seat, nursery, paperwork), a contraction timer with a 5-1-1 summary and a one-tap call to the OB or midwife, and the care team's
 contacts (pediatrician, midwife, hospital), each one tap from a call or a map. After the birth the
 main screen becomes a one-tap log of feeds, sleep, diapers and pumping, readable from across the room:
 when the baby last ate, how long they have been asleep or awake, and today's totals. Every entry shows
@@ -24,13 +24,17 @@ Installable on the tablet, phones and laptops, and works offline (entries sync w
 |---|---|
 | ![The care team with tap-to-call numbers and map links](docs/screenshots/contacts.png) | ![Baby events found in the calendar, each with Add](docs/screenshots/calendar-import.png) |
 
+| Contraction timer |
+|---|
+| ![Contraction timer with the 5-1-1 summary](docs/screenshots/phone-contractions.png) |
+
 _Screenshots of the live site signed out, which shows an invented sample family dated in 2031 (`?demo=after` for the log). Refreshed by CI after each deploy._
 
 ## Data
 
 Signed-in members of a Huishouden household read and write under `households/{householdId}`:
 `babyProfile/main` (name, due date, birth date), `babyEvents` (feed, sleep, diaper, pump),
-`babyChecklists` and `babyAppointments` (an appointment may point at a contact and at the calendar
+`babyChecklists`, `babyContractions` (start and end of each timed contraction; not for kids) and `babyAppointments` (an appointment may point at a contact and at the calendar
 event it came from). Contacts live in the household-wide `contacts` collection shared by every app
 (`@huishouden/pwa-kit/contacts`); Baby shows those whose `apps` include `baby`.
 Once the household has set its home in the portal (`households/{id}.home`, kit `./home`), each
@@ -75,7 +79,7 @@ Household data lives in the household's own Firestore documents, visible only to
 To catch problems early, the app sends reports to New Relic (free tier) through
 `@huishouden/pwa-kit/observability`: errors (emails, ids, query strings and long numbers removed),
 Core Web Vitals and page loads, the app version, device type, and the country and region New Relic
-derives from the request; and anonymous usage counts per visit: `log entry` (with its kind: feed, sleep, diaper…), `save appointment`, `add checklist item`, `save baby profile`, and which tab is open. Households are counted by a
+derives from the request; and anonymous usage counts per visit: `log entry` (with its kind: feed, sleep, diaper…), `save appointment`, `add checklist item`, `save baby profile`, `start contraction`, `stop contraction`, `save contraction note`, and which tab is open. Households are counted by a
 hash of the id. No names, emails, entries, free text or precise location, and no cookie or stored
 id: nothing links one visit to the next. When the browser sends Global Privacy Control or Do Not
 Track, usage counts are skipped; errors and speed still go. Local builds, staging and automated

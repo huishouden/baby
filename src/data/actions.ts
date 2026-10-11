@@ -3,7 +3,7 @@ import { track } from '@huishouden/pwa-kit/observability';
 import { withoutId, type Backend as KitBackend, type Op as KitOp } from '@huishouden/pwa-kit/store';
 import { nextOrder } from '../lib/checklist';
 import type { BabyData } from '../lib/demo';
-import { cleanEvent, type BabyProfile } from '../lib/model';
+import { LIMITS, cleanEvent, type BabyProfile, type ContractionSettings } from '../lib/model';
 import { appointmentDoc, eventFields, newEventDoc, profileDoc } from './build';
 import type { BabyActions } from './types';
 
@@ -16,6 +16,7 @@ export const COLLECTIONS = {
   events: 'babyEvents',
   checklists: 'babyChecklists',
   appointments: 'babyAppointments',
+  contractions: 'babyContractions',
 } as const satisfies Partial<Record<keyof BabyData, string>>;
 export type DataKey = keyof typeof COLLECTIONS;
 
@@ -24,6 +25,8 @@ export type Op = KitOp<DataKey>;
 export interface Backend extends KitBackend<DataKey> {
   /** babyProfile/main, one document rather than a list. */
   saveProfile(profile: BabyProfile): void;
+  /** babyContractionSettings/main, one document. */
+  saveSettings(settings: ContractionSettings): void;
   contacts: ContactWrites;
 }
 
@@ -35,6 +38,10 @@ export function createActions(backend: Backend, read: () => BabyData, me: string
     saveProfile: (p) => {
       track('save baby profile');
       backend.saveProfile(profileDoc(p, me, clock()));
+    },
+    saveContractionNote: (note) => {
+      track('save contraction note');
+      backend.saveSettings({ note: note.trim().slice(0, LIMITS.contractionNote), updatedAt: Math.round(clock()), updatedBy: me });
     },
     logEvent: (f) => {
       track('log entry', { kind: f.kind });
@@ -69,6 +76,21 @@ export function createActions(backend: Backend, read: () => BabyData, me: string
     },
     deleteAppointment: (id) => del('appointments', id),
     restoreAppointment: (a) => put('appointments', a.id, withoutId(a)),
+    startContraction: () => {
+      track('start contraction');
+      const now = Math.round(clock());
+      const id = backend.newId('contractions');
+      put('contractions', id, { start: now, by: me, createdAt: now });
+      return id;
+    },
+    // Only the end changes, so stopping someone else's contraction (a helper may) never rewrites it.
+    stopContraction: (id) => {
+      track('stop contraction');
+      const now = Math.round(clock());
+      backend.write([{ col: 'contractions', id, data: { end: now, updatedAt: now }, merge: true }]);
+    },
+    deleteContraction: (id) => del('contractions', id),
+    restoreContraction: (c) => put('contractions', c.id, withoutId(c)),
     saveContact: (id, input) => backend.contacts.save(id, input),
     deleteContact: (id) => {
       const c = read().contacts.find((x) => x.id === id);

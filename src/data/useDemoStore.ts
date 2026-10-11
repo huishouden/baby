@@ -33,6 +33,7 @@ export function useDemoStore(scenario: DemoScenario, clock: () => number, role: 
     const backend: Backend = {
       ...memory,
       saveProfile: (profile) => patch((d) => ({ ...d, profile })),
+      saveSettings: (contractionSettings) => patch((d) => ({ ...d, contractionSettings })),
       contacts: sampleContacts(() => read().contacts, (contacts) => patch((d) => ({ ...d, contacts })), { by: me, now: clock, newId: localIds() }),
     };
     return createActions(backend, read, me, clock);

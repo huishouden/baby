@@ -14,6 +14,7 @@ function harness(me = 'sam@example.com') {
       store.backend.write(ops);
     },
     saveProfile: (profile) => store.patch((d) => ({ ...d, profile })),
+    saveSettings: (contractionSettings) => store.patch((d) => ({ ...d, contractionSettings })),
     contacts: { save: () => {}, remove: () => {}, restore: () => {} },
   };
   return { actions: createActions(backend, store.read, me, () => DEMO_NOW), read: store.read, writes };
@@ -77,4 +78,33 @@ test('an edited appointment keeps its author and creation time', () => {
   const a = h.read().appointments[0];
   h.actions.saveAppointment(a.id, { title: 'Check-up, moved', at: a.at + 3600_000 });
   expect(h.read().appointments.find((x) => x.id === a.id)).toMatchObject({ title: 'Check-up, moved', by: a.by, createdAt: a.createdAt, private: false });
+});
+
+describe('the contraction timer', () => {
+  test('start records who and when; stop sets only the end, so a helper may stop another’s', () => {
+    const h = harness('sam@example.com');
+    const id = h.actions.startContraction();
+    expect(h.read().contractions.find((c) => c.id === id)).toEqual({ id, start: DEMO_NOW, by: 'sam@example.com', createdAt: DEMO_NOW });
+    h.actions.stopContraction(id);
+    expect(h.writes.at(-1)).toEqual([{ col: 'contractions', id, data: { end: DEMO_NOW, updatedAt: DEMO_NOW }, merge: true }]);
+    expect(h.read().contractions.find((c) => c.id === id)).toMatchObject({ end: DEMO_NOW, by: 'sam@example.com' });
+  });
+
+  test('delete and restore put a mistaken tap back as it was', () => {
+    const h = harness();
+    const id = h.actions.startContraction();
+    const c = h.read().contractions.find((x) => x.id === id)!;
+    h.actions.deleteContraction(id);
+    expect(h.read().contractions.some((x) => x.id === id)).toBe(false);
+    h.actions.restoreContraction(c);
+    expect(h.read().contractions.find((x) => x.id === id)).toEqual(c);
+  });
+});
+
+test('the contraction instructions are trimmed, capped and signed', () => {
+  const h = harness();
+  h.actions.saveContractionNote('  Call if 6 in an hour ');
+  expect(h.read().contractionSettings).toEqual({ note: 'Call if 6 in an hour', updatedAt: DEMO_NOW, updatedBy: 'sam@example.com' });
+  h.actions.saveContractionNote('x'.repeat(400));
+  expect(h.read().contractionSettings?.note).toHaveLength(300);
 });
