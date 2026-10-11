@@ -119,10 +119,13 @@ export function Kicks({ store, notify, live }: Props) {
               <span className="text-6xl tabular-nums" aria-hidden="true">{current.taps.length}</span>
             </button>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <button type="button" className={`${secondaryButton} min-h-14`} disabled={current.taps.length === 0} onClick={() => store.actions.undoKick(current.id)}>
-                <Undo2 size={18} aria-hidden="true" /> {t('kicks.undo')}
-              </button>
-              <button type="button" className={`${secondaryButton} min-h-14`} onClick={() => store.actions.stopKicks(current.id)}>
+              {/* A helper adds movements to and ends someone else's count, but never takes one back (the rules). */}
+              {mayDelete(current) && (
+                <button type="button" className={`${secondaryButton} min-h-14`} disabled={current.taps.length === 0} onClick={() => store.actions.undoKick(current.id)}>
+                  <Undo2 size={18} aria-hidden="true" /> {t('kicks.undo')}
+                </button>
+              )}
+              <button type="button" className={`${secondaryButton} min-h-14 ${mayDelete(current) ? '' : 'col-span-2'}`} onClick={() => store.actions.stopKicks(current.id)}>
                 <Square size={18} aria-hidden="true" /> {t('kicks.stop')}
               </button>
             </div>
