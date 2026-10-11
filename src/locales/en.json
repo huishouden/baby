@@ -324,7 +324,7 @@
   "kicks.movement": "Movement",
   "kicks.undo": "Undo last tap",
   "kicks.stop": "Stop counting",
-  "kicks.cancel": "Mistaken start: remove this count",
+  "kicks.cancel": "Remove this count",
   "kicks.progress": "{n} of {target} movements",
   "kicks.elapsed": "Time counting",
   "kicks.lastAgo": "Last count: {result}",

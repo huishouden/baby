@@ -324,7 +324,7 @@
   "kicks.movement": "Movimiento",
   "kicks.undo": "Deshacer el último toque",
   "kicks.stop": "Dejar de contar",
-  "kicks.cancel": "Inicio por error: quitar este conteo",
+  "kicks.cancel": "Quitar este conteo",
   "kicks.progress": "{n} de {target} movimientos",
   "kicks.elapsed": "Tiempo contando",
   "kicks.lastAgo": "Último conteo: {result}",

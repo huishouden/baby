@@ -151,7 +151,7 @@ test('a count stopped early and a mistaken start', async ({ page }) => {
   await expect(page.getByTestId('kick-last')).toContainText('1 of 10 movements');
   await expect(page.getByTestId('kick-row')).toHaveCount(before + 1);
   await page.getByRole('button', { name: 'Start counting' }).click();
-  await page.getByRole('button', { name: /Mistaken start/ }).click();
+  await page.getByRole('button', { name: 'Remove this count' }).click();
   await expect(page.getByTestId('kick-row')).toHaveCount(before + 1);
 });
 

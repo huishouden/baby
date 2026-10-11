@@ -102,18 +102,20 @@ export function createActions(backend: Backend, read: () => BabyData, me: string
       put('kickSessions', id, { start: now, taps: [], target: targetOf(read().kickSettings), by: me, createdAt: now });
       return id;
     },
-    // The whole session is written back (a tap, or an undo that reopens it, changes `end` too); the rules let a helper change only taps, end and updatedAt of someone else's.
+    // A tap and an undo write only taps, end and updatedAt (a merge), so a stale copy never rolls back a note or target another device saved, and a helper's tap on someone else's session touches only what the rules allow.
     tapKick: (id) => {
       const s = read().kickSessions.find((x) => x.id === id);
       const next = s && withTap(s, Math.round(clock()));
       if (!next) return;
       track('count a movement');
-      put('kickSessions', id, withoutId(next));
+      backend.write([{ col: 'kickSessions', id, data: { taps: next.taps, updatedAt: next.updatedAt, ...(next.end != null ? { end: next.end } : {}) }, merge: true }]);
     },
+    // An undo that takes back the movement that ended the session runs it again: `end` goes to null.
     undoKick: (id) => {
       const s = read().kickSessions.find((x) => x.id === id);
       const next = s && withoutLastTap(s, Math.round(clock()));
-      if (next) put('kickSessions', id, withoutId(next));
+      if (!next) return;
+      backend.write([{ col: 'kickSessions', id, data: { taps: next.taps, updatedAt: next.updatedAt, ...(s.end != null && next.end == null ? { end: null } : {}) }, merge: true }]);
     },
     stopKicks: (id) => {
       track('stop kick count');

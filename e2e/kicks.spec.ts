@@ -16,6 +16,8 @@ test('a helper counts and ends a session a member started, and can’t delete it
   const page = await hh.open(browser, 'helper');
   await page.getByRole('button', { name: 'Kick counter', exact: true }).first().click();
   await expect(page.getByTestId('kick-progress')).toHaveText('1 of 10 movements', { timeout: 20_000 });
+  // A helper adds to and ends someone else's count but never takes a movement back.
+  await expect(page.getByRole('button', { name: 'Undo last tap' })).toHaveCount(0);
   await page.getByRole('button', { name: /^Movement/ }).click();
   await expect(page.getByTestId('kick-progress')).toHaveText('2 of 10 movements');
   await page.getByRole('button', { name: 'Stop counting' }).click();

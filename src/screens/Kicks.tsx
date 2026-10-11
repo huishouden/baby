@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Hand, Minus, Pencil, Phone, Plus, Square, Trash2, Undo2 } from 'lucide-react';
 import { telHref } from '@huishouden/pwa-kit/places';
 import { HOUR, formatDayShort, formatTime, parseYmd, weekdayName } from '@huishouden/pwa-kit/time';
@@ -105,7 +105,8 @@ export function Kicks({ store, notify, live }: Props) {
               <p className="text-lg font-semibold text-ink tabular-nums" data-testid="kick-progress" role="status">
                 {t('kicks.progress', { n: current.taps.length, target: current.target })}
               </p>
-              <p className="text-3xl font-semibold text-ink tabular-nums" data-testid="kick-elapsed" aria-label={t('kicks.elapsed')}>
+              <p className="text-3xl font-semibold text-ink tabular-nums" data-testid="kick-elapsed">
+                <span className="sr-only">{t('kicks.elapsed')}: </span>
                 {clock(lengthOf(current, now))}
               </p>
             </div>
@@ -203,7 +204,7 @@ function StripDay({ day, today, target }: { day: Day; today: boolean; target: nu
       <span aria-hidden="true" className="text-xs text-muted tabular-nums">{day.minutes ?? (s ? s.taps.length : '')}</span>
       <span aria-hidden="true" className="flex w-full flex-1 items-end">
         {day.minutes != null ? (
-          <span className="w-full rounded-t-md bg-forest-600 dark:bg-forest-300" style={{ height: `${pct}%` }} />
+          <span className="w-full rounded-t-md bg-primary" style={{ height: `${pct}%` }} />
         ) : s ? (
           <span className="h-3 w-full rounded-t-md border-2 border-attention-fill" />
         ) : (
@@ -221,6 +222,13 @@ function HistoryRow({ session: s, now, store, canEdit, onDelete }: { session: Ki
   const t = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
+  // Focus follows the form: into the note when it opens, back to the pencil when it closes.
+  const pencil = useRef<HTMLButtonElement>(null);
+  const opened = useRef(false);
+  useEffect(() => {
+    if (!editing && opened.current) pencil.current?.focus();
+    opened.current = editing;
+  }, [editing]);
   const going = s.end == null;
   const slow = reachedTarget(s) && (timeToTarget(s) ?? 0) > 2 * HOUR;
   return (
@@ -235,6 +243,7 @@ function HistoryRow({ session: s, now, store, canEdit, onDelete }: { session: Ki
         </span>
         {canEdit && !editing && (
           <button
+            ref={pencil}
             type="button"
             className={iconButton}
             aria-label={t('kicks.editNote', { time: formatTime(s.start) })}
@@ -261,7 +270,7 @@ function HistoryRow({ session: s, now, store, canEdit, onDelete }: { session: Ki
             setEditing(false);
           }}
         >
-          <input className={inputClass} value={draft} maxLength={LIMITS.kickNote} placeholder={t('kicks.notePlaceholder')} aria-label={t('kicks.note')} onChange={(e) => setDraft(e.target.value)} />
+          <input className={inputClass} autoFocus value={draft} maxLength={LIMITS.kickNote} placeholder={t('kicks.notePlaceholder')} aria-label={t('kicks.note')} onChange={(e) => setDraft(e.target.value)} />
           <div className="flex gap-2">
             <button type="submit" className={primaryButton}>{t('common.save')}</button>
             <button type="button" className={secondaryButton} onClick={() => setEditing(false)}>{t('common.cancel')}</button>
@@ -312,7 +321,7 @@ function Settings({ store }: { store: BabyStore }) {
           <button type="button" className={iconButton} aria-label={t('kicks.targetFewer')} onClick={() => edit(setTarget)(clampTarget(target - 1))}>
             <Minus size={20} aria-hidden="true" />
           </button>
-          <span className="w-10 text-center text-2xl font-semibold text-ink tabular-nums" data-testid="kick-target">{target}</span>
+          <span className="w-10 text-center text-2xl font-semibold text-ink tabular-nums" data-testid="kick-target" role="status">{target}</span>
           <button type="button" className={iconButton} aria-label={t('kicks.targetMore')} onClick={() => edit(setTarget)(clampTarget(target + 1))}>
             <Plus size={20} aria-hidden="true" />
           </button>

@@ -106,7 +106,8 @@ export interface KickSettings {
  */
 export interface KickSessionData {
   start: number;
-  end?: number;
+  /** Absent or null while the session runs (null after an undo reopened it). */
+  end?: number | null;
   taps: number[];
   target: number;
   note?: string;

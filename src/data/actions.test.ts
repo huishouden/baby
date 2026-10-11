@@ -138,7 +138,18 @@ describe('the kick counter', () => {
     h.actions.undoKick(id);
     const back = h.read().kickSessions.find((s) => s.id === id)!;
     expect(back.taps).toHaveLength(1);
-    expect(back.end).toBeUndefined();
+    expect(back.end).toBeNull();
+    // Only the fields that changed are written, never the whole session.
+    expect(h.writes.at(-1)).toEqual([{ col: 'kickSessions', id, data: { taps: [DEMO_NOW], updatedAt: DEMO_NOW, end: null }, merge: true }]);
+  });
+
+  test('a tap writes only taps, end and updatedAt, so a note saved on another device is kept', () => {
+    const h = harness();
+    const id = h.actions.startKicks();
+    h.actions.saveKickNote(id, 'after lunch');
+    h.actions.tapKick(id);
+    expect(h.writes.at(-1)).toEqual([{ col: 'kickSessions', id, data: { taps: [DEMO_NOW], updatedAt: DEMO_NOW }, merge: true }]);
+    expect(h.read().kickSessions.find((s) => s.id === id)).toMatchObject({ note: 'after lunch', taps: [DEMO_NOW] });
   });
 
   test('settings are clamped, signed and keep only a valid reminder time', () => {
