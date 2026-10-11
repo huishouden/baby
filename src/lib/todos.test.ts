@@ -90,10 +90,12 @@ test('to-dos and the due date carry their words in every language; the household
   const data = demoData('before');
   const todos = await localizeTodos(() => todoItems(data.checklists, ORIGIN));
   const first = todos[0];
-  expect(first.texts.en).toMatchObject({ done: 'Mark done', cancel: 'Skip' });
-  expect(first.texts.es).toMatchObject({ title: first.title, done: 'Marcar como hecho', cancel: 'Omitir' });
-  expect(first.texts.nl).toMatchObject({ title: first.title, done: 'Afvinken', cancel: 'Overslaan' });
+  // The writer's (English) words are the record's own.
+  expect({ done: first.done?.label, cancel: first.cancel?.label }).toMatchObject({ done: 'Mark done', cancel: 'Skip' });
+  expect(first.texts?.en).toBeUndefined();
+  expect(first.texts?.es).toMatchObject({ title: first.title, done: 'Marcar como hecho', cancel: 'Omitir' });
+  expect(first.texts?.nl).toMatchObject({ title: first.title, done: 'Afvinken', cancel: 'Overslaan' });
   const agenda = await localizeAgenda(() => agendaItems(data, ORIGIN));
   const due = agenda.find((i) => i.ref === 'profile:dueDate')!;
-  expect([due.texts.en?.title, due.texts.es?.title, due.texts.nl?.title]).toEqual(['Due date', 'Fecha prevista de parto', 'Uitgerekende datum']);
+  expect([due.title, due.texts?.es?.title, due.texts?.nl?.title]).toEqual(['Due date', 'Fecha prevista de parto', 'Uitgerekende datum']);
 });
