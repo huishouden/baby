@@ -1,7 +1,7 @@
 # Huishouden Baby
 
 A wall-tablet app for a household expecting a baby. Before the birth it shows the due-date countdown,
-upcoming appointments (with reminders the day before and 2 hours before), checklists (hospital bag, car seat, nursery, paperwork), a kick counter (tap each movement, ends at 10 or when stopped, a 14-day strip of the time to 10, an optional daily reminder, and a Call L&D button after 2 hours under the target), a contraction timer with a 5-1-1 summary and a one-tap call to the OB or midwife, and the care team's
+upcoming appointments (with reminders the day before and 2 hours before), checklists (hospital bag, car seat, nursery, paperwork), a kick counter (tap each movement, ends at 10 or when stopped, a 14-day strip of the time to 10, an optional daily reminder, and a Call L&D button after 2 hours under the target), a contraction timer with a 5-1-1 summary, a one-tap call to the OB or midwife and a "Labor or practice contractions?" explainer (red flags, a practice-vs-labor comparison, and a call-now note before 37 weeks, from ACOG, Cleveland Clinic and MedlinePlus), and the care team's
 contacts (pediatrician, midwife, hospital), each one tap from a call or a map. After the birth the
 main screen becomes a one-tap log of feeds, sleep, diapers and pumping, readable from across the room:
 when the baby last ate, how long they have been asleep or awake, and today's totals. Every entry shows
@@ -27,6 +27,10 @@ Installable on the tablet, phones and laptops, and works offline (entries sync w
 | Contraction timer | Kick counter |
 |---|---|
 | ![Contraction timer with the 5-1-1 summary](docs/screenshots/phone-contractions.png) | ![Kick counter with the guidance, Start counting and the last count](docs/screenshots/phone-kicks.png) |
+
+| Labor or practice? Before 37 weeks | From 37 weeks |
+|---|---|
+| ![The call-now note before 37 weeks with the Call button, and the red flags](docs/screenshots/phone-contractions-explainer.png) | ![The explainer open at 38 weeks: red flags and the practice-vs-labor comparison](docs/screenshots/phone-contractions-explainer-term.png) |
 
 _Screenshots of the live site signed out, which shows an invented sample family dated in 2031 (`?demo=after` for the log). Refreshed by CI after each deploy._
 

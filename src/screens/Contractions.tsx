@@ -13,6 +13,7 @@ import { mayChange } from '../lib/roles';
 import { countdown } from '../lib/time';
 import { LIMITS } from '../lib/model';
 import { useT } from '../i18n';
+import { LaborOrPractice } from '../components/LaborOrPractice';
 
 const STATUS_KEYS = {
   none: 'contractions.status.none',
@@ -69,6 +70,15 @@ export function Contractions({ store, notify }: Props) {
   const canEditNote = can(store.role, 'change-settings');
   const provider = providerContact(contacts);
   const history = sessions(contractions);
+  const callButton = provider?.phone ? (
+    <a className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 text-lg font-semibold text-link" href={telHref(provider.phone)}>
+      <Phone size={20} aria-hidden="true" />
+      <span className="min-w-0 text-left">
+        <span className="block [overflow-wrap:anywhere]">{t('contractions.call', { name: provider.name })}</span>
+        <span className="block text-base font-medium tabular-nums">{provider.phone}</span>
+      </span>
+    </a>
+  ) : null;
   const last = [...contractions].sort((a, b) => b.start - a.start).find((c) => c.id !== currentId);
 
   const toggle = () => {
@@ -158,16 +168,11 @@ export function Contractions({ store, notify }: Props) {
           {t(STATUS_KEYS[summary.status])}
         </p>
         {!preterm && <p className="mt-1 text-sm text-muted">{t('contractions.guide')}</p>}
-        {provider?.phone && (
-          <a className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 text-lg font-semibold text-link" href={telHref(provider.phone)}>
-            <Phone size={20} aria-hidden="true" />
-            <span className="min-w-0 text-left">
-              <span className="block [overflow-wrap:anywhere]">{t('contractions.call', { name: provider.name })}</span>
-              <span className="block text-base font-medium tabular-nums">{provider.phone}</span>
-            </span>
-          </a>
-        )}
+        {/* Before 37 weeks the preterm note just below carries it, so it is not read out twice. */}
+        {!preterm && callButton}
       </section>
+
+      <LaborOrPractice preterm={weeks == null ? null : preterm} call={callButton} />
 
       {!can(store.role, 'edit-others') && contractions.some((c) => c.by !== store.me) && <RoleNote action="edit-others" />}
 

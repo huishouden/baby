@@ -107,6 +107,53 @@ test('phone: contraction timer', async ({ page }) => {
   });
 });
 
+// "Labor or practice contractions?" opened: the sample is 27 weeks along, so the preterm note shows.
+test('phone: labor or practice, before 37 weeks', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await captureScreenshot(page, 'phone-contractions-explainer', {
+    fixedTime,
+    prepare: async (p) => {
+      await p.getByRole('button', { name: 'Timer', exact: true }).or(p.getByRole('button', { name: 'Contractions', exact: true })).first().click();
+      const card = p.getByTestId('labor-or-practice');
+      await card.getByRole('button', { name: /Labor or practice contractions/ }).click();
+      await card.evaluate((el) => { el.style.scrollMarginTop = '96px'; el.scrollIntoView({ block: 'start' }); });
+      await expect(card.getByTestId('red-flags')).toBeVisible();
+    },
+  });
+});
+
+test('contractions: labor or practice, the comparison', ({ page }) =>
+  captureScreenshot(page, 'contractions-explainer-compare', {
+    fixedTime,
+    prepare: async (p) => {
+      await p.getByRole('button', { name: 'Timer', exact: true }).or(p.getByRole('button', { name: 'Contractions', exact: true })).first().click();
+      const card = p.getByTestId('labor-or-practice');
+      await card.getByRole('button', { name: /Labor or practice contractions/ }).click();
+      await card.getByRole('table').evaluate((el) => { el.style.scrollMarginTop = '96px'; el.scrollIntoView({ block: 'start' }); });
+      await expect(card.getByRole('table')).toBeVisible();
+    },
+  }));
+
+// The same at 38 weeks (due date moved ten days out): no preterm note.
+test('phone: labor or practice, from 37 weeks', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await captureScreenshot(page, 'phone-contractions-explainer-term', {
+    fixedTime,
+    prepare: async (p) => {
+      await p.getByRole('button', { name: 'Edit due date and name' }).click();
+      const dialog = p.getByRole('dialog');
+      await dialog.getByLabel('Due date').fill('2031-05-24');
+      await dialog.getByRole('button', { name: 'Save' }).click();
+      await p.getByRole('button', { name: 'Timer', exact: true }).or(p.getByRole('button', { name: 'Contractions', exact: true })).first().click();
+      await expect(p.getByText('38 weeks 4 days pregnant')).toBeVisible();
+      const card = p.getByTestId('labor-or-practice');
+      await card.getByRole('button', { name: /Labor or practice contractions/ }).click();
+      await card.evaluate((el) => { el.style.scrollMarginTop = '96px'; el.scrollIntoView({ block: 'start' }); });
+      await expect(card.getByTestId('red-flags')).toBeVisible();
+    },
+  });
+});
+
 test('phone: kick counter', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await captureScreenshot(page, 'phone-kicks', {
