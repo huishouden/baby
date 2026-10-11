@@ -108,8 +108,9 @@ test('phone: contraction timer', async ({ page }) => {
 });
 
 // "Labor or practice contractions?" opened: the sample is 27 weeks along, so the preterm note shows.
-test('contractions: labor or practice, before 37 weeks', ({ page }) =>
-  captureScreenshot(page, 'contractions-explainer-preterm', {
+test('phone: labor or practice, before 37 weeks', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await captureScreenshot(page, 'phone-contractions-explainer', {
     fixedTime,
     prepare: async (p) => {
       await p.getByRole('button', { name: 'Timer', exact: true }).or(p.getByRole('button', { name: 'Contractions', exact: true })).first().click();
@@ -118,7 +119,8 @@ test('contractions: labor or practice, before 37 weeks', ({ page }) =>
       await card.evaluate((el) => { el.style.scrollMarginTop = '96px'; el.scrollIntoView({ block: 'start' }); });
       await expect(card.getByTestId('red-flags')).toBeVisible();
     },
-  }));
+  });
+});
 
 test('contractions: labor or practice, the comparison', ({ page }) =>
   captureScreenshot(page, 'contractions-explainer-compare', {
@@ -133,8 +135,9 @@ test('contractions: labor or practice, the comparison', ({ page }) =>
   }));
 
 // The same at 38 weeks (due date moved ten days out): no preterm note.
-test('contractions: labor or practice, from 37 weeks', ({ page }) =>
-  captureScreenshot(page, 'contractions-explainer-term', {
+test('phone: labor or practice, from 37 weeks', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await captureScreenshot(page, 'phone-contractions-explainer-term', {
     fixedTime,
     prepare: async (p) => {
       await p.getByRole('button', { name: 'Edit due date and name' }).click();
@@ -148,7 +151,8 @@ test('contractions: labor or practice, from 37 weeks', ({ page }) =>
       await card.evaluate((el) => { el.style.scrollMarginTop = '96px'; el.scrollIntoView({ block: 'start' }); });
       await expect(card.getByTestId('red-flags')).toBeVisible();
     },
-  }));
+  });
+});
 
 test('phone: kick counter', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

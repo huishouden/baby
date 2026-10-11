@@ -168,7 +168,8 @@ export function Contractions({ store, notify }: Props) {
           {t(STATUS_KEYS[summary.status])}
         </p>
         {!preterm && <p className="mt-1 text-sm text-muted">{t('contractions.guide')}</p>}
-        {callButton}
+        {/* Before 37 weeks the preterm note just below carries it, so it is not read out twice. */}
+        {!preterm && callButton}
       </section>
 
       <LaborOrPractice preterm={weeks == null ? null : preterm} call={callButton} />
