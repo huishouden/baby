@@ -79,7 +79,7 @@ Household data lives in the household's own Firestore documents, visible only to
 To catch problems early, the app sends reports to New Relic (free tier) through
 `@huishouden/pwa-kit/observability`: errors (emails, ids, query strings and long numbers removed),
 Core Web Vitals and page loads, the app version, device type, and the country and region New Relic
-derives from the request; and anonymous usage counts per visit: `log entry` (with its kind: feed, sleep, diaper…), `save appointment`, `add checklist item`, `save baby profile`, and which tab is open. Households are counted by a
+derives from the request; and anonymous usage counts per visit: `log entry` (with its kind: feed, sleep, diaper…), `save appointment`, `add checklist item`, `save baby profile`, `start contraction`, `stop contraction`, `save contraction note`, and which tab is open. Households are counted by a
 hash of the id. No names, emails, entries, free text or precise location, and no cookie or stored
 id: nothing links one visit to the next. When the browser sends Global Privacy Control or Do Not
 Track, usage counts are skipped; errors and speed still go. Local builds, staging and automated

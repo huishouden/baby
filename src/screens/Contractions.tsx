@@ -154,7 +154,7 @@ export function Contractions({ store, notify }: Props) {
           <Stat label={t('contractions.avgApart')} value={summary.avgInterval == null ? '–' : clock(summary.avgInterval)} />
         </dl>
         <p className="mt-3 text-base text-muted">{t(TREND_KEYS[summary.trend])}</p>
-        <p className={`mt-2 text-lg font-medium text-ink ${callNow ? 'rounded-xl border-2 border-attention-fill bg-attention-tint px-3 py-2' : ''}`} data-testid="status" data-status={summary.status}>
+        <p className={`mt-2 text-lg font-medium text-ink ${callNow ? 'rounded-xl border-2 border-attention-fill bg-attention-tint px-3 py-2' : ''}`} data-testid="status" data-status={summary.status} role="status">
           {t(STATUS_KEYS[summary.status])}
         </p>
         {!preterm && <p className="mt-1 text-sm text-muted">{t('contractions.guide')}</p>}
