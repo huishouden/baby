@@ -4,7 +4,7 @@ import { localizeReminders } from '@huishouden/pwa-kit/reminders';
 import { DAY, HOUR } from '@huishouden/pwa-kit/time';
 import { DEMO_NOW } from './demo';
 import type { Appointment, BabyProfile } from './model';
-import { appointmentReminders, reminderRef, reminderSource } from './reminders';
+import { appointmentReminders, kickReminderRef, kickReminders, reminderRef, reminderSource } from './reminders';
 
 afterEach(() => setLangForTests('en'));
 
@@ -65,5 +65,28 @@ describe('appointment reminders', () => {
     expect(list[1]?.texts.nl?.title).toBe('Over 2 uur: Prenatal visit');
     expect(list[1]?.texts.es?.body).toContain('Riverside Family Clinic');
     expect(list[1]?.texts.en?.body).toContain('Robin');
+  });
+});
+
+describe('kick count reminders', () => {
+  test('the chosen time on each of the next seven days still to come, each cancelled by that day’s session', () => {
+    const list = kickReminders({ remindAt: '19:30' }, DEMO_NOW, URL);
+    expect(list).toHaveLength(7);
+    expect(list[0]).toMatchObject({ app: 'baby', ref: 'kicks:2031-05-14', private: true, recipients: 'all', title: 'Time for a kick count' });
+    expect(new Date(list[0].at).getHours()).toBe(19);
+    expect(list[6].ref).toBe(kickReminderRef('2031-05-20'));
+    expect(list[0].source).toEqual({ checks: [{ doc: 'babyKickSessions/2031-05-14', absent: true }] });
+  });
+
+  test('today’s time already past is skipped; no time, no reminders; a device without sources attaches none', () => {
+    expect(kickReminders({ remindAt: '09:00' }, DEMO_NOW, URL).map((r) => r.ref)[0]).toBe('kicks:2031-05-15');
+    expect(kickReminders({}, DEMO_NOW, URL)).toEqual([]);
+    expect(kickReminders(null, DEMO_NOW, URL)).toEqual([]);
+    expect(kickReminders({ remindAt: '19:30' }, DEMO_NOW, URL, false).every((r) => r.source === undefined)).toBe(true);
+  });
+
+  test('worded in every language for the device that gets it', async () => {
+    const all = await localizeReminders(() => kickReminders({ remindAt: '19:30' }, DEMO_NOW, URL));
+    expect(Object.keys(all[0].texts ?? {}).sort()).toEqual(['en', 'es', 'nl']);
   });
 });

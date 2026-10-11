@@ -1,6 +1,7 @@
 import type { ReminderInput, ReminderSource } from '@huishouden/pwa-kit/reminders';
-import { DAY, HOUR, formatTime } from '@huishouden/pwa-kit/time';
-import type { Appointment, BabyProfile } from './model';
+import { DAY, HOUR, formatTime, toYmd } from '@huishouden/pwa-kit/time';
+import type { Appointment, BabyProfile, KickSettings } from './model';
+import { KICK_REF, REMIND_DAYS, atLocal } from './kicks';
 import { t } from '../i18n';
 
 // What Baby asks the household's push sender to remind about: each appointment, the day before and
@@ -52,6 +53,41 @@ export function appointmentReminders(appointments: Appointment[], profile: BabyP
         ...(withSource ? { source: reminderSource(a) } : {}),
       });
     }
+  }
+  return out;
+}
+
+/** The ref of the kick-count reminder for a day (YYYY-MM-DD). */
+export const kickReminderRef = (ymd: string) => `${KICK_REF}${ymd}`;
+
+/** Due until that day's first session exists, which has the day as its id: starting a count cancels it unsent. */
+export const kickReminderSource = (ymd: string): ReminderSource => ({ checks: [{ doc: `babyKickSessions/${ymd}`, absent: true }] });
+
+/**
+ * The daily "time for a kick count" reminder, at the chosen time on each of the next days still to
+ * come. Private (admins and members; kids have no kick counter). `withSource` is false on a
+ * device that may not attach one (the kit lets only admins and members).
+ */
+export function kickReminders(settings: Pick<KickSettings, 'remindAt'> | null, now: number, url: string, withSource = true): ReminderInput[] {
+  if (!settings?.remindAt) return [];
+  const out: ReminderInput[] = [];
+  for (let i = 0; i < REMIND_DAYS; i++) {
+    const day = new Date(now);
+    day.setDate(day.getDate() + i);
+    const ymd = toYmd(day.getTime());
+    const at = atLocal(ymd, settings.remindAt);
+    if (at == null || at <= now) continue;
+    out.push({
+      app: 'baby',
+      title: t('reminder.kicks.title'),
+      body: t('reminder.kicks.body'),
+      at,
+      url,
+      recipients: 'all',
+      ref: kickReminderRef(ymd),
+      private: true,
+      ...(withSource ? { source: kickReminderSource(ymd) } : {}),
+    });
   }
   return out;
 }

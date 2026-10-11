@@ -111,3 +111,69 @@ test('the contraction timer starts, stops and removes a mistaken tap', async ({ 
   await page.getByRole('button', { name: /Mistaken tap/ }).click();
   await expect(page.getByRole('button', { name: /^Delete the contraction/ })).toHaveCount(before + 1);
 });
+
+test('a kid has no kick counter', async ({ page }) => {
+  await expectCleanLoad(page, './?as=kid');
+  await expect(page.getByRole('button', { name: /Kick counter|Kicks/ })).toHaveCount(0);
+});
+
+test('the kick counter counts to the target, undoes a tap, and keeps the guidance in view', async ({ page }) => {
+  await expectCleanLoad(page);
+  await page.getByRole('button', { name: 'Kick counter', exact: true }).first().click();
+  await expect(page.getByTestId('kick-guidance')).toContainText("Call your provider or L&D right away if movements seem fewer, weaker or different from usual, or you haven't felt 10 movements in 2 hours");
+  await expect(page.getByTestId('kick-guidance')).toContainText("Your provider's instructions come first");
+  await expect(page.getByTestId('kick-day')).toHaveCount(14);
+  const before = await page.getByTestId('kick-row').count();
+  await page.getByRole('button', { name: 'Start counting' }).click();
+  await expect(page.getByTestId('kick-progress')).toHaveText('0 of 10 movements');
+  const movement = page.getByRole('button', { name: /^Movement/ });
+  for (let i = 0; i < 4; i++) await movement.click();
+  await expect(page.getByTestId('kick-progress')).toHaveText('4 of 10 movements');
+  await page.getByRole('button', { name: 'Undo last tap' }).click();
+  await expect(page.getByTestId('kick-progress')).toHaveText('3 of 10 movements');
+  for (let i = 0; i < 7; i++) await movement.click();
+  await expect(page.getByRole('button', { name: 'Start counting' })).toBeVisible();
+  await expect(page.getByTestId('kick-last')).toContainText(/10 movements in \d+ min/);
+  await expect(page.getByTestId('kick-row')).toHaveCount(before + 1);
+  // A note on the new count.
+  await page.getByTestId('kick-row').first().getByRole('button', { name: /^Edit the note/ }).click();
+  await page.getByRole('textbox', { name: 'Note' }).fill('After dinner');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByTestId('kick-note').first()).toHaveText('After dinner');
+});
+
+test('a count stopped early and a mistaken start', async ({ page }) => {
+  await expectCleanLoad(page, './#kicks');
+  const before = await page.getByTestId('kick-row').count();
+  await page.getByRole('button', { name: 'Start counting' }).click();
+  await page.getByRole('button', { name: /^Movement/ }).click();
+  await page.getByRole('button', { name: 'Stop counting' }).click();
+  await expect(page.getByTestId('kick-last')).toContainText('1 of 10 movements');
+  await expect(page.getByTestId('kick-row')).toHaveCount(before + 1);
+  await page.getByRole('button', { name: 'Start counting' }).click();
+  await page.getByRole('button', { name: /Mistaken start/ }).click();
+  await expect(page.getByTestId('kick-row')).toHaveCount(before + 1);
+});
+
+test('the kick counter settings save a target', async ({ page }) => {
+  await expectCleanLoad(page, './#kicks');
+  await page.getByRole('button', { name: 'Count fewer movements' }).click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByTestId('kick-target')).toHaveText('9');
+  await expect(page.getByTestId('kick-guidance')).toContainText("haven't felt 9 movements in 2 hours");
+});
+
+test('two hours under the target shows Call L&D now with the contact’s call button', async ({ page }) => {
+  await page.clock.install();
+  await expectCleanLoad(page, './#kicks');
+  await page.getByRole('button', { name: 'Start counting' }).click();
+  await page.getByRole('button', { name: /^Movement/ }).click();
+  await expect(page.getByTestId('kick-call')).toHaveCount(0);
+  await page.clock.fastForward('01:59:00');
+  await expect(page.getByTestId('kick-call')).toHaveCount(0);
+  await page.clock.fastForward('00:02:00');
+  await expect(page.getByTestId('kick-call')).toContainText('Call L&D now');
+  await expect(page.getByTestId('kick-call').getByRole('link', { name: /^Call / })).toHaveAttribute('href', /^tel:/);
+  // The guidance stays in view throughout.
+  await expect(page.getByTestId('kick-guidance')).toBeVisible();
+});

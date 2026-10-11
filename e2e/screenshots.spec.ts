@@ -107,6 +107,29 @@ test('phone: contraction timer', async ({ page }) => {
   });
 });
 
+test('phone: kick counter', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await captureScreenshot(page, 'phone-kicks', {
+    fixedTime,
+    prepare: async (p) => {
+      await p.getByRole('button', { name: 'Kicks', exact: true }).click();
+      await expect(p.getByTestId('kick-strip')).toBeVisible();
+    },
+  });
+});
+
+test('phone: kick counter history', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await captureScreenshot(page, 'phone-kicks-strip', {
+    fixedTime,
+    prepare: async (p) => {
+      await p.getByRole('button', { name: 'Kicks', exact: true }).click();
+      await p.getByTestId('kick-strip').scrollIntoViewIfNeeded();
+      await expect(p.getByTestId('kick-day')).toHaveCount(14);
+    },
+  });
+});
+
 test('checklists: care team', ({ page }) =>
   captureScreenshot(page, 'checklist-contacts', {
     fixedTime,

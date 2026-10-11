@@ -3,7 +3,8 @@ import { track } from '@huishouden/pwa-kit/observability';
 import { withoutId, type Backend as KitBackend, type Op as KitOp } from '@huishouden/pwa-kit/store';
 import { nextOrder } from '../lib/checklist';
 import type { BabyData } from '../lib/demo';
-import { LIMITS, cleanEvent, type BabyProfile, type ContractionSettings } from '../lib/model';
+import { LIMITS, cleanEvent, type BabyProfile, type ContractionSettings, type KickSettings } from '../lib/model';
+import { clampTarget, sessionId, targetOf, withTap, withoutLastTap } from '../lib/kicks';
 import { appointmentDoc, eventFields, newEventDoc, profileDoc } from './build';
 import type { BabyActions } from './types';
 
@@ -17,6 +18,7 @@ export const COLLECTIONS = {
   checklists: 'babyChecklists',
   appointments: 'babyAppointments',
   contractions: 'babyContractions',
+  kickSessions: 'babyKickSessions',
 } as const satisfies Partial<Record<keyof BabyData, string>>;
 export type DataKey = keyof typeof COLLECTIONS;
 
@@ -27,6 +29,8 @@ export interface Backend extends KitBackend<DataKey> {
   saveProfile(profile: BabyProfile): void;
   /** babyContractionSettings/main, one document. */
   saveSettings(settings: ContractionSettings): void;
+  /** babyKickSettings/main, one document. */
+  saveKickSettings(settings: KickSettings): void;
   contacts: ContactWrites;
 }
 
@@ -91,6 +95,39 @@ export function createActions(backend: Backend, read: () => BabyData, me: string
     },
     deleteContraction: (id) => del('contractions', id),
     restoreContraction: (c) => put('contractions', c.id, withoutId(c)),
+    startKicks: () => {
+      track('start kick count');
+      const now = Math.round(clock());
+      const id = sessionId(now, read().kickSessions.map((s) => s.id));
+      put('kickSessions', id, { start: now, taps: [], target: targetOf(read().kickSettings), by: me, createdAt: now });
+      return id;
+    },
+    // The whole session is written back (a tap, or an undo that reopens it, changes `end` too); the rules let a helper change only taps, end and updatedAt of someone else's.
+    tapKick: (id) => {
+      const s = read().kickSessions.find((x) => x.id === id);
+      const next = s && withTap(s, Math.round(clock()));
+      if (!next) return;
+      track('count a movement');
+      put('kickSessions', id, withoutId(next));
+    },
+    undoKick: (id) => {
+      const s = read().kickSessions.find((x) => x.id === id);
+      const next = s && withoutLastTap(s, Math.round(clock()));
+      if (next) put('kickSessions', id, withoutId(next));
+    },
+    stopKicks: (id) => {
+      track('stop kick count');
+      const now = Math.round(clock());
+      backend.write([{ col: 'kickSessions', id, data: { end: now, updatedAt: now }, merge: true }]);
+    },
+    saveKickNote: (id, note) => backend.write([{ col: 'kickSessions', id, data: { note: note.trim().slice(0, LIMITS.kickNote), updatedAt: Math.round(clock()) }, merge: true }]),
+    deleteKickSession: (id) => del('kickSessions', id),
+    restoreKickSession: (s) => put('kickSessions', s.id, withoutId(s)),
+    saveKickSettings: (input) => {
+      track('save kick settings');
+      const remindAt = input.remindAt && /^([01]\d|2[0-3]):[0-5]\d$/.test(input.remindAt) ? input.remindAt : undefined;
+      backend.saveKickSettings({ target: clampTarget(input.target), ...(remindAt ? { remindAt } : {}), updatedAt: Math.round(clock()), updatedBy: me });
+    },
     saveContact: (id, input) => backend.contacts.save(id, input),
     deleteContact: (id) => {
       const c = read().contacts.find((x) => x.id === id);

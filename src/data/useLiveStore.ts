@@ -3,7 +3,7 @@ import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
 import { commitOps, setDoc, writeBatch } from '@huishouden/pwa-kit/firestore';
 import { householdContacts, markUnflaggedOpen, watchContacts, type Contact } from '@huishouden/pwa-kit/contacts';
 import { can, isRestricted, type Role } from '@huishouden/pwa-kit/roles';
-import type { Appointment, BabyEvent, BabyProfile, ChecklistItem, Contraction, ContractionSettings } from '../lib/model';
+import type { Appointment, BabyEvent, BabyProfile, ChecklistItem, Contraction, ContractionSettings, KickSession, KickSettings } from '../lib/model';
 import { APP } from '../lib/contacts';
 import { defaultChecklistDocs } from '../lib/checklist';
 import { DAY } from '@huishouden/pwa-kit/time';
@@ -13,7 +13,7 @@ import { localizeReminders, replaceReminders, syncReminders } from '@huishouden/
 import { localizeTodos, syncTodos } from '@huishouden/pwa-kit/todos';
 import { agendaItems, appointmentAgenda, appointmentRef, tabUrl } from '../lib/agenda';
 import { todoItems } from '../lib/todos';
-import { appointmentReminders, reminderRefs } from '../lib/reminders';
+import { appointmentReminders, kickReminders, reminderRefs } from '../lib/reminders';
 import { db } from './firebase';
 import { COLLECTIONS, createActions, type Backend } from './actions';
 import type { BabyData, BabyStore } from './types';
@@ -24,6 +24,9 @@ const HISTORY_DAYS = 14;
 
 /** How far back the contraction history reads. */
 const CONTRACTION_DAYS = 30;
+
+/** How far back the kick sessions read: the 14-day strip and a little history. */
+const KICK_DAYS = 30;
 
 /** The household agenda is a copy for the portal: a failed write there never interrupts Baby. */
 const publish = (p: Promise<unknown>) => void p.catch((e) => console.warn("Couldn't update the household agenda", e));
@@ -48,15 +51,17 @@ export function useLiveStore(householdId: string, me: string, members: string[],
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [contractions, setContractions] = useState<Contraction[]>([]);
   const [contractionSettings, setContractionSettings] = useState<ContractionSettings | null>(null);
+  const [kickSessions, setKickSessions] = useState<KickSession[]>([]);
+  const [kickSettings, setKickSettings] = useState<KickSettings | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [answered, setAnswered] = useState({ profile: false, checklists: false });
-  const data: BabyData = { profile, events, checklists, appointments, contractions, contractionSettings, contacts };
+  const data: BabyData = { profile, events, checklists, appointments, contractions, contractionSettings, kickSessions, kickSettings, contacts };
   // The data as of the last render, for actions (an edit keeps its author; a new item goes last).
   const current = useRef(data);
   current.current = data;
   // Whether the profile and appointments have answered from the server, not just the local cache:
   // the agenda is reconciled against them once per household when both have.
-  const [fromServer, setFromServer] = useState({ profile: false, appointments: false, checklists: false });
+  const [fromServer, setFromServer] = useState({ profile: false, appointments: false, checklists: false, kicks: false });
   const syncedFor = useRef<string | null>(null);
   const todosFor = useRef<string | null>(null);
   const errorRef = useRef(onError);
@@ -136,6 +141,20 @@ export function useLiveStore(householdId: string, me: string, members: string[],
               (s) => setContractionSettings(s.exists() ? (s.data() as ContractionSettings) : null),
               fail(() => t('error.loadContractions')),
             ),
+            onSnapshot(
+              query(collection(db, base, 'babyKickSessions'), where('start', '>=', Date.now() - KICK_DAYS * DAY)),
+              (s) => setKickSessions(s.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<KickSession, 'id'>) }))),
+              fail(() => t('error.loadKicks')),
+            ),
+            onSnapshot(
+              doc(db, base, 'babyKickSettings', 'main'),
+              { includeMetadataChanges: true },
+              (s) => {
+                setKickSettings(s.exists() ? (s.data() as KickSettings) : null);
+                if (!s.metadata.fromCache) setFromServer((f) => (f.kicks ? f : { ...f, kicks: true }));
+              },
+              fail(() => t('error.loadKicks')),
+            ),
           ]),
       watchContacts(db, householdId, setContacts, { app: APP, restricted, backfillPositions: true, onError: fail(() => t('error.loadContacts')) }),
     ];
@@ -174,12 +193,13 @@ export function useLiveStore(householdId: string, me: string, members: string[],
   // (see `scheduleReminders` below), so a change to its time, privacy or switch is not left to a timer.
   // Every language's words go along, so each device is notified in its own.
   const scheduleReminders = useCallback(
-    (appointments: Appointment[], profile: BabyProfile | null, changed?: string[]) => {
+    (appointments: Appointment[], profile: BabyProfile | null, changed?: string[], kicks: KickSettings | null = current.current.kickSettings) => {
       const now = Date.now();
       const url = tabUrl(location.origin, 'appointments');
+      const kickUrl = tabUrl(location.origin, 'kicks');
       const warn = (e: unknown) => console.warn("Couldn't schedule reminders", e);
       if (!restricted) {
-        localizeReminders(() => appointmentReminders(appointments, profile, now, url))
+        localizeReminders(() => [...appointmentReminders(appointments, profile, now, url), ...kickReminders(kicks, now, kickUrl)])
           .then((items) => syncReminders(db, householdId, 'baby', items, me, now, {}))
           .catch(warn);
         return;
@@ -198,10 +218,11 @@ export function useLiveStore(householdId: string, me: string, members: string[],
   );
   const remindersFor = useRef<string | null>(null);
   useEffect(() => {
-    if (restricted || !fromServer.profile || !fromServer.appointments || remindersFor.current === householdId) return;
+    // The kick settings too: a stale cache without them would cancel the daily reminder.
+    if (restricted || !fromServer.profile || !fromServer.appointments || !fromServer.kicks || remindersFor.current === householdId) return;
     remindersFor.current = householdId;
     scheduleReminders(appointments, profile);
-  }, [restricted, fromServer.profile, fromServer.appointments, appointments, profile, householdId, scheduleReminders]);
+  }, [restricted, fromServer.profile, fromServer.appointments, fromServer.kicks, appointments, profile, householdId, scheduleReminders]);
 
   const actions = useMemo(() => {
     const report = (p: Promise<unknown>) => void p.catch((e) => errorRef.current(readError(e, t('error.save'))));
@@ -229,6 +250,11 @@ export function useLiveStore(householdId: string, me: string, members: string[],
         }
       },
       saveSettings: (settings) => report(setDoc(doc(db, base, 'babyContractionSettings', 'main'), settings)),
+      saveKickSettings: (settings) => {
+        report(setDoc(doc(db, base, 'babyKickSettings', 'main'), settings));
+        // The daily reminder follows the time just chosen (or goes, when it is cleared).
+        scheduleReminders(current.current.appointments, current.current.profile, undefined, settings);
+      },
       saveProfile: (profile) => {
         report(setDoc(doc(db, base, 'babyProfile', 'main'), profile));
         // The due date and the baby's name on every appointment may both have changed.

@@ -1,4 +1,4 @@
-import { Baby as BabyIcon, CalendarDays, Contact as ContactIcon, ListChecks, NotebookPen, Timer } from 'lucide-react';
+import { Baby as BabyIcon, CalendarDays, Contact as ContactIcon, Hand, ListChecks, NotebookPen, Timer } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import type { Contact } from '@huishouden/pwa-kit/contacts';
@@ -23,10 +23,11 @@ import { Appointments } from './screens/Appointments';
 import { Checklists } from './screens/Checklists';
 import { Contacts } from './screens/Contacts';
 import { Contractions } from './screens/Contractions';
+import { Kicks } from './screens/Kicks';
 import { useT } from './i18n';
 
-type TabId = 'home' | 'contractions' | 'appointments' | 'checklists' | 'contacts';
-const TAB_IDS: readonly TabId[] = ['home', 'contractions', 'appointments', 'checklists', 'contacts'];
+type TabId = 'home' | 'contractions' | 'kicks' | 'appointments' | 'checklists' | 'contacts';
+const TAB_IDS: readonly TabId[] = ['home', 'contractions', 'kicks', 'appointments', 'checklists', 'contacts'];
 
 /** The tab a link asks for ("#appointments", as the household agenda links), if any. */
 const tabFromHash = (): TabId | undefined => TAB_IDS.find((id) => `#${id}` === location.hash);
@@ -91,6 +92,8 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
     { id: 'home', label: born ? t('tab.log') : t('tab.overview'), icon: born ? NotebookPen : BabyIcon },
     // Kids have no access to the contraction timer.
     ...(store.role == null || store.role === 'kid' ? [] : [{ id: 'contractions', label: t('tab.contractions'), short: t('tab.contractionsShort'), icon: Timer }]),
+    // The kick counter is for the pregnancy, and like the contraction timer not for kids.
+    ...(born || store.role == null || store.role === 'kid' ? [] : [{ id: 'kicks', label: t('tab.kicks'), short: t('tab.kicksShort'), icon: Hand }]),
     { id: 'appointments', label: t('tab.appointments'), short: t('tab.appointmentsShort'), icon: CalendarDays },
     { id: 'checklists', label: t('tab.checklists'), icon: ListChecks },
     { id: 'contacts', label: t('tab.contacts'), icon: ContactIcon },
@@ -99,6 +102,8 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   let content: ReactNode;
   if (!store.ready) content = <p className="p-2 text-lg text-muted">{t('app.loading')}</p>;
   else if (tab === 'contractions' && store.role != null && store.role !== 'kid') content = <Contractions store={store} notify={notify} />;
+  else if (tab === 'kicks' && !born && store.role != null && store.role !== 'kid')
+    content = <Kicks store={store} notify={notify} live={householdId && user?.email ? { householdId, email: user.email.toLowerCase() } : undefined} />;
   else if (tab === 'appointments')
     content = <Appointments store={store} live={householdId && user?.email ? { householdId, email: user.email.toLowerCase() } : undefined} calendarAvailable={calendar} onAdd={() => setAppointment('new')} onEdit={openAppointment} onImport={importEvents} />;
   else if (tab === 'checklists') content = <Checklists store={store} notify={notify} onAddContact={(role) => setContact({ contact: null, role: ROLE_NAMES[role] })} />;
@@ -115,6 +120,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
         onEditAppointment={openAppointment}
         onOpen={setTab}
         contractions={store.role != null && store.role !== 'kid'}
+        kicks={store.role != null && store.role !== 'kid'}
         notify={notify}
       />
     );

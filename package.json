@@ -11,12 +11,12 @@
     "lint": "tsc --noEmit",
     "test": "bun test src",
     "e2e": "playwright test e2e/smoke.spec.ts e2e/contacts.spec.ts e2e/contact-import.spec.ts e2e/calendar.spec.ts e2e/i18n.spec.ts",
-    "e2e:signed-in": "playwright test e2e/signed-in.spec.ts",
+    "e2e:signed-in": "playwright test e2e/signed-in.spec.ts e2e/kicks.spec.ts",
     "screenshots": "playwright test e2e/screenshots.spec.ts",
     "icons": "pwa-logo bottle public/icon.svg && pwa-icons --background=#1b4332",
     "prepare": "git config core.hooksPath .githooks",
     "env:pull": "gh variable list --json name,value -q '.[] | select(.name|startswith(\"VITE_\")) | \"\\(.name)=\\(.value)\"' > .env.local && echo 'wrote .env.local'",
-    "e2e:emulator": "playwright test e2e/signed-in.spec.ts --grep-invert @staging"
+    "e2e:emulator": "playwright test e2e/signed-in.spec.ts e2e/kicks.spec.ts --grep-invert @staging"
   },
   "dependencies": {
     "firebase": "^12.19.0",
