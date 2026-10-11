@@ -90,7 +90,36 @@ export interface Contraction extends ContractionData {
   id: string;
 }
 
-export const LIMITS = { name: 60, note: 500, itemText: 200, title: 120, location: 200, notes: 500, contractionNote: 300 } as const;
+/** babyKickSettings/main: the movements to count (default 10) and the daily reminder time, if any. */
+export interface KickSettings {
+  target: number;
+  /** "HH:MM", local time; absent when there is no daily reminder. */
+  remindAt?: string;
+  updatedAt: number;
+  updatedBy: string;
+}
+
+/**
+ * babyKickSessions/{id}: one counting session. `taps` are the times of each movement; the session
+ * ends at `target` taps (`end` is that tap's time) or when stopped. A day's first session has the
+ * day (YYYY-MM-DD) as its id, which the daily reminder's source names.
+ */
+export interface KickSessionData {
+  start: number;
+  /** Absent or null while the session runs (null after an undo reopened it). */
+  end?: number | null;
+  taps: number[];
+  target: number;
+  note?: string;
+  by: string;
+  createdAt: number;
+  updatedAt?: number;
+}
+export interface KickSession extends KickSessionData {
+  id: string;
+}
+
+export const LIMITS = { name: 60, note: 500, itemText: 200, title: 120, location: 200, notes: 500, contractionNote: 300, kickNote: 300, kickTarget: 50, kickTaps: 60 } as const;
 
 /** The editable part of an event; `by`/`createdAt` stay with the original logger. */
 export type EventFields = Pick<BabyEventData, 'kind' | 'at' | 'endAt' | 'side' | 'method' | 'amountMl' | 'diaper' | 'note'>;

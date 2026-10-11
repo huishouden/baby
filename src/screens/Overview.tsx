@@ -1,4 +1,4 @@
-import { Baby, CalendarPlus, Timer, ChevronRight, MapPin, Pencil } from 'lucide-react';
+import { Baby, CalendarPlus, Hand, Timer, ChevronRight, MapPin, Pencil } from 'lucide-react';
 import type { Appointment } from '../lib/model';
 import { groupChecklist, isOpen } from '../lib/checklist';
 import { formatDateLong, formatDayLong, formatTime, parseYmd, relativeDay } from '@huishouden/pwa-kit/time';
@@ -12,6 +12,7 @@ import { RoleNote } from '@huishouden/pwa-kit/react/roles';
 import { AddToCalendar } from '@huishouden/pwa-kit/react/calendar';
 import { dueDateEntry } from '../lib/agenda';
 import { running } from '../lib/contractions';
+import { running as kickRunning } from '../lib/kicks';
 import { useT } from '../i18n';
 
 interface Props {
@@ -21,14 +22,16 @@ interface Props {
   onBabyIsHere?: () => void;
   onAddAppointment: () => void;
   onEditAppointment: (a: Appointment) => void;
-  onOpen: (tab: 'appointments' | 'checklists' | 'contractions') => void;
+  onOpen: (tab: 'appointments' | 'checklists' | 'contractions' | 'kicks') => void;
   /** Show the contraction timer entry (not for kids). */
   contractions?: boolean;
+  /** Show the kick counter entry (not for kids). */
+  kicks?: boolean;
   notify: (message: string, undo?: () => void) => void;
 }
 
 /** Before the birth: the countdown, the next appointment, and how far each checklist has come. */
-export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, onEditAppointment, onOpen, notify, contractions }: Props) {
+export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, onEditAppointment, onOpen, notify, contractions, kicks }: Props) {
   const t = useT();
   const { now } = useClock();
   const { profile, appointments, checklists } = store.data;
@@ -42,6 +45,8 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="flex min-h-0 flex-col gap-6">
+        {(contractions || kicks) && (
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-2">
         {contractions && (
           <section aria-label={t('contractions.title')}>
             <button
@@ -57,6 +62,26 @@ export function Overview({ store, onSetDueDate, onBabyIsHere, onAddAppointment, 
               <ChevronRight size={24} aria-hidden="true" className="ml-auto shrink-0" />
             </button>
           </section>
+        )}
+        {kicks && (
+          <section aria-label={t('kicks.title')}>
+            <button
+              type="button"
+              onClick={() => onOpen('kicks')}
+              className="flex min-h-20 w-full items-center gap-4 rounded-2xl bg-primary px-6 py-4 text-left text-on-primary transition-colors duration-150 hover:bg-primary-hover"
+            >
+              <Hand size={36} aria-hidden="true" className="shrink-0" />
+              <span className="min-w-0">
+                <span className="block text-2xl font-semibold">{t('kicks.title')}</span>
+                <span className="block text-base opacity-90">
+                  {kickRunning(store.data.kickSessions) ? t('kicks.runningNow', { n: kickRunning(store.data.kickSessions)!.taps.length, target: kickRunning(store.data.kickSessions)!.target }) : t('kicks.overviewHint')}
+                </span>
+              </span>
+              <ChevronRight size={24} aria-hidden="true" className="ml-auto shrink-0" />
+            </button>
+          </section>
+        )}
+          </div>
         )}
         <section className={`${cardClass} px-8 py-6`} aria-label={t('overview.countdown')}>
           <div className="flex items-start justify-between gap-4">

@@ -1,6 +1,6 @@
 import type { Contact, ContactInput } from '@huishouden/pwa-kit/contacts';
 import type { Role } from '@huishouden/pwa-kit/roles';
-import type { Appointment, BabyEvent, ChecklistItem, Contraction, EventFields } from '../lib/model';
+import type { Appointment, BabyEvent, ChecklistItem, Contraction, EventFields, KickSession } from '../lib/model';
 import type { BabyData } from '../lib/demo';
 
 export type { BabyData };
@@ -49,6 +49,20 @@ export interface BabyActions {
   stopContraction(id: string): void;
   deleteContraction(id: string): void;
   restoreContraction(c: Contraction): void;
+  /** Starts a kick-count session now (the target is the household's setting); returns its id. */
+  startKicks(): string;
+  /** Counts a movement now; the session ends when it reaches its target. */
+  tapKick(id: string): void;
+  /** Takes back the last movement (a session the target had ended runs again). */
+  undoKick(id: string): void;
+  /** Ends a running session now. */
+  stopKicks(id: string): void;
+  /** The session's note; empty clears it. */
+  saveKickNote(id: string, note: string): void;
+  deleteKickSession(id: string): void;
+  restoreKickSession(s: KickSession): void;
+  /** The movements to count and the daily reminder time ("HH:MM", or none); admins and members. */
+  saveKickSettings(input: { target: number; remindAt?: string }): void;
   saveContact(id: string | null, input: ContactInput): void;
   deleteContact(id: string): void;
   /** Puts a deleted contact back under its old id, so appointments that point at it still do. */

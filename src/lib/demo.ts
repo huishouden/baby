@@ -1,6 +1,6 @@
 import type { Contact } from '@huishouden/pwa-kit/contacts';
 import type { HouseholdHome } from '@huishouden/pwa-kit/home';
-import type { Appointment, BabyEvent, BabyProfile, ChecklistItem, Contraction, ContractionSettings } from './model';
+import type { Appointment, BabyEvent, BabyProfile, ChecklistItem, Contraction, ContractionSettings, KickSession, KickSettings } from './model';
 import { defaultChecklistDocs } from './checklist';
 import { toYmd } from '@huishouden/pwa-kit/time';
 import { t } from '../i18n';
@@ -25,6 +25,10 @@ export interface BabyData {
   contractions: Contraction[];
   /** The provider's instructions for the timer; null for a kid, who reads none. */
   contractionSettings: ContractionSettings | null;
+  /** The kick counter's sessions; empty for a kid, who has no access. */
+  kickSessions: KickSession[];
+  /** The kick counter's target and reminder time; null when never saved or for a kid. */
+  kickSettings: KickSettings | null;
   /** The household's contacts shown in Baby. */
   contacts: Contact[];
 }
@@ -207,6 +211,17 @@ function sampleContractions(): Contraction[] {
   });
 }
 
+/** A session on each of the last ten days, 16 to 41 minutes to ten movements, with two slower days. */
+function sampleKicks(): KickSession[] {
+  const mins = [18, 22, 16, 25, 19, 41, 37, 20, 17, 23];
+  return mins.map((m, i) => {
+    const day = -(mins.length - i);
+    const start = at(day, i % 3 === 0 ? '21:10' : '14:30');
+    const taps = Array.from({ length: 10 }, (_, k) => start + Math.round(((k + 1) / 10) * m * 60_000));
+    return { id: `demo-kick-${i + 1}`, start, end: taps[9], taps, target: 10, by: i % 2 ? ALEX : SAM, createdAt: start, ...(i === 5 ? { note: 'Quiet morning, baby was asleep' } : {}) };
+  });
+}
+
 export function demoData(scenario: DemoScenario): BabyData {
   const after = scenario === 'after';
   const profile: BabyProfile = after
@@ -219,6 +234,8 @@ export function demoData(scenario: DemoScenario): BabyData {
     appointments: appointments(after),
     contractions: after ? [] : sampleContractions(),
     contractionSettings: null,
+    kickSessions: after ? [] : sampleKicks(),
+    kickSettings: null,
     contacts: contacts(),
   };
 }

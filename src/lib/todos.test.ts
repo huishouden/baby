@@ -67,7 +67,7 @@ describe("the portal's actions do what Baby's own do", () => {
   const key = (col: string) => (col === 'babyChecklists' ? 'checklists' : (col as keyof BabyData));
   const fresh = () => {
     const store = memoryStore<BabyData>(demoData('before'), () => {});
-    const backend: Backend = { ...store.backend, saveProfile: () => {}, saveSettings: () => {}, contacts: { save: () => {}, remove: () => {}, restore: () => {} } };
+    const backend: Backend = { ...store.backend, saveProfile: () => {}, saveSettings: () => {}, saveKickSettings: () => {}, contacts: { save: () => {}, remove: () => {}, restore: () => {} } };
     return { read: store.read, actions: createActions(backend, store.read, SAM, () => DEMO_NOW) };
   };
 
