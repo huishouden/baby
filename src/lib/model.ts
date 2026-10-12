@@ -1,6 +1,8 @@
 // Firestore shapes under households/{householdId}. The project's rules accept exactly these keys,
 // so writers build documents from these types and never add fields.
 
+import { BABY_SETTINGS_LIMITS } from '@huishouden/pwa-kit/baby-settings';
+
 export type EventKind = 'feed' | 'sleep' | 'diaper' | 'pump';
 export type Side = 'left' | 'right' | 'both';
 export type FeedMethod = 'breast' | 'bottle';
@@ -119,7 +121,7 @@ export interface KickSession extends KickSessionData {
   id: string;
 }
 
-export const LIMITS = { name: 60, note: 500, itemText: 200, title: 120, location: 200, notes: 500, contractionNote: 300, kickNote: 300, kickTarget: 50, kickTaps: 60 } as const;
+export const LIMITS = { name: 60, note: 500, itemText: 200, title: 120, location: 200, notes: 500, contractionNote: BABY_SETTINGS_LIMITS.contractionNote, kickNote: 300, kickTarget: BABY_SETTINGS_LIMITS.kickTargetMax, kickTaps: 60 } as const;
 
 /** The editable part of an event; `by`/`createdAt` stay with the original logger. */
 export type EventFields = Pick<BabyEventData, 'kind' | 'at' | 'endAt' | 'side' | 'method' | 'amountMl' | 'diaper' | 'note'>;

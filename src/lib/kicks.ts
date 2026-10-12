@@ -1,11 +1,13 @@
 import { HOUR, MINUTE, parseYmd, toYmd } from '@huishouden/pwa-kit/time';
 import type { KickSession, KickSettings } from './model';
 import { LIMITS } from './model';
+import { DEFAULT_KICK_TARGET, KICK_REF, KICK_REMIND_DAYS, clampKickTarget } from '@huishouden/pwa-kit/baby-settings';
 
 // The kick counter's maths. Pure: `now` is passed in. Nothing here diagnoses: it counts movements,
 // times them, and says when the common "10 movements in 2 hours" guide has not been met.
 
-export const DEFAULT_TARGET = 10;
+/** Baby's default and limits are the kit's (`@huishouden/pwa-kit/baby-settings`), which the assistant's tool uses too. */
+export const DEFAULT_TARGET = DEFAULT_KICK_TARGET;
 /** The common guide: 10 movements within 2 hours. A session still under its target after this long means call. */
 export const CALL_AFTER = 2 * HOUR;
 /** The strip shows this many days, ending today. */
@@ -15,7 +17,7 @@ export const STRIP_MAX = CALL_AFTER;
 
 export const targetOf = (settings: Pick<KickSettings, 'target'> | null | undefined): number => clampTarget(settings?.target ?? DEFAULT_TARGET);
 
-export const clampTarget = (n: number): number => Math.min(LIMITS.kickTarget, Math.max(2, Math.round(Number.isFinite(n) ? n : DEFAULT_TARGET)));
+export const clampTarget = clampKickTarget;
 
 export const isRunning = (s: KickSession): boolean => s.end == null;
 /** Reached its target: the target-th movement was counted. */
@@ -114,7 +116,7 @@ export function atLocal(ymd: string, hhmm: string): number | null {
 }
 
 /** How many days ahead the daily reminder is scheduled; each time the app opens it rolls forward. */
-export const REMIND_DAYS = 7;
+export const REMIND_DAYS = KICK_REMIND_DAYS;
 
 /** The daily reminder's day-ref prefix. */
-export const KICK_REF = 'kicks:';
+export { KICK_REF };
