@@ -1,13 +1,11 @@
 import { HOUR, MINUTE, parseYmd, toYmd } from '@huishouden/pwa-kit/time';
 import type { KickSession, KickSettings } from './model';
 import { LIMITS } from './model';
-import { DEFAULT_KICK_TARGET, KICK_REF, KICK_REMIND_DAYS, clampKickTarget } from '@huishouden/pwa-kit/baby-settings';
+import { DEFAULT_KICK_TARGET, clampKickTarget } from '@huishouden/pwa-kit/baby-settings';
 
 // The kick counter's maths. Pure: `now` is passed in. Nothing here diagnoses: it counts movements,
 // times them, and says when the common "10 movements in 2 hours" guide has not been met.
 
-/** Baby's default and limits are the kit's (`@huishouden/pwa-kit/baby-settings`), which the assistant's tool uses too. */
-export const DEFAULT_TARGET = DEFAULT_KICK_TARGET;
 /** The common guide: 10 movements within 2 hours. A session still under its target after this long means call. */
 export const CALL_AFTER = 2 * HOUR;
 /** The strip shows this many days, ending today. */
@@ -15,8 +13,9 @@ export const STRIP_DAYS = 14;
 /** A strip bar is full at this many minutes (the call threshold). */
 export const STRIP_MAX = CALL_AFTER;
 
-export const targetOf = (settings: Pick<KickSettings, 'target'> | null | undefined): number => clampTarget(settings?.target ?? DEFAULT_TARGET);
+export const targetOf = (settings: Pick<KickSettings, 'target'> | null | undefined): number => clampTarget(settings?.target ?? DEFAULT_KICK_TARGET);
 
+/** Whole, 2 to 50, else the default: the kit's (`@huishouden/pwa-kit/baby-settings`), which the assistant's tool uses too. */
 export const clampTarget = clampKickTarget;
 
 export const isRunning = (s: KickSession): boolean => s.end == null;
@@ -114,9 +113,3 @@ export function atLocal(ymd: string, hhmm: string): number | null {
   d.setHours(Number(m[1]), Number(m[2]), 0, 0);
   return d.getTime();
 }
-
-/** How many days ahead the daily reminder is scheduled; each time the app opens it rolls forward. */
-export const REMIND_DAYS = KICK_REMIND_DAYS;
-
-/** The daily reminder's day-ref prefix. */
-export { KICK_REF };

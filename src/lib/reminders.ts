@@ -1,7 +1,7 @@
 import type { ReminderInput, ReminderSource } from '@huishouden/pwa-kit/reminders';
 import { DAY, HOUR, formatTime, toYmd } from '@huishouden/pwa-kit/time';
 import type { Appointment, BabyProfile, KickSettings } from './model';
-import { kickReminderRef, kickReminderSource, kickReminders as kitKickReminders } from '@huishouden/pwa-kit/baby-settings';
+import { kickReminders as kitKickReminders } from '@huishouden/pwa-kit/baby-settings';
 import { atLocal } from './kicks';
 import { t } from '../i18n';
 
@@ -57,8 +57,6 @@ export function appointmentReminders(appointments: Appointment[], profile: BabyP
   }
   return out;
 }
-
-export { kickReminderRef, kickReminderSource };
 
 /**
  * The daily "time for a kick count" reminder, at the chosen time (this device's clock) on each of
