@@ -8,13 +8,12 @@ import { APP } from '../lib/contacts';
 import { defaultChecklistDocs } from '../lib/checklist';
 import { DAY } from '@huishouden/pwa-kit/time';
 import { readError } from '@huishouden/pwa-kit/feedback';
-import { localizeAgenda, removeAgenda, replaceAgenda, syncAgenda } from '@huishouden/pwa-kit/agenda';
-import { localizeReminders, replaceReminders, syncReminders } from '@huishouden/pwa-kit/reminders';
-import { localizeTodos, syncTodos } from '@huishouden/pwa-kit/todos';
-import { agendaItems, appointmentAgenda, appointmentRef, tabUrl } from '../lib/agenda';
-import { todoItems } from '../lib/todos';
-import { appointmentReminders, kickReminders, reminderRefs } from '../lib/reminders';
+import { localizeAgenda, removeAgenda, replaceAgenda } from '@huishouden/pwa-kit/agenda';
+import { localizeReminders, replaceReminders } from '@huishouden/pwa-kit/reminders';
+import { appointmentAgenda, appointmentRef, tabUrl } from '../lib/agenda';
+import { appointmentReminders, reminderRefs } from '../lib/reminders';
 import { db } from './firebase';
+import { publishAgenda, publishReminders, publishTodos } from './publish';
 import { COLLECTIONS, createActions, type Backend } from './actions';
 import type { BabyData, BabyStore } from './types';
 import { t } from '../i18n';
@@ -31,7 +30,7 @@ const KICK_DAYS = 30;
 /** The household agenda is a copy for the portal: a failed write there never interrupts Baby. */
 const publish = (p: Promise<unknown>) => void p.catch((e) => console.warn("Couldn't update the household agenda", e));
 /** The to-do list is the same kind of copy. */
-const publishTodos = (p: Promise<unknown>) => void p.catch((e) => console.warn("Couldn't update the household to-do list", e));
+const followTodos = (p: Promise<unknown>) => void p.catch((e) => console.warn("Couldn't update the household to-do list", e));
 
 /** How long after a checklist change the to-do list follows, so a run of ticks is one sync. */
 const TODO_DELAY = 3000;
@@ -172,7 +171,7 @@ export function useLiveStore(householdId: string, me: string, members: string[],
   useEffect(() => {
     if (!fromServer.profile || !fromServer.appointments || syncedFor.current === householdId) return;
     syncedFor.current = householdId;
-    publish(localizeAgenda(() => agendaItems({ profile, appointments })).then((items) => syncAgenda(db, householdId, APP, items, { by: me, restricted })));
+    publish(publishAgenda(db, householdId, me, { profile, appointments }, { origin: location.origin, now: Date.now(), restricted }));
   }, [fromServer, householdId, me, profile, appointments, restricted]);
 
   // The household to-do list follows the checklists: at once on open (once the server has answered,
@@ -182,7 +181,7 @@ export function useLiveStore(householdId: string, me: string, members: string[],
     const first = todosFor.current !== householdId;
     todosFor.current = householdId;
     const timer = setTimeout(
-      () => publishTodos(localizeTodos(() => todoItems(checklists)).then((items) => syncTodos(db, householdId, APP, items, { by: me, restricted }))),
+      () => followTodos(publishTodos(db, householdId, me, checklists, { origin: location.origin, now: Date.now(), restricted })),
       first ? 0 : TODO_DELAY,
     );
     return () => clearTimeout(timer);
@@ -196,12 +195,9 @@ export function useLiveStore(householdId: string, me: string, members: string[],
     (appointments: Appointment[], profile: BabyProfile | null, changed?: string[], kicks: KickSettings | null = current.current.kickSettings) => {
       const now = Date.now();
       const url = tabUrl(location.origin, 'appointments');
-      const kickUrl = tabUrl(location.origin, 'kicks');
       const warn = (e: unknown) => console.warn("Couldn't schedule reminders", e);
       if (!restricted) {
-        localizeReminders(() => [...appointmentReminders(appointments, profile, now, url), ...kickReminders(kicks, now, kickUrl)])
-          .then((items) => syncReminders(db, householdId, 'baby', items, me, now, {}))
-          .catch(warn);
+        publishReminders(db, householdId, me, { appointments, profile, kickSettings: kicks }, { origin: location.origin, now }).catch(warn);
         return;
       }
       // A helper's or kid's device touches only the appointments it just saved or deleted, by ref and
@@ -258,11 +254,7 @@ export function useLiveStore(householdId: string, me: string, members: string[],
       saveProfile: (profile) => {
         report(setDoc(doc(db, base, 'babyProfile', 'main'), profile));
         // The due date and the baby's name on every appointment may both have changed.
-        publish(
-          localizeAgenda(() => agendaItems({ profile, appointments: current.current.appointments })).then((items) =>
-            syncAgenda(db, householdId, APP, items, { by: me, restricted }),
-          ),
-        );
+        publish(publishAgenda(db, householdId, me, { profile, appointments: current.current.appointments }, { origin: location.origin, now: Date.now(), restricted }));
       },
       contacts: householdContacts(db, householdId, APP, me, report),
     };
