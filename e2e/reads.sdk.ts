@@ -33,6 +33,10 @@ let hh: TestHousehold;
 let app: FirebaseApp;
 let db: ReturnType<typeof real.getFirestore>;
 let admin: string;
+/** The helper's device: restricted queries, only what isn't private. */
+let helperApp: FirebaseApp;
+let helperDb: ReturnType<typeof real.getFirestore>;
+let helper: string;
 const kickSettings: KickSettings = { target: 10, remindAt: '20:00', updatedAt: NOW - DAY, updatedBy: 'seed@example.com' };
 const data = { ...demoData('before'), kickSettings };
 
@@ -52,12 +56,20 @@ beforeAll(async () => {
   connectFirestoreEmulator(db, process.env.HH_EMULATOR_HOST || '127.0.0.1', Number(process.env.HH_EMULATOR_FIRESTORE_PORT || 8080), {
     mockUserToken: { sub: hh.users.admin.uid, email: admin, email_verified: true },
   });
+  helper = hh.users.helper.email;
+  helperApp = initializeApp({ apiKey: 'demo-key', projectId: e2eProject(), appId: 'demo' }, `reads-helper-${hh.id}`);
+  helperDb = initializeFirestore(helperApp, { localCache: memoryLocalCache() });
+  connectFirestoreEmulator(helperDb, process.env.HH_EMULATOR_HOST || '127.0.0.1', Number(process.env.HH_EMULATOR_FIRESTORE_PORT || 8080), {
+    mockUserToken: { sub: hh.users.helper.uid, email: helper, email_verified: true },
+  });
 });
 
 afterAll(async () => {
   if (!emulator) return;
   await terminate(db);
+  await terminate(helperDb);
   await deleteApp(app);
+  await deleteApp(helperApp);
 });
 
 type Store = Parameters<typeof publishAgenda>[4]['published'];
@@ -96,5 +108,23 @@ describe.skipIf(!emulator)('what an open publishes (agenda, to-dos, reminders): 
     // and removed them.
     expect(n).toBe(3);
     expect(value.map((r) => r.deleted)).toEqual([3, 3, 3]);
+  });
+});
+
+describe.skipIf(!emulator)("a helper's open: the agenda and to-dos with restricted queries, nothing private read", () => {
+  test("after the admin's device published; again with this device's note", async () => {
+    await open();
+    const helperOpen = (published: Store = null) =>
+      Promise.all([
+        publishAgenda(helperDb, hh.id, helper, data, { origin: ORIGIN, now: NOW, restricted: true, published }),
+        publishTodos(helperDb, hh.id, helper, data.checklists, { origin: ORIGIN, now: NOW, restricted: true, published }),
+      ]);
+    // The 5 agenda items that aren't private (the private appointment's is left out) and the 12 to-dos.
+    const { value, reads } = await expectReads(() => helperOpen(), { max: 17, min: 17, counter, label: 'Baby publish, helper' });
+    expect(reads).toBe(value.reduce((n, r) => n + r.unchanged, 0));
+    const notes = new Map<string, string>();
+    const store = { getItem: (k: string) => notes.get(k) ?? null, setItem: (k: string, v: string) => void notes.set(k, v), removeItem: (k: string) => void notes.delete(k), key: (i: number) => [...notes.keys()][i] ?? null, clear: () => notes.clear(), get length() { return notes.size; } };
+    await helperOpen(store);
+    await expectReads(() => helperOpen(store), { max: 0, counter, label: 'Baby publish, helper, published' });
   });
 });
