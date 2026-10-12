@@ -4,7 +4,8 @@ import { localizeReminders } from '@huishouden/pwa-kit/reminders';
 import { DAY, HOUR } from '@huishouden/pwa-kit/time';
 import { DEMO_NOW } from './demo';
 import type { Appointment, BabyProfile } from './model';
-import { appointmentReminders, kickReminderRef, kickReminders, reminderRef, reminderSource } from './reminders';
+import { kickReminderRef } from '@huishouden/pwa-kit/baby-settings';
+import { appointmentReminders, kickReminders, reminderRef, reminderSource } from './reminders';
 
 afterEach(() => setLangForTests('en'));
 
