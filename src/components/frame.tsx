@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import { AppOpening, type AppFrameProps, type OpeningPhase } from '@huishouden/pwa-kit/react/frame';
 import { trackView } from '@huishouden/pwa-kit/observability';
@@ -33,7 +34,7 @@ export function babyFrame(t: ReturnType<typeof useT>, account: Account, tabs?: P
 }
 
 /** The app while it opens: the kit's opening frame, without tabs until the household says which. */
-export function BabyOpening({ phase, ...account }: Account & { phase: OpeningPhase }) {
+export function BabyOpening({ phase, after, ...account }: Account & { phase: OpeningPhase; after?: ReactNode }) {
   const t = useT();
-  return <AppOpening {...babyFrame(t, account)} phase={phase} />;
+  return <AppOpening {...babyFrame(t, account)} phase={phase} after={after} />;
 }

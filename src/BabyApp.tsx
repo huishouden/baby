@@ -95,7 +95,8 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
 
   // The first data still on its way: the opening frame, which counts no view yet and shows no tabs
   // (they depend on the role and the birth, which arrive with the data).
-  if (!store.ready) return <BabyOpening user={user} onSignIn={onSignIn} onSignOut={onSignOut} signingIn={signingIn} phase="data" />;
+  // The toast stays mounted: a first load that fails says so there.
+  if (!store.ready) return <BabyOpening user={user} onSignIn={onSignIn} onSignOut={onSignOut} signingIn={signingIn} phase="data" after={<Toast toast={toast} onDone={clearToast} />} />;
   const frame = babyFrame(t, { user, onSignIn, onSignOut, signingIn }, { tabs, tab, onTab: (id) => setTab(id as TabId) });
 
   let content: ReactNode;
