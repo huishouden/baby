@@ -12,7 +12,8 @@ import { ClockProvider } from '@huishouden/pwa-kit/react/clock';
 import { BabyApp } from './BabyApp';
 import { Header } from './components/Header';
 import { PORTAL_URL } from './lib/portal';
-import { Chip, SampleBanner, cardClass, primaryButton, useToast } from '@huishouden/pwa-kit/react/ui';
+import { Chip, SampleBanner, ScreenSkeleton, cardClass, primaryButton, useToast } from '@huishouden/pwa-kit/react/ui';
+import { setUrlParams } from '@huishouden/pwa-kit/url-state';
 import { t, useLang, useT } from './i18n';
 
 export default function App() {
@@ -43,7 +44,7 @@ export default function App() {
 
   const frame = { onSignIn: signIn, onSignOut: signOut, signingIn };
 
-  if (user === undefined) return <Plain user={null} {...frame} hideSignIn />;
+  if (user === undefined) return <Opening user={undefined} {...frame} />;
   if (user === null) return <DemoApp {...frame} signInError={signInError} />;
   return <SignedIn key={user.uid} user={user} {...frame} />;
 }
@@ -70,7 +71,7 @@ function SignedIn({ user, ...frame }: FrameProps & { user: User }) {
   }, [householdId, user]);
 
   if (state.status === 'ready') return <LiveApp household={state.household} user={user} {...frame} />;
-  if (state.status === 'loading') return <Plain user={user} {...frame}>{t('household.finding')}</Plain>;
+  if (state.status === 'loading') return <Opening user={user} {...frame} label={t('household.finding')} />;
   if (state.status === 'error')
     return (
       <Plain user={user} {...frame}>
@@ -119,10 +120,7 @@ function DemoApp({ signInError, ...frame }: FrameProps & { signInError: string |
   const read = useCallback(() => DEMO_NOW + (Date.now() - loadedAt), [loadedAt]);
   const choose = (s: DemoScenario) => {
     setScenario(s);
-    const url = new URL(location.href);
-    if (s === 'after') url.searchParams.set('demo', 'after');
-    else url.searchParams.delete('demo');
-    history.replaceState(null, '', url);
+    setUrlParams({ demo: s === 'after' ? 'after' : null }, { replace: true });
   };
   // The sample's checklists start in the page's language, so a new language starts them again.
   const { lang } = useLang();
@@ -157,10 +155,27 @@ function DemoInner({ scenario, read, onScenario, signInError, ...frame }: FrameP
   return <BabyApp store={store} user={null} {...frame} toast={toast} notify={notify} clearToast={clear} banner={banner} />;
 }
 
-function Plain({ user, children, hideSignIn, ...frame }: FrameProps & { user: User | null; children?: ReactNode; hideSignIn?: boolean }) {
+/**
+ * While the app opens (the session restoring, the household loading): the app's frame over the kit's
+ * placeholder, so no sign-in screen or empty state flashes before the first screen. Baby's tabs
+ * depend on the person's role and on whether the baby is born, so they arrive with the app.
+ */
+function Opening({ user, label, ...frame }: FrameProps & { user: User | null | undefined; label?: string }) {
+  const t = useT();
   return (
     <div className="flex min-h-dvh flex-col bg-page font-sans text-ink antialiased">
-      <Header tabs={[]} tab="" onTab={() => {}} user={hideSignIn ? undefined : user} {...frame} />
+      <Header tabs={[]} tab="" onTab={() => {}} user={user} {...frame} opening />
+      <main className="mx-auto flex w-full max-w-[1200px] min-h-0 flex-1 flex-col gap-4 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-6">
+        <ScreenSkeleton label={label ?? t('app.loading')} />
+      </main>
+    </div>
+  );
+}
+
+function Plain({ user, children, ...frame }: FrameProps & { user: User | null; children?: ReactNode }) {
+  return (
+    <div className="flex min-h-dvh flex-col bg-page font-sans text-ink antialiased">
+      <Header tabs={[]} tab="" onTab={() => {}} user={user} {...frame} />
       <main className="mx-auto w-full max-w-[1200px] px-4 py-6 sm:px-6">
         {children && <div className={`${cardClass} max-w-2xl p-6 text-lg text-muted`}>{children}</div>}
       </main>
