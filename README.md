@@ -32,6 +32,10 @@ Installable on the tablet, phones and laptops, and works offline (entries sync w
 |---|---|
 | ![The call-now note before 37 weeks with the Call button, and the red flags](docs/screenshots/phone-contractions-explainer.png) | ![The explainer open at 38 weeks: red flags and the practice-vs-labor comparison](docs/screenshots/phone-contractions-explainer-term.png) |
 
+| Opening |
+|---|
+| ![While Baby opens: the app bar already in place over a placeholder; the tabs follow once the household shows what applies](docs/screenshots/opening.png) |
+
 _Screenshots of the live site signed out, which shows an invented sample family dated in 2031 (`?demo=after` for the log). Refreshed by CI after each deploy._
 
 ## Data
