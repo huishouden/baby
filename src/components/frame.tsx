@@ -1,5 +1,6 @@
 import type { User } from 'firebase/auth';
 import { AppOpening, type AppFrameProps, type OpeningPhase } from '@huishouden/pwa-kit/react/frame';
+import { trackView } from '@huishouden/pwa-kit/observability';
 import type { Tab } from '@huishouden/pwa-kit/react/ui';
 import { PORTAL_URL } from '../lib/portal';
 import { useT } from '../i18n';
@@ -26,6 +27,7 @@ export function babyFrame(t: ReturnType<typeof useT>, account: Account, tabs?: {
     portalUrl: PORTAL_URL,
     version: VERSION,
     ...account,
+    onView: trackView,
     layout: 'fit',
     ...(tabs && { tabs: tabs.tabs, tab: tabs.id, onTab: tabs.choose }),
   };
