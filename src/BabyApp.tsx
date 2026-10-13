@@ -14,7 +14,7 @@ import { urlParam } from '@huishouden/pwa-kit/url-state';
 import { can, refusal } from '@huishouden/pwa-kit/roles';
 import { mayChange } from './lib/roles';
 import type { BabyStore } from './data/types';
-import { babyFrame } from './components/frame';
+import { babyFrame, type Account } from './components/frame';
 import { ProfileDialog, type ProfileMode } from './components/ProfileDialog';
 import { AppointmentDialog } from './components/AppointmentDialog';
 import { APP, ROLE_NAMES, STORED_ROLES, shownRole } from './lib/contacts';
@@ -33,12 +33,9 @@ type TabId = 'home' | 'contractions' | 'kicks' | 'appointments' | 'checklists' |
 const TAB_IDS: readonly TabId[] = ['home', 'contractions', 'kicks', 'appointments', 'checklists', 'contacts'];
 
 
-interface Props {
+interface Props extends Omit<Account, 'user'> {
   store: BabyStore;
   user: User | null;
-  onSignIn: () => void;
-  onSignOut: () => void;
-  signingIn: boolean;
   toast: ToastState | null;
   notify: (message: string, undo?: () => void) => void;
   clearToast: () => void;

@@ -11,7 +11,7 @@ import { DEMO_NOW, type DemoScenario } from './lib/demo';
 import { ClockProvider } from '@huishouden/pwa-kit/react/clock';
 import { BabyApp } from './BabyApp';
 import { AppFrame } from '@huishouden/pwa-kit/react/frame';
-import { BabyOpening, babyFrame } from './components/frame';
+import { BabyOpening, babyFrame, type Account } from './components/frame';
 import { PORTAL_URL } from './lib/portal';
 import { Chip, SampleBanner, cardClass, primaryButton, useToast } from '@huishouden/pwa-kit/react/ui';
 import { setUrlParams } from '@huishouden/pwa-kit/url-state';
@@ -50,11 +50,7 @@ export default function App() {
   return <SignedIn key={user.uid} user={user} {...frame} />;
 }
 
-interface FrameProps {
-  onSignIn: () => void;
-  onSignOut: () => void;
-  signingIn: boolean;
-}
+type FrameProps = Omit<Account, 'user'>;
 
 function SignedIn({ user, ...frame }: FrameProps & { user: User }) {
   const t = useT();
