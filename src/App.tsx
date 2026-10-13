@@ -10,9 +10,10 @@ import { useDemoStore } from './data/useDemoStore';
 import { DEMO_NOW, type DemoScenario } from './lib/demo';
 import { ClockProvider } from '@huishouden/pwa-kit/react/clock';
 import { BabyApp } from './BabyApp';
-import { Header } from './components/Header';
+import { AppFrame } from '@huishouden/pwa-kit/react/frame';
+import { BabyOpening, babyFrame, type Account } from './components/frame';
 import { PORTAL_URL } from './lib/portal';
-import { Chip, SampleBanner, ScreenSkeleton, cardClass, primaryButton, useToast } from '@huishouden/pwa-kit/react/ui';
+import { Chip, SampleBanner, cardClass, primaryButton, useToast } from '@huishouden/pwa-kit/react/ui';
 import { setUrlParams } from '@huishouden/pwa-kit/url-state';
 import { t, useLang, useT } from './i18n';
 
@@ -44,16 +45,12 @@ export default function App() {
 
   const frame = { onSignIn: signIn, onSignOut: signOut, signingIn };
 
-  if (user === undefined) return <Opening user={undefined} {...frame} />;
+  if (user === undefined) return <BabyOpening user={undefined} {...frame} phase="session" />;
   if (user === null) return <DemoApp {...frame} signInError={signInError} />;
   return <SignedIn key={user.uid} user={user} {...frame} />;
 }
 
-interface FrameProps {
-  onSignIn: () => void;
-  onSignOut: () => void;
-  signingIn: boolean;
-}
+type FrameProps = Omit<Account, 'user'>;
 
 function SignedIn({ user, ...frame }: FrameProps & { user: User }) {
   const t = useT();
@@ -71,7 +68,7 @@ function SignedIn({ user, ...frame }: FrameProps & { user: User }) {
   }, [householdId, user]);
 
   if (state.status === 'ready') return <LiveApp household={state.household} user={user} {...frame} />;
-  if (state.status === 'loading') return <Opening user={user} {...frame} label={t('household.finding')} />;
+  if (state.status === 'loading') return <BabyOpening user={user} {...frame} phase="household" />;
   if (state.status === 'error')
     return (
       <Plain user={user} {...frame}>
@@ -155,30 +152,8 @@ function DemoInner({ scenario, read, onScenario, signInError, ...frame }: FrameP
   return <BabyApp store={store} user={null} {...frame} toast={toast} notify={notify} clearToast={clear} banner={banner} />;
 }
 
-/**
- * While the app opens (the session restoring, the household loading): the app's frame over the kit's
- * placeholder, so no sign-in screen or empty state flashes before the first screen. Baby's tabs
- * depend on the person's role and on whether the baby is born, so they arrive with the app.
- */
-function Opening({ user, label, ...frame }: FrameProps & { user: User | null | undefined; label?: string }) {
-  const t = useT();
-  return (
-    <div className="flex min-h-dvh flex-col bg-page font-sans text-ink antialiased">
-      <Header tabs={[]} tab="" onTab={() => {}} user={user} {...frame} opening />
-      <main className="mx-auto flex w-full max-w-[1200px] min-h-0 flex-1 flex-col gap-4 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-6">
-        <ScreenSkeleton label={label ?? t('app.loading')} />
-      </main>
-    </div>
-  );
-}
-
+/** A note in the frame, outside the app's tabs: no household, or it can't be reached. */
 function Plain({ user, children, ...frame }: FrameProps & { user: User | null; children?: ReactNode }) {
-  return (
-    <div className="flex min-h-dvh flex-col bg-page font-sans text-ink antialiased">
-      <Header tabs={[]} tab="" onTab={() => {}} user={user} {...frame} />
-      <main className="mx-auto w-full max-w-[1200px] px-4 py-6 sm:px-6">
-        {children && <div className={`${cardClass} max-w-2xl p-6 text-lg text-muted`}>{children}</div>}
-      </main>
-    </div>
-  );
+  const t = useT();
+  return <AppFrame {...babyFrame(t, { user, ...frame })}>{children && <div className={`${cardClass} max-w-2xl p-6 text-lg text-muted`}>{children}</div>}</AppFrame>;
 }

@@ -7,13 +7,14 @@ import { isImported, type CalendarMatch } from '@huishouden/pwa-kit/calendar';
 import { useClock } from '@huishouden/pwa-kit/react/clock';
 import { CalendarSuggestions, calendarAvailable, useCalendarSuggestions } from '@huishouden/pwa-kit/react/calendar';
 import { ContactDialog } from '@huishouden/pwa-kit/react/contacts';
-import { ScreenSkeleton, Toast, type ToastState } from '@huishouden/pwa-kit/react/ui';
+import { Toast, type Tab, type ToastState } from '@huishouden/pwa-kit/react/ui';
+import { AppFrame } from '@huishouden/pwa-kit/react/frame';
 import { useUrlTab } from '@huishouden/pwa-kit/react/url-state';
 import { urlParam } from '@huishouden/pwa-kit/url-state';
 import { can, refusal } from '@huishouden/pwa-kit/roles';
 import { mayChange } from './lib/roles';
 import type { BabyStore } from './data/types';
-import { Header, type Tab } from './components/Header';
+import { BabyOpening, babyFrame, type Account } from './components/frame';
 import { ProfileDialog, type ProfileMode } from './components/ProfileDialog';
 import { AppointmentDialog } from './components/AppointmentDialog';
 import { APP, ROLE_NAMES, STORED_ROLES, shownRole } from './lib/contacts';
@@ -32,12 +33,9 @@ type TabId = 'home' | 'contractions' | 'kicks' | 'appointments' | 'checklists' |
 const TAB_IDS: readonly TabId[] = ['home', 'contractions', 'kicks', 'appointments', 'checklists', 'contacts'];
 
 
-interface Props {
+interface Props extends Omit<Account, 'user'> {
   store: BabyStore;
   user: User | null;
-  onSignIn: () => void;
-  onSignOut: () => void;
-  signingIn: boolean;
   toast: ToastState | null;
   notify: (message: string, undo?: () => void) => void;
   clearToast: () => void;
@@ -95,9 +93,13 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
     { id: 'contacts', label: t('tab.contacts'), icon: ContactIcon },
   ];
 
+  // The first data still on its way: the opening frame, which counts no view yet and shows no tabs
+  // (they depend on the role and the birth, which arrive with the data).
+  if (!store.ready) return <BabyOpening user={user} onSignIn={onSignIn} onSignOut={onSignOut} signingIn={signingIn} phase="data" />;
+  const frame = babyFrame(t, { user, onSignIn, onSignOut, signingIn }, { tabs, tab, onTab: (id) => setTab(id as TabId) });
+
   let content: ReactNode;
-  if (!store.ready) content = <ScreenSkeleton label={t('app.loading')} />;
-  else if (tab === 'contractions' && store.role != null && store.role !== 'kid') content = <Contractions store={store} notify={notify} />;
+  if (tab === 'contractions' && store.role != null && store.role !== 'kid') content = <Contractions store={store} notify={notify} />;
   else if (tab === 'kicks' && !born && store.role != null && store.role !== 'kid')
     content = <Kicks store={store} notify={notify} live={householdId && user?.email ? { householdId, email: user.email.toLowerCase() } : undefined} />;
   else if (tab === 'appointments')
@@ -121,17 +123,8 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
       />
     );
 
-  return (
-    <div className="flex min-h-dvh flex-col bg-page font-sans text-ink antialiased lg:h-dvh lg:overflow-hidden">
-      <Header tabs={tabs} tab={tab} onTab={(id) => setTab(id as TabId)} user={user} onSignIn={onSignIn} onSignOut={onSignOut} signingIn={signingIn} />
-      <main className="mx-auto flex w-full max-w-[1200px] min-h-0 flex-1 flex-col gap-4 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-6">
-        {banner}
-        {tab === 'home' && store.ready && (
-          <CalendarSuggestions suggestions={suggested.suggestions} now={now} onAdd={(m) => importEvents([m])} onDismiss={suggested.dismiss} />
-        )}
-        <div className="min-h-0 flex-1">{content}</div>
-      </main>
-
+  const dialogs = (
+    <>
       {profileMode && (
         <ProfileDialog
           mode={profileMode}
@@ -196,6 +189,16 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
         />
       )}
       <Toast toast={toast} onDone={clearToast} />
-    </div>
+    </>
+  );
+
+  return (
+    <AppFrame {...frame} after={dialogs}>
+        {banner}
+        {tab === 'home' && (
+          <CalendarSuggestions suggestions={suggested.suggestions} now={now} onAdd={(m) => importEvents([m])} onDismiss={suggested.dismiss} />
+        )}
+        <div className="min-h-0 flex-1">{content}</div>
+    </AppFrame>
   );
 }
