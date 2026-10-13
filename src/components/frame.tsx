@@ -1,7 +1,6 @@
 import type { User } from 'firebase/auth';
 import { AppOpening, type AppFrameProps, type OpeningPhase } from '@huishouden/pwa-kit/react/frame';
 import { trackView } from '@huishouden/pwa-kit/observability';
-import type { Tab } from '@huishouden/pwa-kit/react/ui';
 import { PORTAL_URL } from '../lib/portal';
 import { useT } from '../i18n';
 
@@ -20,7 +19,7 @@ const VERSION = `${import.meta.env.VITE_APP_VERSION} (${import.meta.env.VITE_BUI
  * nothing moves between them. Without `tabs`, no tabs: while opening (they depend on the person's
  * role and on whether the baby is born) and on a note outside the app's sections.
  */
-export function babyFrame(t: ReturnType<typeof useT>, account: Account, tabs?: { tabs: Tab[]; id: string; choose: (id: string) => void }): AppFrameProps {
+export function babyFrame(t: ReturnType<typeof useT>, account: Account, tabs?: Pick<AppFrameProps, 'tabs' | 'tab' | 'onTab'>): AppFrameProps {
   return {
     app: t('app.name'),
     glyph: 'bottle',
@@ -29,7 +28,7 @@ export function babyFrame(t: ReturnType<typeof useT>, account: Account, tabs?: {
     ...account,
     onView: trackView,
     layout: 'fit',
-    ...(tabs && { tabs: tabs.tabs, tab: tabs.id, onTab: tabs.choose }),
+    ...tabs,
   };
 }
 

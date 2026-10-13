@@ -8,13 +8,13 @@ import { useClock } from '@huishouden/pwa-kit/react/clock';
 import { CalendarSuggestions, calendarAvailable, useCalendarSuggestions } from '@huishouden/pwa-kit/react/calendar';
 import { ContactDialog } from '@huishouden/pwa-kit/react/contacts';
 import { Toast, type Tab, type ToastState } from '@huishouden/pwa-kit/react/ui';
-import { AppFrame, AppOpening } from '@huishouden/pwa-kit/react/frame';
+import { AppFrame } from '@huishouden/pwa-kit/react/frame';
 import { useUrlTab } from '@huishouden/pwa-kit/react/url-state';
 import { urlParam } from '@huishouden/pwa-kit/url-state';
 import { can, refusal } from '@huishouden/pwa-kit/roles';
 import { mayChange } from './lib/roles';
 import type { BabyStore } from './data/types';
-import { babyFrame, type Account } from './components/frame';
+import { BabyOpening, babyFrame, type Account } from './components/frame';
 import { ProfileDialog, type ProfileMode } from './components/ProfileDialog';
 import { AppointmentDialog } from './components/AppointmentDialog';
 import { APP, ROLE_NAMES, STORED_ROLES, shownRole } from './lib/contacts';
@@ -95,8 +95,8 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
 
   // The first data still on its way: the opening frame, which counts no view yet and shows no tabs
   // (they depend on the role and the birth, which arrive with the data).
-  if (!store.ready) return <AppOpening {...babyFrame(t, { user, onSignIn, onSignOut, signingIn })} phase="data" />;
-  const frame = babyFrame(t, { user, onSignIn, onSignOut, signingIn }, { tabs, id: tab, choose: (id) => setTab(id as TabId) });
+  if (!store.ready) return <BabyOpening user={user} onSignIn={onSignIn} onSignOut={onSignOut} signingIn={signingIn} phase="data" />;
+  const frame = babyFrame(t, { user, onSignIn, onSignOut, signingIn }, { tabs, tab, onTab: (id) => setTab(id as TabId) });
 
   let content: ReactNode;
   if (tab === 'contractions' && store.role != null && store.role !== 'kid') content = <Contractions store={store} notify={notify} />;
