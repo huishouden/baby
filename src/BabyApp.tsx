@@ -7,7 +7,9 @@ import { isImported, type CalendarMatch } from '@huishouden/pwa-kit/calendar';
 import { useClock } from '@huishouden/pwa-kit/react/clock';
 import { CalendarSuggestions, calendarAvailable, useCalendarSuggestions } from '@huishouden/pwa-kit/react/calendar';
 import { ContactDialog } from '@huishouden/pwa-kit/react/contacts';
-import { Toast, type ToastState } from '@huishouden/pwa-kit/react/ui';
+import { ScreenSkeleton, Toast, type ToastState } from '@huishouden/pwa-kit/react/ui';
+import { useUrlTab } from '@huishouden/pwa-kit/react/url-state';
+import { urlParam } from '@huishouden/pwa-kit/url-state';
 import { can, refusal } from '@huishouden/pwa-kit/roles';
 import { mayChange } from './lib/roles';
 import type { BabyStore } from './data/types';
@@ -29,8 +31,6 @@ import { useT } from './i18n';
 type TabId = 'home' | 'contractions' | 'kicks' | 'appointments' | 'checklists' | 'contacts';
 const TAB_IDS: readonly TabId[] = ['home', 'contractions', 'kicks', 'appointments', 'checklists', 'contacts'];
 
-/** The tab a link asks for ("#appointments", as the household agenda links), if any. */
-const tabFromHash = (): TabId | undefined => TAB_IDS.find((id) => `#${id}` === location.hash);
 
 interface Props {
   store: BabyStore;
@@ -52,7 +52,12 @@ interface Props {
 export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, notify, clearToast, banner, initialTab, householdId }: Props) {
   const t = useT();
   const { now } = useClock();
-  const [tab, setTab] = useState<TabId>(() => initialTab ?? tabFromHash() ?? 'home');
+  // The tab lives in the address (`?tab=appointments`), so a reload (an update) and Back return to it;
+  // agenda links published as `#appointments` still open their tab.
+  const [tab, setTab] = useUrlTab(TAB_IDS, 'home', { legacyHash: true });
+  useEffect(() => {
+    if (initialTab && !urlParam('tab')) setTab(initialTab, { replace: true });
+  }, []);
   const [profileMode, setProfileMode] = useState<ProfileMode | null>(null);
   const [appointment, setAppointment] = useState<Appointment | 'new' | null>(null);
   const [contact, setContact] = useState<{ contact: Contact | null; role?: string } | null>(null);
@@ -79,15 +84,6 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
     document.title = title;
   }, [title]);
 
-  useEffect(() => {
-    const follow = () => {
-      const id = tabFromHash();
-      if (id) setTab(id);
-    };
-    addEventListener('hashchange', follow);
-    return () => removeEventListener('hashchange', follow);
-  }, []);
-
   const tabs: Tab[] = [
     { id: 'home', label: born ? t('tab.log') : t('tab.overview'), icon: born ? NotebookPen : BabyIcon },
     // Kids have no access to the contraction timer.
@@ -100,7 +96,7 @@ export function BabyApp({ store, user, onSignIn, onSignOut, signingIn, toast, no
   ];
 
   let content: ReactNode;
-  if (!store.ready) content = <p className="p-2 text-lg text-muted">{t('app.loading')}</p>;
+  if (!store.ready) content = <ScreenSkeleton label={t('app.loading')} />;
   else if (tab === 'contractions' && store.role != null && store.role !== 'kid') content = <Contractions store={store} notify={notify} />;
   else if (tab === 'kicks' && !born && store.role != null && store.role !== 'kid')
     content = <Kicks store={store} notify={notify} live={householdId && user?.email ? { householdId, email: user.email.toLowerCase() } : undefined} />;
